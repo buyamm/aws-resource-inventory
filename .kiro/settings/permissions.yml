@@ -1,0 +1,26 @@
+rules:
+  - capability: shell
+    effect: allow
+    match:
+      - "git *"
+      - "terraform plan*"
+      - "terraform validate*"
+      - "terraform fmt*"
+      - "aws sts get-caller-identity*"
+      - "aws * describe-*"
+      - "aws * list-*"
+      - "ls *"
+      - "cat *"
+
+  - capability: shell
+    effect: ask
+    match:
+      - "terraform apply*"
+      - "terraform destroy*"
+
+  - capability: fs_write
+    effect: deny
+    match:
+      - "*.env"
+      - "*.pem"
+      - "*.key"

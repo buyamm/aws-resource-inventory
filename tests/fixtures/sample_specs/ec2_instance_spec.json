@@ -1,0 +1,49 @@
+{
+  "resource_type": "aws_ec2_instance",
+  "arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0",
+  "region": "us-east-1",
+  "account_id": "123456789012",
+  "specifications": {
+    "instance_id": "i-1234567890abcdef0",
+    "instance_type": "t2.micro",
+    "state": "running",
+    "image_id": "ami-12345678",
+    "launch_time": "2023-01-01T00:00:00.000Z",
+    "availability_zone": "us-east-1a",
+    "vpc_id": "vpc-12345678",
+    "subnet_id": "subnet-12345678",
+    "private_ip_address": "10.0.1.100",
+    "public_ip_address": "54.123.45.67",
+    "security_groups": [
+      {
+        "group_id": "sg-12345678",
+        "group_name": "web-server"
+      }
+    ],
+    "block_device_mappings": [
+      {
+        "device_name": "/dev/xvda",
+        "ebs": {
+          "volume_id": "vol-1234567890abcdef0",
+          "status": "attached",
+          "delete_on_termination": true
+        }
+      }
+    ],
+    "tags": {
+      "Name": "test-instance",
+      "Environment": "test",
+      "Application": "web"
+    },
+    "monitoring": "disabled",
+    "architecture": "x86_64",
+    "root_device_type": "ebs"
+  },
+  "metadata": {
+    "collected_at": "2023-01-01T00:00:00Z",
+    "collector_version": "1.0.0",
+    "api_version": "2023-01-01",
+    "checksum": "xyz789abc123456"
+  },
+  "raw_response": null
+}

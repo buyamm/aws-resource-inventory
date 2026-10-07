@@ -1,0 +1,53 @@
+{
+  "resource_type": "aws_lambda_function",
+  "arn": "arn:aws:lambda:us-east-1:123456789012:function:test-function",
+  "region": "us-east-1",
+  "account_id": "123456789012",
+  "specifications": {
+    "function_name": "test-function",
+    "runtime": "python3.9",
+    "handler": "index.handler",
+    "role": "arn:aws:iam::123456789012:role/lambda-execution-role",
+    "code_size": 1024,
+    "description": "Test Lambda function",
+    "timeout": 30,
+    "memory_size": 128,
+    "last_modified": "2023-01-01T00:00:00.000+0000",
+    "code_sha256": "abc123def456",
+    "version": "$LATEST",
+    "environment": {
+      "variables": {
+        "ENV": "test",
+        "LOG_LEVEL": "INFO",
+        "DATABASE_URL": "postgresql://localhost:5432/db"
+      }
+    },
+    "vpc_config": {
+      "subnet_ids": ["subnet-12345678"],
+      "security_group_ids": ["sg-12345678"],
+      "vpc_id": "vpc-12345678"
+    },
+    "layers": [
+      {
+        "arn": "arn:aws:lambda:us-east-1:123456789012:layer:test-layer:1",
+        "code_size": 512
+      }
+    ],
+    "state": "Active",
+    "package_type": "Zip",
+    "tracing_config": {
+      "mode": "PassThrough"
+    },
+    "tags": {
+      "Environment": "test",
+      "Application": "inventory"
+    }
+  },
+  "metadata": {
+    "collected_at": "2023-01-01T00:00:00Z",
+    "collector_version": "1.0.0",
+    "api_version": "2023-01-01",
+    "checksum": "def456ghi789012"
+  },
+  "raw_response": null
+}

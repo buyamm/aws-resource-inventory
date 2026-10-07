@@ -1,0 +1,81 @@
+{
+  "resource_type": "aws_s3_bucket",
+  "arn": "arn:aws:s3:::test-bucket-1",
+  "region": "us-east-1",
+  "account_id": "123456789012",
+  "specifications": {
+    "bucket-acl": {
+      "Owner": {
+        "DisplayName": "test-owner",
+        "ID": "owner-id-123456789"
+      },
+      "Grants": [
+        {
+          "Grantee": {
+            "Type": "CanonicalUser",
+            "DisplayName": "test-owner",
+            "ID": "owner-id-123456789"
+          },
+          "Permission": "FULL_CONTROL"
+        }
+      ]
+    },
+    "bucket-versioning": {
+      "Status": "Enabled",
+      "MFADelete": "Disabled"
+    },
+    "bucket-encryption": {
+      "ServerSideEncryptionConfiguration": {
+        "Rules": [
+          {
+            "ApplyServerSideEncryptionByDefault": {
+              "SSEAlgorithm": "AES256"
+            },
+            "BucketKeyEnabled": false
+          }
+        ]
+      }
+    },
+    "bucket-lifecycle-configuration": {
+      "Rules": [
+        {
+          "ID": "DeleteOldVersions",
+          "Status": "Enabled",
+          "NoncurrentVersionExpiration": {
+            "NoncurrentDays": 90
+          },
+          "Filter": {}
+        }
+      ]
+    },
+    "bucket-tagging": {
+      "TagSet": [
+        {
+          "Key": "Environment",
+          "Value": "test"
+        },
+        {
+          "Key": "Project",
+          "Value": "aws-inventory"
+        }
+      ]
+    },
+    "bucket-cors": {
+      "CORSRules": [
+        {
+          "AllowedMethods": ["GET", "POST"],
+          "AllowedOrigins": ["https://example.com"],
+          "AllowedHeaders": ["*"],
+          "MaxAgeSeconds": 3000
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "collected_at": "2023-01-01T00:00:00Z",
+    "collector_version": "1.0.0",
+    "api_version": "2023-01-01",
+    "checksum": "abc123def456789"
+  },
+  "raw_response": null
+}

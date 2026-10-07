@@ -1,0 +1,20 @@
+# Production Dependencies for AWS Resource Inventory
+
+# AWS SDK
+boto3>=1.28.0,<1.43.0
+
+# MCP Framework (Model Context Protocol)
+# Note: mcp package will be added when implementing MCP server component
+# Placeholder for now - may need to use SDK from: https://github.com/modelcontextprotocol/python-sdk
+
+# CLI utilities
+click>=8.1.0
+
+# Data validation and serialization
+pydantic>=1.10.0,<2.0.0
+
+# Terraform validation
+python-hcl2>=4.3.0
+
+# JSON schema validation
+jsonschema>=4.17.0

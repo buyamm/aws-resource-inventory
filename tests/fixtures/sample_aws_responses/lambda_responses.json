@@ -1,0 +1,95 @@
+{
+  "list_functions": {
+    "Functions": [
+      {
+        "FunctionName": "test-function",
+        "FunctionArn": "arn:aws:lambda:us-east-1:123456789012:function:test-function",
+        "Runtime": "python3.9",
+        "Role": "arn:aws:iam::123456789012:role/lambda-execution-role",
+        "Handler": "index.handler",
+        "CodeSize": 1024,
+        "Description": "Test Lambda function",
+        "Timeout": 30,
+        "MemorySize": 128,
+        "LastModified": "2023-01-01T00:00:00.000+0000",
+        "CodeSha256": "abc123def456",
+        "Version": "$LATEST",
+        "PackageType": "Zip",
+        "State": "Active"
+      }
+    ]
+  },
+  "get_function": {
+    "Configuration": {
+      "FunctionName": "test-function",
+      "FunctionArn": "arn:aws:lambda:us-east-1:123456789012:function:test-function",
+      "Runtime": "python3.9",
+      "Role": "arn:aws:iam::123456789012:role/lambda-execution-role",
+      "Handler": "index.handler",
+      "CodeSize": 1024,
+      "Description": "Test Lambda function",
+      "Timeout": 30,
+      "MemorySize": 128,
+      "LastModified": "2023-01-01T00:00:00.000+0000",
+      "CodeSha256": "abc123def456",
+      "Version": "$LATEST",
+      "Environment": {
+        "Variables": {
+          "ENV": "test",
+          "LOG_LEVEL": "INFO",
+          "DATABASE_URL": "postgresql://localhost:5432/db"
+        }
+      },
+      "VpcConfig": {
+        "SubnetIds": ["subnet-12345678"],
+        "SecurityGroupIds": ["sg-12345678"],
+        "VpcId": "vpc-12345678"
+      },
+      "Layers": [
+        {
+          "Arn": "arn:aws:lambda:us-east-1:123456789012:layer:test-layer:1",
+          "CodeSize": 512
+        }
+      ],
+      "State": "Active",
+      "PackageType": "Zip",
+      "TracingConfig": {
+        "Mode": "PassThrough"
+      }
+    },
+    "Code": {
+      "RepositoryType": "S3",
+      "Location": "https://awslambda-us-east-1-tasks.s3.us-east-1.amazonaws.com/..."
+    },
+    "Tags": {
+      "Environment": "test",
+      "Application": "inventory"
+    }
+  },
+  "get_function_configuration": {
+    "FunctionName": "test-function",
+    "FunctionArn": "arn:aws:lambda:us-east-1:123456789012:function:test-function",
+    "Runtime": "python3.9",
+    "Role": "arn:aws:iam::123456789012:role/lambda-execution-role",
+    "Handler": "index.handler",
+    "CodeSize": 1024,
+    "Description": "Test Lambda function",
+    "Timeout": 30,
+    "MemorySize": 128,
+    "LastModified": "2023-01-01T00:00:00.000+0000",
+    "CodeSha256": "abc123def456",
+    "Version": "$LATEST",
+    "Environment": {
+      "Variables": {
+        "ENV": "test",
+        "LOG_LEVEL": "INFO"
+      }
+    },
+    "VpcConfig": {},
+    "State": "Active",
+    "PackageType": "Zip"
+  },
+  "get_policy": {
+    "Policy": "{\"Version\":\"2012-10-17\",\"Id\":\"default\",\"Statement\":[{\"Sid\":\"AllowInvokeFromAPIGateway\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"apigateway.amazonaws.com\"},\"Action\":\"lambda:InvokeFunction\",\"Resource\":\"arn:aws:lambda:us-east-1:123456789012:function:test-function\"}]}"
+  }
+}
