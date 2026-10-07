@@ -90,8 +90,8 @@ class OutputGenerator:
             candidate = spec.arn
 
         # Sanitize for filesystem safety
-        safe_name = re.sub(r'[^a-zA-Z0-9_.-]', '_', str(candidate))
-        return safe_name.strip('_') or "resource"
+        safe_name = re.sub(r"[^a-zA-Z0-9_.-]", "_", str(candidate))
+        return safe_name.strip("_") or "resource"
 
     def _resource_dir(self, spec: ResourceSpec) -> Path:
         """
@@ -178,8 +178,12 @@ class OutputGenerator:
                 if idx < len(col_widths):
                     col_widths[idx] = max(col_widths[idx], len(str(cell)))
 
-        header_line = "| " + " | ".join(h.ljust(col_widths[i]) for i, h in enumerate(headers)) + " |"
-        sep_line = "| " + " | ".join("-" * max(3, col_widths[i]) for i in range(len(headers))) + " |"
+        header_line = (
+            "| " + " | ".join(h.ljust(col_widths[i]) for i, h in enumerate(headers)) + " |"
+        )
+        sep_line = (
+            "| " + " | ".join("-" * max(3, col_widths[i]) for i in range(len(headers))) + " |"
+        )
         row_lines = [
             "| " + " | ".join(str(cell).ljust(col_widths[i]) for i, cell in enumerate(row)) + " |"
             for row in rows
@@ -237,14 +241,15 @@ class OutputGenerator:
             if complex_key == "tags":
                 continue
             lines.append(f"### {complex_key.replace('_', ' ').title()}\n")
-            if isinstance(complex_val, list) and complex_val and all(isinstance(i, dict) for i in complex_val):
+            if (
+                isinstance(complex_val, list)
+                and complex_val
+                and all(isinstance(i, dict) for i in complex_val)
+            ):
                 # Try table format if list of dicts
                 keys = list({k for item in complex_val for k in item.keys()})
                 keys.sort()
-                table_rows = [
-                    [str(item.get(k, "")) for k in keys]
-                    for item in complex_val
-                ]
+                table_rows = [[str(item.get(k, "")) for k in keys] for item in complex_val]
                 lines.append(self._format_markdown_table(keys, table_rows))
             else:
                 lines.append("```json")
@@ -302,19 +307,13 @@ class OutputGenerator:
             r = spec.region or "global"
             region_counts[r] = region_counts.get(r, 0) + 1
 
-        summary_rows = [
-            [res_type, str(count)]
-            for res_type, count in sorted(type_counts.items())
-        ]
+        summary_rows = [[res_type, str(count)] for res_type, count in sorted(type_counts.items())]
         agg_lines.append(self._format_markdown_table(["Resource Type", "Count"], summary_rows))
         agg_lines.append("\n")
 
         # Regional Breakdown
         agg_lines.append("## Regional Distribution\n")
-        region_rows = [
-            [region, str(count)]
-            for region, count in sorted(region_counts.items())
-        ]
+        region_rows = [[region, str(count)] for region, count in sorted(region_counts.items())]
         agg_lines.append(self._format_markdown_table(["Region", "Resource Count"], region_rows))
         agg_lines.append("\n")
 
@@ -323,13 +322,17 @@ class OutputGenerator:
         res_rows: list[list[str]] = []
         for spec, _ in sanitized_specs:
             name = self._safe_filename(spec)
-            res_rows.append([
-                spec.resource_type,
-                name,
-                spec.region or "global",
-                spec.arn,
-            ])
-        agg_lines.append(self._format_markdown_table(["Resource Type", "Identifier", "Region", "ARN"], res_rows))
+            res_rows.append(
+                [
+                    spec.resource_type,
+                    name,
+                    spec.region or "global",
+                    spec.arn,
+                ]
+            )
+        agg_lines.append(
+            self._format_markdown_table(["Resource Type", "Identifier", "Region", "ARN"], res_rows)
+        )
         agg_lines.append("\n")
 
         # Detailed Resource Specifications
@@ -418,9 +421,7 @@ class OutputGenerator:
     # Performance & Summary Report (Requirements 10.3, 10.4, 10.5)
     # ========================================================================
 
-    def generate_summary_report(
-        self, specs: list[ResourceSpec], duration_seconds: float
-    ) -> str:
+    def generate_summary_report(self, specs: list[ResourceSpec], duration_seconds: float) -> str:
         """
         Generate summary report comparing estimated manual effort versus automated time.
 
@@ -461,6 +462,35 @@ class OutputGenerator:
 {table_md}
 """
         return report
+
+    def format_terminal_summary(
+        self, specs: list[ResourceSpec], duration_seconds: float
+    ) -> str:
+        """
+        Format a colorful summary report suitable for display in terminal CLI.
+
+        Uses ANSI color codes for terminal highlighting (Task 9.4).
+        """
+        green = "\033[92m"
+        cyan = "\033[96m"
+        yellow = "\033[93m"
+        bold = "\033[1m"
+        reset = "\033[0m"
+
+        total_resources = len(specs)
+        manual_minutes = total_resources * 5
+        manual_hours = manual_minutes / 60.0
+        hours_saved = max(0.0, manual_hours - (duration_seconds / 3600.0))
+        percent_saved = (hours_saved / manual_hours * 100.0) if manual_hours > 0 else 0.0
+
+        lines = [
+            f"{bold}{cyan}=== AWS Resource Inventory Summary ==={reset}",
+            f"Total Resources: {bold}{green}{total_resources}{reset}",
+            f"Automated Time:  {yellow}{duration_seconds:.2f}s{reset}",
+            f"Manual Baseline: {manual_hours:.2f}h ({manual_minutes} min)",
+            f"Time Saved:      {bold}{green}{hours_saved:.2f} hours ({percent_saved:.1f}%){reset}",
+        ]
+        return "\n".join(lines)
 
     # ========================================================================
     # Full Generation Workflow (Requirement 3.1-3.6)

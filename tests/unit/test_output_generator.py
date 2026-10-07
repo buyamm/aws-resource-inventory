@@ -25,6 +25,7 @@ from src.parser import ResourceSpec, SpecMetadata
 # Test Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def sample_s3_spec() -> ResourceSpec:
     """Provide a sample S3 ResourceSpec object."""
@@ -108,6 +109,7 @@ def sample_sensitive_spec() -> ResourceSpec:
 # ============================================================================
 # Unit Tests for OutputGenerator
 # ============================================================================
+
 
 class TestOutputGeneratorFormats:
     """Tests for JSON and Markdown generation (Requirement 3.1)."""
@@ -321,7 +323,9 @@ class TestOutputGeneratorMetricsAndSummary:
         assert "Manual Effort" in report or "manual" in report.lower()
         assert "Time Saved" in report or "savings" in report.lower()
         assert "5 minutes" in report or "baseline" in report.lower()
-        assert "10" in report or "0.17" in report or "0.16" in report  # 10 minutes or ~0.17 hours manual
+        assert (
+            "10" in report or "0.17" in report or "0.16" in report
+        )  # 10 minutes or ~0.17 hours manual
 
 
 class TestOutputGeneratorCompleteWorkflow:
@@ -346,3 +350,71 @@ class TestOutputGeneratorCompleteWorkflow:
         assert (tmp_path / "resources.json").exists()
         assert (tmp_path / "resources.md").exists()
         assert (tmp_path / "checksums.sha256").exists() or (tmp_path / "checksums.json").exists()
+
+
+class TestOutputGeneratorTerminal:
+    """Tests for terminal color formatting (Task 9.4)."""
+
+    def test_output_generator_format_terminal_summary(
+        self, tmp_path: Path, sample_s3_spec: ResourceSpec, sample_ec2_spec: ResourceSpec
+    ) -> None:
+        """Task 9.4: Color-coded summary output for terminal."""
+        generator = OutputGenerator(output_dir=tmp_path)
+        specs = [sample_s3_spec, sample_ec2_spec]
+        summary = generator.format_terminal_summary(specs, duration_seconds=30.0)
+
+        assert "\033[" in summary  # ANSI color codes present
+        assert "Total Resources:" in summary
+        assert "2" in summary
+        assert "Time Saved:" in summary
+
+
+class TestOutputGeneratorEdgeCases:
+    """Tests for edge cases and defensive logic."""
+
+    def test_output_generator_empty_specs(self, tmp_path: Path) -> None:
+        """Handle empty specs list gracefully."""
+        generator = OutputGenerator(output_dir=tmp_path)
+        res = generator.generate_all([])
+        assert res["checksum_file"].exists()
+        assert (tmp_path / "resources.json").exists()
+        assert (tmp_path / "resources.md").exists()
+
+    def test_output_generator_spec_without_raw_response(self, tmp_path: Path) -> None:
+        """Spec without raw_response is skipped in store_raw_responses."""
+        spec = ResourceSpec(
+            resource_type="aws_s3_bucket",
+            arn="arn:aws:s3:::no-raw",
+            region="us-east-1",
+            account_id="123456789012",
+            specifications={},
+            metadata=SpecMetadata(
+                collected_at="2026-10-07T12:00:00Z",
+                collector_version="1.0.0",
+                api_version="2006-03-01",
+                checksum="xyz",
+            ),
+            raw_response=None,
+        )
+        generator = OutputGenerator(output_dir=tmp_path)
+        raw_files = generator.store_raw_responses([spec])
+        assert len(raw_files) == 0
+
+    def test_output_generator_arn_fallback_filename(self, tmp_path: Path) -> None:
+        """Fallback to ARN when no standard identifier in specifications."""
+        spec = ResourceSpec(
+            resource_type="custom_type",
+            arn="arn:aws:custom:us-east-1:123456789012:my-custom-res",
+            region="us-east-1",
+            account_id="123456789012",
+            specifications={"custom_key": "custom_val"},
+            metadata=SpecMetadata(
+                collected_at="2026-10-07T12:00:00Z",
+                collector_version="1.0.0",
+                api_version="1.0",
+                checksum="abc",
+            ),
+        )
+        generator = OutputGenerator(output_dir=tmp_path)
+        json_files = generator.generate_json([spec])
+        assert any("my-custom-res" in f.name for f in json_files)
