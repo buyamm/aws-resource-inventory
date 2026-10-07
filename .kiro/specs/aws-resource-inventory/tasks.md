@@ -313,7 +313,7 @@ This implementation plan follows Test-Driven Development (TDD) methodology with 
     - _Requirements: 6.5_
 
 - [ ] 14. MCP Server - TDD Implementation
-  - [ ] 14.1 Write integration tests for MCP server (RED phase)
+  - [x] 14.1 Write integration tests for MCP server (RED phase)
     - Write test: `test_mcp_server_list_resources_returns_cached_data_req_5_3`
     - Write test: `test_mcp_server_blocks_unauthorized_operations_req_5_6`
     - Write test: `test_mcp_server_enforces_rate_limit_req_5_7`
