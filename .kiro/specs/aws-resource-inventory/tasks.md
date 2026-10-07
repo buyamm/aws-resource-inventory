@@ -63,7 +63,7 @@ This implementation plan follows Test-Driven Development (TDD) methodology with 
     - Ensure all tests still pass
     - _Requirements: 4.2, 4.5_
 
-- [ ] 4. Checkpoint - Parser tests passing
+- [x] 4. Checkpoint - Parser tests passing
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 5. Data Sanitizer - TDD Implementation
@@ -92,7 +92,7 @@ This implementation plan follows Test-Driven Development (TDD) methodology with 
     - Ensure all tests still pass
     - _Requirements: 9.5_
 
-- [ ] 6. Spec Collector - TDD Implementation
+- [x] 6. Spec Collector - TDD Implementation
   - [x] 6.1 Write unit tests for collector resilience (RED phase)
     - Write test: `test_collector_retry_exponential_backoff_req_12_1`
     - Write test: `test_collector_continues_after_permission_error_req_2_5`
@@ -183,20 +183,20 @@ This implementation plan follows Test-Driven Development (TDD) methodology with 
     - Ensure 5-minute completion for 1000 resources
     - _Requirements: 1.5_
 
-- [ ] 9. Output Generator - TDD Implementation
-  - [ ] 9.1 Write unit tests for output generation (RED phase)
+- [x] 9. Output Generator - TDD Implementation
+  - [x] 9.1 Write unit tests for output generation (RED phase)
     - Write test: `test_output_generator_creates_json_and_markdown_req_3_1`
     - Write test: `test_output_generator_includes_checksums_req_3_5`
     - Write test: `test_output_generator_organizes_by_type_and_region_req_3_2`
     - _Requirements: 3.1, 3.5, 3.2_
 
-  - [ ] 9.2 Unit tests for output generator
+  - [x] 9.2 Unit tests for output generator
     - Test JSON and Markdown output generation
     - Test checksum calculation
     - Test file organization structure
     - _Requirements: 3.1, 3.5, 3.2_
 
-  - [ ] 9.3 Implement OutputGenerator class (GREEN phase)
+  - [x] 9.3 Implement OutputGenerator class (GREEN phase)
     - Create `src/output_generator.py` with `OutputGenerator` class
     - Implement `generate_json()` method with metadata
     - Implement `generate_markdown()` method with formatting
@@ -204,79 +204,79 @@ This implementation plan follows Test-Driven Development (TDD) methodology with 
     - Implement directory organization
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
 
-  - [ ] 9.4 Refactor output generator for readability (REFACTOR phase)
+  - [x] 9.4 Refactor output generator for readability (REFACTOR phase)
     - Improve Markdown formatting with tables
     - Add color coding for terminal output
     - Ensure all tests still pass
     - _Requirements: 3.4_
 
-- [ ] 10. IaC Generator - TDD Implementation
-  - [ ] 10.1 Write property tests for IaC generator (RED phase)
+- [x] 10. IaC Generator - TDD Implementation
+  - [x] 10.1 Write property tests for IaC generator (RED phase)
     - Write test: `test_property_iac_generator_includes_all_specs_req_7_3` using Hypothesis
     - Write test: `test_iac_generator_includes_import_commands_req_7_4`
     - _Requirements: 7.3, 7.4_
 
-  - [ ] 10.2 Property test for IaC generator - completeness
+  - [x] 10.2 Property test for IaC generator - completeness
     - **Property 3: IaC Generation Completeness**
     - **Validates: Requirements 7.3**
 
-  - [ ] 10.3 Write E2E test for Terraform validation (RED phase)
+  - [x] 10.3 Write E2E test for Terraform validation (RED phase)
     - Write test: `test_iac_generator_terraform_plan_zero_changes_req_7_5`
     - Set up Terraform workspace in test environment
     - Verify test fails before implementation
     - _Requirements: 7.5_
 
-  - [ ] 10.4 E2E test for Terraform plan validation
+  - [x] 10.4 E2E test for Terraform plan validation
     - Test that generated Terraform shows zero changes
     - Validate against actual AWS state
     - _Requirements: 7.5_
 
-  - [ ] 10.5 Implement IaCGenerator class (GREEN phase)
+  - [x] 10.5 Implement IaCGenerator class (GREEN phase)
     - Create `src/iac_generator.py` with `IaCGenerator` class
     - Implement `generate_terraform()` method
     - Implement `generate_resource_block()` for each resource type
     - Implement `generate_import_script()` method
     - _Requirements: 7.1, 7.2, 7.3, 7.4_
 
-  - [ ] 10.6 Implement Terraform verification (GREEN phase)
+  - [x] 10.6 Implement Terraform verification (GREEN phase)
     - Implement `generate_verification_script()` method
     - Add validation that terraform plan shows zero changes
     - Add traceability comments linking to spec files
     - _Requirements: 7.5, 7.6, 7.7_
 
-  - [ ] 10.7 Refactor IaC generator for maintainability (REFACTOR phase)
+  - [x] 10.7 Refactor IaC generator for maintainability (REFACTOR phase)
     - Extract resource-specific generators into separate modules
     - Improve Terraform formatting
     - Ensure all tests still pass
     - _Requirements: 7.2_
 
-- [ ] 11. Checkpoint - IaC generator tests passing
+- [x] 11. Checkpoint - IaC generator tests passing
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 12. Diagram Generator - TDD Implementation
-  - [ ] 12.1 Write property tests for diagram generator (RED phase)
+- [x] 12. Diagram Generator - TDD Implementation
+  - [x] 12.1 Write property tests for diagram generator (RED phase)
     - Write test: `test_property_diagram_includes_all_resources_req_6_4` using Hypothesis
     - Write test: `test_diagram_generator_creates_valid_drawio_xml_req_6_4`
     - Write test: `test_diagram_generator_shows_relationships_req_6_1`
     - _Requirements: 6.4, 6.1_
 
-  - [ ] 12.2 Property test for diagram generator - resource inclusion
+  - [x] 12.2 Property test for diagram generator - resource inclusion
     - **Property 4: Diagram Includes All Resources**
     - **Validates: Requirements 6.4**
 
-  - [ ] 12.3 Unit tests for diagram generator
+  - [x] 12.3 Unit tests for diagram generator
     - Test valid drawio XML generation
     - Test relationship visualization
     - _Requirements: 6.4, 6.1_
 
-  - [ ] 12.4 Implement DiagramGenerator class (GREEN phase)
+  - [x] 12.4 Implement DiagramGenerator class (GREEN phase)
     - Create `src/diagram_generator.py` with `DiagramGenerator` class
     - Integrate drawio-ai-kit library
     - Implement `generate_diagram()` method
     - Implement `identify_relationships()` method
     - _Requirements: 6.1, 6.4_
 
-  - [ ] 12.5 Refactor diagram generator with pattern detection (REFACTOR phase)
+  - [x] 12.5 Refactor diagram generator with pattern detection (REFACTOR phase)
     - Add common pattern detection (API Gateway + Lambda + DynamoDB, etc.)
     - Improve layout algorithm
     - _Requirements: 6.2_
