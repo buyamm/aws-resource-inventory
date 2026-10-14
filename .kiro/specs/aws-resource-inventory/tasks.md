@@ -421,8 +421,10 @@ Tasks 1–13 were implemented against the first draft of the design. Tasks 14–
   - [x] 24.4 `ruff check`, `black --check`, `mypy src` clean; CI workflow gates point at the real module files — checked by `tests/unit/test_ci_workflow.py`; obsolete `scripts/validate_workflow.py`/`.sh` removed
   - Commit: `chore: final quality gates (Task 24)`
 
-- [ ] 25. Final Checkpoint - Production Ready
+- [x] 25. Final Checkpoint - Production Ready
   - Full suite green, CI configuration consistent, ask the user if questions arise.
+  - 340 passed, 1 skipped (opt-in live IaC test); ruff, black, mypy, bandit `-ll` clean; CI workflow on Python 3.11 runs the same gates (`tests/unit/test_ci_workflow.py`); CLI commands match README.md and instruction.md
+  - Commit: `chore(checkpoint): production ready (Task 25)`
 
 ## Notes
 
