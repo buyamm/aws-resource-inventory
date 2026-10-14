@@ -377,7 +377,7 @@ Tasks 1–13 were implemented against the first draft of the design. Tasks 14–
   - [x] 19.5 Refactor for security: sanitize every response at a single exit point, no boto3 import (REFACTOR)
   - Commit: `feat(mcp): MCP stdio server over cached specs with whitelist, validation and rate limit (Task 19)`
 
-- [ ] 20. Checkpoint - Foundations, collector, analysis, IaC and MCP tests passing
+- [x] 20. Checkpoint - Foundations, collector, analysis, IaC and MCP tests passing
   - Run the full suite; fix regressions before continuing.
 
 - [ ] 21. CLI Tool - TDD Implementation

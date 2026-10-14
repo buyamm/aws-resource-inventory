@@ -22,14 +22,14 @@ if os.environ.get("AWS_INVENTORY_LIVE_TESTS") != "1":
     os.environ["AWS_ACCOUNT_ID_ENDPOINT_MODE"] = "disabled"
 
 import json
-import pytest
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List
-from unittest.mock import Mock, MagicMock
+from typing import Any
+
 import boto3
-from moto import mock_s3, mock_ec2, mock_lambda, mock_iam, mock_dynamodb
+import pytest
 from hypothesis import settings as hypothesis_settings
+from moto import mock_dynamodb, mock_ec2, mock_iam, mock_lambda, mock_s3
 
 # Property tests must run at least 100 examples (design.md, "Test Coverage Requirements").
 hypothesis_settings.register_profile("default", max_examples=100, deadline=None)
@@ -49,6 +49,7 @@ def pytest_collection_modifyitems(config, items):
 # ============================================================================
 # Path Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def fixtures_dir() -> Path:
@@ -72,10 +73,12 @@ def sample_specs_dir(fixtures_dir) -> Path:
 # AWS Mock Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def aws_credentials():
     """Provide mock AWS credentials for testing."""
     import os
+
     os.environ["AWS_ACCESS_KEY_ID"] = "testing"
     os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
     os.environ["AWS_SECURITY_TOKEN"] = "testing"
@@ -122,8 +125,9 @@ def mock_dynamodb_client(aws_credentials):
 # Sample Resource Fixtures
 # ============================================================================
 
+
 @pytest.fixture
-def sample_s3_bucket_response() -> Dict[str, Any]:
+def sample_s3_bucket_response() -> dict[str, Any]:
     """Sample S3 bucket response from AWS API."""
     return {
         "Name": "test-bucket",
@@ -132,7 +136,7 @@ def sample_s3_bucket_response() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def sample_s3_bucket_acl_response() -> Dict[str, Any]:
+def sample_s3_bucket_acl_response() -> dict[str, Any]:
     """Sample S3 bucket ACL response."""
     return {
         "Owner": {
@@ -153,7 +157,7 @@ def sample_s3_bucket_acl_response() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def sample_ec2_instance_response() -> Dict[str, Any]:
+def sample_ec2_instance_response() -> dict[str, Any]:
     """Sample EC2 instance response from AWS API."""
     return {
         "InstanceId": "i-1234567890abcdef0",
@@ -167,9 +171,7 @@ def sample_ec2_instance_response() -> Dict[str, Any]:
         "VpcId": "vpc-12345678",
         "SubnetId": "subnet-12345678",
         "PrivateIpAddress": "10.0.1.100",
-        "SecurityGroups": [
-            {"GroupId": "sg-12345678", "GroupName": "default"}
-        ],
+        "SecurityGroups": [{"GroupId": "sg-12345678", "GroupName": "default"}],
         "Tags": [
             {"Key": "Name", "Value": "test-instance"},
             {"Key": "Environment", "Value": "test"},
@@ -178,7 +180,7 @@ def sample_ec2_instance_response() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def sample_lambda_function_response() -> Dict[str, Any]:
+def sample_lambda_function_response() -> dict[str, Any]:
     """Sample Lambda function response from AWS API."""
     return {
         "FunctionName": "test-function",
@@ -208,8 +210,9 @@ def sample_lambda_function_response() -> Dict[str, Any]:
 # ResourceSpec Fixtures
 # ============================================================================
 
+
 @pytest.fixture
-def sample_resource_spec() -> Dict[str, Any]:
+def sample_resource_spec() -> dict[str, Any]:
     """Sample ResourceSpec structure."""
     return {
         "resource_type": "aws_s3_bucket",
@@ -233,13 +236,7 @@ def sample_resource_spec() -> Dict[str, Any]:
             "bucket-versioning": {"Status": "Enabled"},
             "bucket-encryption": {
                 "ServerSideEncryptionConfiguration": {
-                    "Rules": [
-                        {
-                            "ApplyServerSideEncryptionByDefault": {
-                                "SSEAlgorithm": "AES256"
-                            }
-                        }
-                    ]
+                    "Rules": [{"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}]
                 }
             },
         },
@@ -254,7 +251,7 @@ def sample_resource_spec() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def sample_ec2_resource_spec() -> Dict[str, Any]:
+def sample_ec2_resource_spec() -> dict[str, Any]:
     """Sample EC2 ResourceSpec structure."""
     return {
         "resource_type": "aws_ec2_instance",
@@ -280,7 +277,7 @@ def sample_ec2_resource_spec() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def sample_lambda_resource_spec() -> Dict[str, Any]:
+def sample_lambda_resource_spec() -> dict[str, Any]:
     """Sample Lambda ResourceSpec structure."""
     return {
         "resource_type": "aws_lambda_function",
@@ -309,8 +306,9 @@ def sample_lambda_resource_spec() -> Dict[str, Any]:
 # Collection Report Fixtures
 # ============================================================================
 
+
 @pytest.fixture
-def sample_collection_report() -> Dict[str, Any]:
+def sample_collection_report() -> dict[str, Any]:
     """Sample collection report."""
     return {
         "start_time": "2023-01-01T00:00:00Z",
@@ -337,23 +335,28 @@ def sample_collection_report() -> Dict[str, Any]:
 # File Loading Helpers
 # ============================================================================
 
+
 @pytest.fixture
 def load_fixture_json():
     """Factory fixture to load JSON fixture files."""
-    def _load(fixture_path: Path) -> Dict[str, Any]:
+
+    def _load(fixture_path: Path) -> dict[str, Any]:
         """Load a JSON fixture file."""
-        with open(fixture_path, "r") as f:
+        with open(fixture_path) as f:
             return json.load(f)
+
     return _load
 
 
 @pytest.fixture
 def load_fixture_text():
     """Factory fixture to load text fixture files."""
+
     def _load(fixture_path: Path) -> str:
         """Load a text fixture file."""
-        with open(fixture_path, "r") as f:
+        with open(fixture_path) as f:
             return f.read()
+
     return _load
 
 
@@ -361,28 +364,20 @@ def load_fixture_text():
 # Test Configuration
 # ============================================================================
 
+
 def pytest_configure(config):
     """Configure pytest with custom markers."""
-    config.addinivalue_line(
-        "markers", "unit: mark test as a unit test"
-    )
-    config.addinivalue_line(
-        "markers", "integration: mark test as an integration test"
-    )
-    config.addinivalue_line(
-        "markers", "e2e: mark test as an end-to-end test"
-    )
-    config.addinivalue_line(
-        "markers", "property: mark test as a property-based test"
-    )
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow running"
-    )
+    config.addinivalue_line("markers", "unit: mark test as a unit test")
+    config.addinivalue_line("markers", "integration: mark test as an integration test")
+    config.addinivalue_line("markers", "e2e: mark test as an end-to-end test")
+    config.addinivalue_line("markers", "property: mark test as a property-based test")
+    config.addinivalue_line("markers", "slow: mark test as slow running")
 
 
 # ============================================================================
 # Sample account (all ten Supported_Resource_Types) inside moto
 # ============================================================================
+
 
 @pytest.fixture
 def moto_all_services():
@@ -390,8 +385,15 @@ def moto_all_services():
     from moto import mock_logs, mock_rds, mock_stepfunctions, mock_sts
 
     mocks = [
-        mock_ec2(), mock_iam(), mock_lambda(), mock_logs(), mock_s3(),
-        mock_stepfunctions(), mock_rds(), mock_dynamodb(), mock_sts(),
+        mock_ec2(),
+        mock_iam(),
+        mock_lambda(),
+        mock_logs(),
+        mock_s3(),
+        mock_stepfunctions(),
+        mock_rds(),
+        mock_dynamodb(),
+        mock_sts(),
     ]
     for m in mocks:
         m.start()

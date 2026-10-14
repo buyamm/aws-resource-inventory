@@ -452,7 +452,7 @@ def _aws_lambda_spec() -> ResourceSpec:
 
 class TestOutputGeneratorIntegrity:
     def test_output_generator_json_checksum_matches_specifications_req_3_5(self, tmp_path):
-        (path, *_rest) = OutputGenerator(tmp_path).generate_json([_aws_lambda_spec()])
+        path, *_rest = OutputGenerator(tmp_path).generate_json([_aws_lambda_spec()])
         doc = _json.loads(path.read_text())
         assert path == tmp_path / "aws_lambda_function/us-east-1/worker.json"
         assert doc["metadata"]["checksum"] == spec_checksum(doc["specifications"])

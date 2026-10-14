@@ -5,9 +5,7 @@ This test file validates that all fixtures defined in conftest.py
 are accessible and working as expected.
 """
 
-import pytest
 import json
-from pathlib import Path
 
 
 class TestFixtureInfrastructure:
@@ -32,7 +30,7 @@ class TestFixtureInfrastructure:
         """Test JSON fixture loading helper."""
         spec_file = sample_specs_dir / "s3_bucket_spec.json"
         data = load_fixture_json(spec_file)
-        
+
         assert isinstance(data, dict)
         assert "resource_type" in data
         assert data["resource_type"] == "aws_s3_bucket"
@@ -64,10 +62,10 @@ class TestFixtureInfrastructure:
         """Test mocked S3 client is functional."""
         # Create a test bucket
         mock_s3_client.create_bucket(Bucket="test-fixture-bucket")
-        
+
         # List buckets
         response = mock_s3_client.list_buckets()
-        
+
         assert "Buckets" in response
         assert len(response["Buckets"]) == 1
         assert response["Buckets"][0]["Name"] == "test-fixture-bucket"
@@ -76,7 +74,7 @@ class TestFixtureInfrastructure:
         """Test mocked EC2 client is functional."""
         # Describe instances (should be empty initially)
         response = mock_ec2_client.describe_instances()
-        
+
         assert "Reservations" in response
         assert isinstance(response["Reservations"], list)
 
@@ -84,7 +82,7 @@ class TestFixtureInfrastructure:
         """Test mocked Lambda client is functional."""
         # List functions (should be empty initially)
         response = mock_lambda_client.list_functions()
-        
+
         assert "Functions" in response
         assert isinstance(response["Functions"], list)
 
@@ -95,12 +93,12 @@ class TestFixtureInfrastructure:
             "ec2_responses.json",
             "lambda_responses.json",
         ]
-        
+
         for filename in json_files:
             filepath = sample_aws_responses_dir / filename
             assert filepath.exists(), f"Missing fixture: {filename}"
-            
-            with open(filepath, "r") as f:
+
+            with open(filepath) as f:
                 data = json.load(f)
                 assert isinstance(data, dict), f"{filename} should contain a dict"
 
@@ -111,12 +109,12 @@ class TestFixtureInfrastructure:
             "ec2_instance_spec.json",
             "lambda_function_spec.json",
         ]
-        
+
         for filename in json_files:
             filepath = sample_specs_dir / filename
             assert filepath.exists(), f"Missing spec fixture: {filename}"
-            
-            with open(filepath, "r") as f:
+
+            with open(filepath) as f:
                 data = json.load(f)
                 assert isinstance(data, dict), f"{filename} should contain a dict"
                 assert "resource_type" in data

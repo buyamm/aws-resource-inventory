@@ -30,14 +30,15 @@ Requirements Coverage:
 """
 
 import time
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 # ---------------------------------------------------------------------------
 # Lazy import — will be None until src/discovery.py is implemented (RED phase)
 # ---------------------------------------------------------------------------
 try:
-    from src.discovery import ResourceDiscovery, DiscoveredResource
+    from src.discovery import DiscoveredResource, ResourceDiscovery
 except ImportError:
     ResourceDiscovery = None
     DiscoveredResource = None
@@ -46,6 +47,7 @@ except ImportError:
 # ===========================================================================
 # Helpers
 # ===========================================================================
+
 
 def _empty_client():
     """A Mock boto3-like client where every list/describe call returns empty."""
@@ -90,10 +92,13 @@ def _make_session(region_clients, global_client=None):
 # Test: Region Enumeration (Requirement 1.1)
 # ===========================================================================
 
+
 class TestDiscoveryRegionEnumeration:
     """Tests for discovering resources across all AWS regions."""
 
-    @pytest.mark.skipif(ResourceDiscovery is None, reason="ResourceDiscovery not implemented yet (RED phase)")
+    @pytest.mark.skipif(
+        ResourceDiscovery is None, reason="ResourceDiscovery not implemented yet (RED phase)"
+    )
     def test_discovery_lists_all_regions_req_1_1(self):
         """
         Unit: Discovery enumerates all regions and aggregates resources from each.
@@ -119,23 +124,28 @@ class TestDiscoveryRegionEnumeration:
             "Reservations": [{"Instances": [{"InstanceId": "i-euwest1"}]}]
         }
 
-        session = _make_session({
-            "us-east-1": {"ec2": us_east_ec2},
-            "eu-west-1": {"ec2": eu_west_ec2},
-        })
+        session = _make_session(
+            {
+                "us-east-1": {"ec2": us_east_ec2},
+                "eu-west-1": {"ec2": eu_west_ec2},
+            }
+        )
 
         discovery = ResourceDiscovery(aws_session=session, regions=["us-east-1", "eu-west-1"])
         resources = discovery.discover_all_resources()
 
         regions_found = {r.region for r in resources if r.resource_type == "aws_instance"}
-        assert regions_found == {"us-east-1", "eu-west-1"}, (
-            f"Expected resources from both regions, found: {regions_found}"
-        )
+        assert regions_found == {
+            "us-east-1",
+            "eu-west-1",
+        }, f"Expected resources from both regions, found: {regions_found}"
 
         instance_ids = {r.resource_id for r in resources if r.resource_type == "aws_instance"}
         assert instance_ids == {"i-useast1", "i-euwest1"}
 
-    @pytest.mark.skipif(ResourceDiscovery is None, reason="ResourceDiscovery not implemented yet (RED phase)")
+    @pytest.mark.skipif(
+        ResourceDiscovery is None, reason="ResourceDiscovery not implemented yet (RED phase)"
+    )
     def test_discovery_supports_minimum_resource_types_req_1_3(self):
         """
         Unit: Discovery supports the minimum required set of resource types.
@@ -151,16 +161,36 @@ class TestDiscoveryRegionEnumeration:
             "SecurityGroups": [{"GroupId": "sg-1"}]
         }
         region_client.list_functions.return_value = {
-            "Functions": [{"FunctionName": "fn-1", "FunctionArn": "arn:aws:lambda:us-east-1:123:function:fn-1"}]
+            "Functions": [
+                {
+                    "FunctionName": "fn-1",
+                    "FunctionArn": "arn:aws:lambda:us-east-1:123:function:fn-1",
+                }
+            ]
         }
         region_client.describe_db_instances.return_value = {
-            "DBInstances": [{"DBInstanceIdentifier": "db-1", "DBInstanceArn": "arn:aws:rds:us-east-1:123:db:db-1"}]
+            "DBInstances": [
+                {
+                    "DBInstanceIdentifier": "db-1",
+                    "DBInstanceArn": "arn:aws:rds:us-east-1:123:db:db-1",
+                }
+            ]
         }
         region_client.describe_log_groups.return_value = {
-            "logGroups": [{"logGroupName": "/aws/lambda/fn-1", "arn": "arn:aws:logs:us-east-1:123:log-group:/aws/lambda/fn-1"}]
+            "logGroups": [
+                {
+                    "logGroupName": "/aws/lambda/fn-1",
+                    "arn": "arn:aws:logs:us-east-1:123:log-group:/aws/lambda/fn-1",
+                }
+            ]
         }
         region_client.list_state_machines.return_value = {
-            "stateMachines": [{"name": "sm-1", "stateMachineArn": "arn:aws:states:us-east-1:123:stateMachine:sm-1"}]
+            "stateMachines": [
+                {
+                    "name": "sm-1",
+                    "stateMachineArn": "arn:aws:states:us-east-1:123:stateMachine:sm-1",
+                }
+            ]
         }
         region_client.list_tables.return_value = {"TableNames": ["table-1"]}
 
@@ -173,14 +203,16 @@ class TestDiscoveryRegionEnumeration:
         }
 
         session = _make_session(
-            {"us-east-1": {
-                "ec2": region_client,
-                "lambda": region_client,
-                "rds": region_client,
-                "logs": region_client,
-                "stepfunctions": region_client,
-                "dynamodb": region_client,
-            }},
+            {
+                "us-east-1": {
+                    "ec2": region_client,
+                    "lambda": region_client,
+                    "rds": region_client,
+                    "logs": region_client,
+                    "stepfunctions": region_client,
+                    "dynamodb": region_client,
+                }
+            },
             global_client={"s3": global_s3, "iam": global_iam},
         )
 
@@ -208,10 +240,13 @@ class TestDiscoveryRegionEnumeration:
 # Test: Inaccessible Region Handling (Requirement 1.4)
 # ===========================================================================
 
+
 class TestDiscoveryErrorHandling:
     """Tests for graceful handling of inaccessible regions."""
 
-    @pytest.mark.skipif(ResourceDiscovery is None, reason="ResourceDiscovery not implemented yet (RED phase)")
+    @pytest.mark.skipif(
+        ResourceDiscovery is None, reason="ResourceDiscovery not implemented yet (RED phase)"
+    )
     def test_discovery_handles_inaccessible_region_req_1_4(self):
         """
         Unit: An inaccessible region is logged and discovery continues.
@@ -236,11 +271,19 @@ class TestDiscoveryErrorHandling:
         eu_west_ec2.describe_vpcs.side_effect = Exception("AccessDenied: not authorized")
         eu_west_ec2.describe_security_groups.side_effect = Exception("AccessDenied: not authorized")
 
-        session = _make_session({
-            "us-east-1": {"ec2": us_east_ec2},
-            "eu-west-1": {"ec2": eu_west_ec2, "lambda": eu_west_ec2, "rds": eu_west_ec2,
-                          "logs": eu_west_ec2, "stepfunctions": eu_west_ec2, "dynamodb": eu_west_ec2},
-        })
+        session = _make_session(
+            {
+                "us-east-1": {"ec2": us_east_ec2},
+                "eu-west-1": {
+                    "ec2": eu_west_ec2,
+                    "lambda": eu_west_ec2,
+                    "rds": eu_west_ec2,
+                    "logs": eu_west_ec2,
+                    "stepfunctions": eu_west_ec2,
+                    "dynamodb": eu_west_ec2,
+                },
+            }
+        )
 
         discovery = ResourceDiscovery(aws_session=session, regions=["us-east-1", "eu-west-1"])
         resources = discovery.discover_all_resources()
@@ -250,19 +293,22 @@ class TestDiscoveryErrorHandling:
 
         errors = discovery.get_errors()
         assert len(errors) > 0, "Errors from the inaccessible region must be logged"
-        assert any("eu-west-1" in str(e) for e in errors), (
-            f"Expected an error referencing region 'eu-west-1', got: {errors}"
-        )
+        assert any(
+            "eu-west-1" in str(e) for e in errors
+        ), f"Expected an error referencing region 'eu-west-1', got: {errors}"
 
 
 # ===========================================================================
 # Test: Performance (Requirement 1.5)
 # ===========================================================================
 
+
 class TestDiscoveryPerformance:
     """Tests for discovery performance requirements."""
 
-    @pytest.mark.skipif(ResourceDiscovery is None, reason="ResourceDiscovery not implemented yet (RED phase)")
+    @pytest.mark.skipif(
+        ResourceDiscovery is None, reason="ResourceDiscovery not implemented yet (RED phase)"
+    )
     def test_discovery_completes_under_5_minutes_req_1_5(self):
         """
         Performance: Discovery of ~1000 resources across many regions completes
@@ -279,7 +325,11 @@ class TestDiscoveryPerformance:
             client = _empty_client()
             client.describe_instances.return_value = {
                 "Reservations": [
-                    {"Instances": [{"InstanceId": f"i-{region}-{j}"} for j in range(instances_per_region)]}
+                    {
+                        "Instances": [
+                            {"InstanceId": f"i-{region}-{j}"} for j in range(instances_per_region)
+                        ]
+                    }
                 ]
             }
             region_clients[region] = {"ec2": client}
@@ -294,9 +344,9 @@ class TestDiscoveryPerformance:
         elapsed = time.time() - start
 
         instance_count = sum(1 for r in resources if r.resource_type == "aws_instance")
-        assert instance_count == num_regions * instances_per_region, (
-            f"Expected {num_regions * instances_per_region} instances, got {instance_count}"
-        )
+        assert (
+            instance_count == num_regions * instances_per_region
+        ), f"Expected {num_regions * instances_per_region} instances, got {instance_count}"
         assert elapsed < 300, f"Discovery took {elapsed}s, expected < 300s"
 
 
@@ -304,19 +354,24 @@ class TestDiscoveryPerformance:
 # Test: Progress Reporting (Refactor support for Requirement 1.5)
 # ===========================================================================
 
+
 class TestDiscoveryProgressReporting:
     """Tests for optional progress reporting during long discovery runs."""
 
-    @pytest.mark.skipif(ResourceDiscovery is None, reason="ResourceDiscovery not implemented yet (RED phase)")
+    @pytest.mark.skipif(
+        ResourceDiscovery is None, reason="ResourceDiscovery not implemented yet (RED phase)"
+    )
     def test_discovery_reports_progress_per_region(self):
         """
         Unit: The optional progress_callback is invoked once per completed region
         with monotonically increasing completed counts and the correct total.
         """
-        session = _make_session({
-            "us-east-1": {"ec2": _empty_client()},
-            "eu-west-1": {"ec2": _empty_client()},
-        })
+        session = _make_session(
+            {
+                "us-east-1": {"ec2": _empty_client()},
+                "eu-west-1": {"ec2": _empty_client()},
+            }
+        )
 
         progress_calls = []
 
@@ -340,17 +395,28 @@ class TestDiscoveryProgressReporting:
 # Task 15: pagination and API call counting
 # ===========================================================================
 
+
 def test_discovery_follows_pagination_req_1_5():
     region_client = _empty_client()
     region_client.can_paginate.side_effect = lambda method: method == "list_functions"
     paginator = Mock()
-    paginator.paginate.return_value = iter([
-        {"Functions": [{"FunctionName": "f1", "FunctionArn": "arn:aws:lambda:us-east-1:1:function:f1"}]},
-        {"Functions": [{"FunctionName": "f2", "FunctionArn": "arn:aws:lambda:us-east-1:1:function:f2"}]},
-    ])
+    paginator.paginate.return_value = iter(
+        [
+            {
+                "Functions": [
+                    {"FunctionName": "f1", "FunctionArn": "arn:aws:lambda:us-east-1:1:function:f1"}
+                ]
+            },
+            {
+                "Functions": [
+                    {"FunctionName": "f2", "FunctionArn": "arn:aws:lambda:us-east-1:1:function:f2"}
+                ]
+            },
+        ]
+    )
     region_client.get_paginator.return_value = paginator
     services = ("ec2", "lambda", "rds", "logs", "stepfunctions", "dynamodb")
-    session = _make_session({"us-east-1": {svc: region_client for svc in services}})
+    session = _make_session({"us-east-1": dict.fromkeys(services, region_client)})
 
     discovery = ResourceDiscovery(session, regions=["us-east-1"])
     resources = discovery.discover_all_resources()

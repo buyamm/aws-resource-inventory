@@ -27,15 +27,15 @@ Requirements Coverage:
 - Requirement 2.6:  Preserve raw API response in collected specification
 """
 
-import pytest
-from unittest.mock import Mock, patch, call
+from unittest.mock import Mock, patch
 
+import pytest
 
 # ---------------------------------------------------------------------------
 # Lazy import — will be None until src/collector.py is implemented (RED phase)
 # ---------------------------------------------------------------------------
 try:
-    from src.collector import SpecCollector, AccessDeniedError, RateLimitError
+    from src.collector import AccessDeniedError, RateLimitError, SpecCollector
 except ImportError:
     SpecCollector = None
     AccessDeniedError = None
@@ -48,6 +48,7 @@ except ImportError:
 # The real implementation may wrap botocore ClientError; for the unit tests
 # we use a placeholder exception type imported from src.collector.
 # ===========================================================================
+
 
 def _access_denied(operation: str, message: str = None):
     """Return an AccessDeniedError (or a plain Exception in RED phase)."""
@@ -70,10 +71,13 @@ def _rate_limit(retry_after: int = 5):
 # Test Class: Retry Logic
 # ===========================================================================
 
+
 class TestCollectorRetryLogic:
     """Tests for exponential-backoff retry behaviour (Requirement 12.1)."""
 
-    @pytest.mark.skipif(SpecCollector is None, reason="SpecCollector not implemented yet (RED phase)")
+    @pytest.mark.skipif(
+        SpecCollector is None, reason="SpecCollector not implemented yet (RED phase)"
+    )
     def test_collector_retry_exponential_backoff_req_12_1(self):
         """
         Unit: Collector retries up to 3 times with exponential backoff.
@@ -101,9 +105,9 @@ class TestCollectorRetryLogic:
             result = collector.collect_ec2_spec("i-123abc")
 
         # Result must be Ok
-        assert result.is_ok(), (
-            f"Expected successful result after retries, got error: {result.error}"
-        )
+        assert (
+            result.is_ok()
+        ), f"Expected successful result after retries, got error: {result.error}"
 
         # API must have been called exactly 3 times
         assert mock_api.describe_instances.call_count == 3, (
@@ -113,8 +117,7 @@ class TestCollectorRetryLogic:
 
         # sleep must have been called twice (after each failure)
         assert mock_sleep.call_count == 2, (
-            f"Expected 2 sleep calls (one after each failure), "
-            f"got {mock_sleep.call_count}"
+            f"Expected 2 sleep calls (one after each failure), " f"got {mock_sleep.call_count}"
         )
 
         # Verify exponential backoff: second sleep >= first sleep
@@ -124,7 +127,9 @@ class TestCollectorRetryLogic:
             f"first delay ({sleep_calls[0]}) to confirm exponential growth"
         )
 
-    @pytest.mark.skipif(SpecCollector is None, reason="SpecCollector not implemented yet (RED phase)")
+    @pytest.mark.skipif(
+        SpecCollector is None, reason="SpecCollector not implemented yet (RED phase)"
+    )
     def test_collector_exhausts_retries_and_returns_error_req_12_1(self):
         """
         Unit: Collector returns an Err after exhausting all 3 retry attempts.
@@ -143,19 +148,22 @@ class TestCollectorRetryLogic:
             result = collector.collect_ec2_spec("i-dead")
 
         assert result.is_err(), "After 3 failures the result must be Err"
-        assert mock_api.describe_instances.call_count == 3, (
-            "Collector must attempt exactly 3 calls before giving up"
-        )
+        assert (
+            mock_api.describe_instances.call_count == 3
+        ), "Collector must attempt exactly 3 calls before giving up"
 
 
 # ===========================================================================
 # Test Class: Permission Error Handling
 # ===========================================================================
 
+
 class TestCollectorPermissionErrorHandling:
     """Tests for graceful handling of missing-permission errors (Requirement 2.5)."""
 
-    @pytest.mark.skipif(SpecCollector is None, reason="SpecCollector not implemented yet (RED phase)")
+    @pytest.mark.skipif(
+        SpecCollector is None, reason="SpecCollector not implemented yet (RED phase)"
+    )
     def test_collector_continues_after_permission_error_req_2_5(self):
         """
         Unit: Collector logs a missing permission and continues collecting
@@ -205,23 +213,25 @@ class TestCollectorPermissionErrorHandling:
 
         # The inaccessible spec must be absent from the result
         specifications = result.value.specifications
-        assert "bucket-policy" not in specifications, (
-            "bucket-policy spec should be absent when permission is denied"
-        )
+        assert (
+            "bucket-policy" not in specifications
+        ), "bucket-policy spec should be absent when permission is denied"
 
         # The permission error must be logged
         logs = collector.get_logs()
         permission_logged = any(
-            "s3:getbucketpolicy" in log.lower() or "bucket-policy" in log.lower()
+            "s3:getbucketpolicy" in log.lower()
+            or "bucket-policy" in log.lower()
             or "getbucketpolicy" in log.lower()
             for log in logs
         )
         assert permission_logged, (
-            f"Missing-permission error for s3:GetBucketPolicy must appear in logs. "
-            f"Logs: {logs}"
+            f"Missing-permission error for s3:GetBucketPolicy must appear in logs. " f"Logs: {logs}"
         )
 
-    @pytest.mark.skipif(SpecCollector is None, reason="SpecCollector not implemented yet (RED phase)")
+    @pytest.mark.skipif(
+        SpecCollector is None, reason="SpecCollector not implemented yet (RED phase)"
+    )
     def test_collector_logs_permission_error_message_req_2_5(self):
         """
         Unit: The log entry for a missing permission includes the permission name.
@@ -256,8 +266,7 @@ class TestCollectorPermissionErrorHandling:
         assert len(logs) > 0, "get_logs() must return non-empty list after permission error"
         combined = " ".join(logs).lower()
         assert "s3:getbucketpolicy" in combined or "getbucketpolicy" in combined, (
-            "Log entry must mention the specific permission that was denied. "
-            f"Logs: {logs}"
+            "Log entry must mention the specific permission that was denied. " f"Logs: {logs}"
         )
 
 
@@ -265,10 +274,13 @@ class TestCollectorPermissionErrorHandling:
 # Test Class: Rate Limit Handling
 # ===========================================================================
 
+
 class TestCollectorRateLimitHandling:
     """Tests for AWS rate-limit / throttling handling (Requirement 12.3)."""
 
-    @pytest.mark.skipif(SpecCollector is None, reason="SpecCollector not implemented yet (RED phase)")
+    @pytest.mark.skipif(
+        SpecCollector is None, reason="SpecCollector not implemented yet (RED phase)"
+    )
     def test_collector_waits_on_rate_limit_req_12_3(self):
         """
         Unit: Collector respects the retry-after duration when rate-limited.
@@ -286,7 +298,12 @@ class TestCollectorRateLimitHandling:
         mock_api = Mock()
         mock_api.get_function.side_effect = [
             _rate_limit(retry_after=5),
-            {"Configuration": {"FunctionName": "my-function", "FunctionArn": "arn:aws:lambda:us-east-1:123:function:my-function"}},
+            {
+                "Configuration": {
+                    "FunctionName": "my-function",
+                    "FunctionArn": "arn:aws:lambda:us-east-1:123:function:my-function",
+                }
+            },
         ]
 
         with patch("time.sleep") as mock_sleep:
@@ -306,7 +323,9 @@ class TestCollectorRateLimitHandling:
             f"Actual sleep durations: {sleep_durations}"
         )
 
-    @pytest.mark.skipif(SpecCollector is None, reason="SpecCollector not implemented yet (RED phase)")
+    @pytest.mark.skipif(
+        SpecCollector is None, reason="SpecCollector not implemented yet (RED phase)"
+    )
     def test_collector_respects_exact_retry_after_value_req_12_3(self):
         """
         Unit: Collector uses the exact retry-after value from the rate-limit error,
@@ -321,7 +340,12 @@ class TestCollectorRateLimitHandling:
         mock_api = Mock()
         mock_api.get_function.side_effect = [
             _rate_limit(retry_after=30),
-            {"Configuration": {"FunctionName": "fn", "FunctionArn": "arn:aws:lambda:us-east-1:123:function:fn"}},
+            {
+                "Configuration": {
+                    "FunctionName": "fn",
+                    "FunctionArn": "arn:aws:lambda:us-east-1:123:function:fn",
+                }
+            },
         ]
 
         with patch("time.sleep") as mock_sleep:
@@ -339,10 +363,13 @@ class TestCollectorRateLimitHandling:
 # Test Class: Raw Response Preservation
 # ===========================================================================
 
+
 class TestCollectorRawResponsePreservation:
     """Tests for raw AWS API response preservation (Requirement 2.6)."""
 
-    @pytest.mark.skipif(SpecCollector is None, reason="SpecCollector not implemented yet (RED phase)")
+    @pytest.mark.skipif(
+        SpecCollector is None, reason="SpecCollector not implemented yet (RED phase)"
+    )
     def test_collector_preserves_raw_response_req_2_6(self):
         """
         Unit: The raw AWS API response is stored verbatim in the ResourceSpec.
@@ -374,35 +401,35 @@ class TestCollectorRawResponsePreservation:
         collector = SpecCollector(api_client=mock_api)
         result = collector.collect_ec2_spec("i-abc123")
 
-        assert result.is_ok(), f"Expected Ok result, got error: {result.error if result.is_err() else 'ok'}"
+        assert (
+            result.is_ok()
+        ), f"Expected Ok result, got error: {result.error if result.is_err() else 'ok'}"
 
         spec = result.value
 
         # The spec must expose the raw response
-        assert hasattr(spec, "raw_response"), (
-            "ResourceSpec must have a 'raw_response' attribute"
-        )
-        assert spec.raw_response is not None, (
-            "raw_response must not be None when a successful API call was made"
-        )
+        assert hasattr(spec, "raw_response"), "ResourceSpec must have a 'raw_response' attribute"
+        assert (
+            spec.raw_response is not None
+        ), "raw_response must not be None when a successful API call was made"
 
         # The raw response must include data from the original payload
         raw = spec.raw_response
         if isinstance(raw, dict):
             # raw_response is keyed by API operation name (design.md, Specification schema)
-            assert "Reservations" in raw["DescribeInstances"], (
-                "raw_response['DescribeInstances'] must contain the original 'Reservations' key"
-            )
+            assert (
+                "Reservations" in raw["DescribeInstances"]
+            ), "raw_response['DescribeInstances'] must contain the original 'Reservations' key"
         elif isinstance(raw, str):
-            assert "Reservations" in raw, (
-                "raw_response string must contain 'Reservations' from original response"
-            )
+            assert (
+                "Reservations" in raw
+            ), "raw_response string must contain 'Reservations' from original response"
         else:
-            pytest.fail(
-                f"raw_response must be a dict or JSON string, got {type(raw)}"
-            )
+            pytest.fail(f"raw_response must be a dict or JSON string, got {type(raw)}")
 
-    @pytest.mark.skipif(SpecCollector is None, reason="SpecCollector not implemented yet (RED phase)")
+    @pytest.mark.skipif(
+        SpecCollector is None, reason="SpecCollector not implemented yet (RED phase)"
+    )
     def test_collector_raw_response_contains_original_data_req_2_6(self):
         """
         Unit: Every field from the original AWS API response appears in raw_response.
@@ -445,11 +472,9 @@ class TestCollectorRawResponsePreservation:
 
         # Check a selection of original fields appear in the stored raw response
         for key in ("i-xyz789", "m5.large", "ami-00000001", "r-0abc1234"):
-            assert key in raw_str, (
-                f"raw_response must preserve '{key}' from the original API response"
-            )
-
-
+            assert (
+                key in raw_str
+            ), f"raw_response must preserve '{key}' from the original API response"
 
 
 # ===========================================================================
@@ -461,7 +486,9 @@ from botocore.exceptions import ClientError, EndpointConnectionError  # noqa: E4
 from src.collector import CallStatus  # noqa: E402
 
 
-def _client_error(code: str, status: int = 400, operation: str = "Op", retry_after: str | None = None):
+def _client_error(
+    code: str, status: int = 400, operation: str = "Op", retry_after: str | None = None
+):
     headers = {"retry-after": retry_after} if retry_after is not None else {}
     return ClientError(
         {
@@ -573,7 +600,10 @@ class TestCollectorErrorClassification:
     def test_collector_raw_response_keyed_by_operation_req_2_6(self):
         api = Mock()
         api.get_function.return_value = {
-            "Configuration": {"FunctionName": "fn", "FunctionArn": "arn:aws:lambda:us-east-1:1:function:fn"},
+            "Configuration": {
+                "FunctionName": "fn",
+                "FunctionArn": "arn:aws:lambda:us-east-1:1:function:fn",
+            },
             "Tags": {"team": "a"},
             "ResponseMetadata": {"HTTPStatusCode": 200},
         }
@@ -597,9 +627,11 @@ class TestCollectorErrorClassification:
     def test_collector_sets_region_and_account_req_3_3(self):
         api = Mock()
         api.describe_instances.return_value = _EC2_OK
-        spec = SpecCollector(api_client=api).collect_ec2_spec(
-            "i-1", region="eu-west-1", account_id="111122223333"
-        ).value
+        spec = (
+            SpecCollector(api_client=api)
+            .collect_ec2_spec("i-1", region="eu-west-1", account_id="111122223333")
+            .value
+        )
         assert spec.region == "eu-west-1"
         assert spec.account_id == "111122223333"
         assert spec.arn == "arn:aws:ec2:eu-west-1:111122223333:instance/i-1"

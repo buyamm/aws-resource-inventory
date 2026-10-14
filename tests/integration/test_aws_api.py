@@ -13,18 +13,21 @@ Requirements Coverage:
 - Requirement 2.2: Spec_Collector SHALL retrieve all 8 S3 bucket spec types
 """
 
+import io
 import json
 import os
-import pytest
+import zipfile
+
 import boto3
-from moto import mock_s3
+import pytest
+from moto import mock_ec2, mock_iam, mock_lambda, mock_s3
 
 from src.collector import SpecCollector
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _setup_aws_env():
     """Set dummy AWS credentials so boto3 / moto don't complain."""
@@ -89,9 +92,7 @@ def test_integration_collector_s3_all_specs_req_2_2():
         ServerSideEncryptionConfiguration={
             "Rules": [
                 {
-                    "ApplyServerSideEncryptionByDefault": {
-                        "SSEAlgorithm": "AES256"
-                    },
+                    "ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"},
                     "BucketKeyEnabled": False,
                 }
             ]
@@ -187,21 +188,17 @@ def test_integration_collector_s3_all_specs_req_2_2():
     )
 
     # Spot-check a few values to confirm real data was collected
-    assert "CORSRules" in specifications["bucket-cors"], (
-        "bucket-cors should contain CORSRules"
-    )
-    assert specifications["bucket-versioning"].get("Status") == "Enabled", (
-        "bucket-versioning should show Status=Enabled"
-    )
-    assert "ServerSideEncryptionConfiguration" in specifications["bucket-encryption"], (
-        "bucket-encryption should contain ServerSideEncryptionConfiguration"
-    )
-    assert "TagSet" in specifications["bucket-tagging"], (
-        "bucket-tagging should contain TagSet"
-    )
-    assert "Rules" in specifications["bucket-lifecycle-configuration"], (
-        "bucket-lifecycle-configuration should contain Rules"
-    )
+    assert "CORSRules" in specifications["bucket-cors"], "bucket-cors should contain CORSRules"
+    assert (
+        specifications["bucket-versioning"].get("Status") == "Enabled"
+    ), "bucket-versioning should show Status=Enabled"
+    assert (
+        "ServerSideEncryptionConfiguration" in specifications["bucket-encryption"]
+    ), "bucket-encryption should contain ServerSideEncryptionConfiguration"
+    assert "TagSet" in specifications["bucket-tagging"], "bucket-tagging should contain TagSet"
+    assert (
+        "Rules" in specifications["bucket-lifecycle-configuration"]
+    ), "bucket-lifecycle-configuration should contain Rules"
 
 
 # ---------------------------------------------------------------------------
@@ -213,11 +210,6 @@ def test_integration_collector_s3_all_specs_req_2_2():
 def aws_credentials_env():
     """Ensure dummy AWS credentials are set for all moto tests."""
     _setup_aws_env()
-
-
-from moto import mock_ec2, mock_lambda, mock_iam  # noqa: E402 – imported here to keep grouping clear
-import io
-import zipfile
 
 
 @mock_ec2
@@ -275,31 +267,28 @@ def test_integration_collector_ec2_all_specs_req_2_3():
     spec = result.value
 
     # The raw_response must preserve the original describe_instances response
-    assert spec.raw_response is not None, (
-        "raw_response must not be None – Requirement 2.6 requires raw preservation"
-    )
+    assert (
+        spec.raw_response is not None
+    ), "raw_response must not be None – Requirement 2.6 requires raw preservation"
 
     # The raw response should be the describe_instances dict with Reservations key
-    assert "Reservations" in spec.raw_response["DescribeInstances"], (
-        "raw_response should contain the Reservations key from describe_instances()"
-    )
+    assert (
+        "Reservations" in spec.raw_response["DescribeInstances"]
+    ), "raw_response should contain the Reservations key from describe_instances()"
 
     # Spot-check: the returned instance ID is present in the raw response
     reservations = spec.raw_response["DescribeInstances"]["Reservations"]
     all_instance_ids = [
-        inst["InstanceId"]
-        for reservation in reservations
-        for inst in reservation["Instances"]
+        inst["InstanceId"] for reservation in reservations for inst in reservation["Instances"]
     ]
     assert instance_id in all_instance_ids, (
-        f"Instance {instance_id} not found in raw_response. "
-        f"Found: {all_instance_ids}"
+        f"Instance {instance_id} not found in raw_response. " f"Found: {all_instance_ids}"
     )
 
     # The spec should record the correct resource type
-    assert spec.resource_type == "aws_instance", (
-        f"Expected resource_type='aws_instance', got '{spec.resource_type}'"
-    )
+    assert (
+        spec.resource_type == "aws_instance"
+    ), f"Expected resource_type='aws_instance', got '{spec.resource_type}'"
 
 
 # ---------------------------------------------------------------------------
@@ -347,16 +336,18 @@ def test_integration_collector_lambda_all_specs_req_2_4():
     iam = boto3.client("iam", region_name=region)
     role = iam.create_role(
         RoleName="lambda-execution-role",
-        AssumeRolePolicyDocument=json.dumps({
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Principal": {"Service": "lambda.amazonaws.com"},
-                    "Action": "sts:AssumeRole",
-                }
-            ],
-        }),
+        AssumeRolePolicyDocument=json.dumps(
+            {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {"Service": "lambda.amazonaws.com"},
+                        "Action": "sts:AssumeRole",
+                    }
+                ],
+            }
+        ),
     )
     execution_role_arn = role["Role"]["Arn"]
 
@@ -397,38 +388,38 @@ def test_integration_collector_lambda_all_specs_req_2_4():
     spec = result.value
 
     # The raw_response must preserve the original get_function() response
-    assert spec.raw_response is not None, (
-        "raw_response must not be None – Requirement 2.6 requires raw preservation"
-    )
+    assert (
+        spec.raw_response is not None
+    ), "raw_response must not be None – Requirement 2.6 requires raw preservation"
 
     # get_function() returns a dict with a 'Configuration' key
-    assert "Configuration" in spec.raw_response["GetFunction"], (
-        "raw_response should contain the 'Configuration' key from get_function()"
-    )
+    assert (
+        "Configuration" in spec.raw_response["GetFunction"]
+    ), "raw_response should contain the 'Configuration' key from get_function()"
 
     # The spec's specifications should be the function Configuration dict
     config = spec.specifications
-    assert config.get("FunctionName") == function_name, (
-        f"Expected FunctionName='{function_name}', got '{config.get('FunctionName')}'"
-    )
+    assert (
+        config.get("FunctionName") == function_name
+    ), f"Expected FunctionName='{function_name}', got '{config.get('FunctionName')}'"
     assert "FunctionArn" in config, "spec.specifications must include FunctionArn"
-    assert config.get("Runtime") == "python3.11", (
-        f"Expected Runtime='python3.11', got '{config.get('Runtime')}'"
-    )
-    assert config.get("Role") == execution_role_arn, (
-        f"Expected Role='{execution_role_arn}', got '{config.get('Role')}'"
-    )
-    assert config.get("Handler") == "handler.handler", (
-        f"Expected Handler='handler.handler', got '{config.get('Handler')}'"
-    )
+    assert (
+        config.get("Runtime") == "python3.11"
+    ), f"Expected Runtime='python3.11', got '{config.get('Runtime')}'"
+    assert (
+        config.get("Role") == execution_role_arn
+    ), f"Expected Role='{execution_role_arn}', got '{config.get('Role')}'"
+    assert (
+        config.get("Handler") == "handler.handler"
+    ), f"Expected Handler='handler.handler', got '{config.get('Handler')}'"
 
     # Environment variables should be present (Requirement 2.4)
     env_vars = config.get("Environment", {}).get("Variables", {})
-    assert env_vars.get("APP_ENV") == "test", (
-        f"Expected environment variable APP_ENV='test', got '{env_vars.get('APP_ENV')}'"
-    )
+    assert (
+        env_vars.get("APP_ENV") == "test"
+    ), f"Expected environment variable APP_ENV='test', got '{env_vars.get('APP_ENV')}'"
 
     # The spec should record the correct resource type
-    assert spec.resource_type == "aws_lambda_function", (
-        f"Expected resource_type='aws_lambda_function', got '{spec.resource_type}'"
-    )
+    assert (
+        spec.resource_type == "aws_lambda_function"
+    ), f"Expected resource_type='aws_lambda_function', got '{spec.resource_type}'"

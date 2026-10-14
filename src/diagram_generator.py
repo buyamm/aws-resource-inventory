@@ -38,7 +38,10 @@ TYPE_ORDER = {type_id: index for index, type_id in enumerate(REGISTRY)}
 
 
 def _cell_id(prefix: str, *parts: str) -> str:
-    return f"{prefix}-" + hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()[:12]
+    return (
+        f"{prefix}-"
+        + hashlib.sha1("|".join(parts).encode("utf-8"), usedforsecurity=False).hexdigest()[:12]
+    )
 
 
 class DiagramGenerator:
