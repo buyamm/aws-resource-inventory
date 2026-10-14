@@ -262,7 +262,9 @@ def verify_output_dir(output_dir) -> VerificationReport       # Req 8.3 / 8.4
 └── checksums.sha256  checksums.json  # regenerated after every command that writes files
 ```
 
-`OutputGenerator.load_specs(output_dir) -> list[ResourceSpec]` reads exactly the files matching `<canonical_type>/<region>/*.json` (directory names validated against the registry), so other directories are never mistaken for specs.
+Per-resource JSON files contain the sealed spec without `raw_response` (that lives under `raw_responses/`) plus `generated_at`. Every OutputGenerator writer seals its input first, so `metadata.checksum` always equals the Spec_Checksum of the written `specifications`.
+
+`OutputGenerator.load_specs(output_dir, errors=None) -> list[ResourceSpec]` reads exactly the files matching `<canonical_type>/<region>/*.json` (directory names validated against the registry), so other directories are never mistaken for specs.
 
 ## Analysis Engine (`src/analysis_engine.py`)
 

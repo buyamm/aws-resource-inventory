@@ -26,8 +26,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from src import __version__
+from src.integrity import seal_specs
 from src.parser import ResourceSpec
-from src.resource_types import GLOBAL_REGION, file_id, resource_id, type_dir
+from src.resource_types import GLOBAL_REGION, REGISTRY, file_id, resource_id, type_dir
 from src.sanitizer import DataSanitizer
 
 
@@ -97,17 +99,16 @@ class OutputGenerator:
         now_iso = datetime.utcnow().isoformat() + "Z"
         sanitized_specs_list: list[dict[str, Any]] = []
 
-        for spec in specs:
+        for spec in seal_specs(specs, self.sanitizer):
             res_dir = self._resource_dir(spec)
             filename = f"{self._safe_filename(spec)}.json"
             target_path = res_dir / filename
 
-            spec_dict = spec.to_dict()
-            # Ensure timestamp field is present in addition to metadata
-            spec_dict["generated_at"] = now_iso
-
-            # Sanitize sensitive data (Requirement 9.5)
-            sanitized_dict = self.sanitizer.sanitize(spec_dict)
+            # Sealed: sanitized (Req 9.5) and metadata.checksum set (Req 3.5).
+            # raw_response is stored separately under raw_responses/ (Req 3.6).
+            sanitized_dict = spec.to_dict()
+            sanitized_dict.pop("raw_response", None)
+            sanitized_dict["generated_at"] = now_iso
             sanitized_specs_list.append(sanitized_dict)
 
             json_content = json.dumps(sanitized_dict, indent=2, sort_keys=True)
@@ -196,9 +197,9 @@ class OutputGenerator:
             lines.append(self._format_markdown_table(["Configuration Key", "Value"], scalar_specs))
             lines.append("\n")
 
-        # Tags table if available
-        tags = specs_data.get("tags")
-        if isinstance(tags, dict) and tags:
+        # Tags table if available (dict, or AWS [{Key, Value}] / [{key, value}] lists)
+        tags = _tags_as_dict(specs_data.get("Tags", specs_data.get("tags")))
+        if tags:
             lines.append("## Resource Tags\n")
             tag_rows = [[str(k), str(v)] for k, v in sorted(tags.items())]
             lines.append(self._format_markdown_table(["Tag Key", "Tag Value"], tag_rows))
@@ -206,7 +207,7 @@ class OutputGenerator:
 
         # Additional complex configurations
         for complex_key, complex_val in complex_specs.items():
-            if complex_key == "tags":
+            if complex_key in ("tags", "Tags") and tags:
                 continue
             lines.append(f"### {complex_key.replace('_', ' ').title()}\n")
             if (
@@ -243,13 +244,13 @@ class OutputGenerator:
         generated_paths: list[Path] = []
         sanitized_specs: list[tuple[ResourceSpec, dict[str, Any]]] = []
 
+        specs = seal_specs(specs, self.sanitizer)
         for spec in specs:
             res_dir = self._resource_dir(spec)
             filename = f"{self._safe_filename(spec)}.md"
             target_path = res_dir / filename
 
-            spec_dict = spec.to_dict()
-            sanitized_dict = self.sanitizer.sanitize(spec_dict)
+            sanitized_dict = spec.to_dict()
             sanitized_specs.append((spec, sanitized_dict))
 
             md_content = self._render_spec_markdown(spec, sanitized_dict)
@@ -333,7 +334,7 @@ class OutputGenerator:
         raw_dir.mkdir(parents=True, exist_ok=True)
         stored_paths: list[Path] = []
 
-        for spec in specs:
+        for spec in seal_specs(specs, self.sanitizer):
             if spec.raw_response is None:
                 continue
 
@@ -341,15 +342,68 @@ class OutputGenerator:
             dest_dir = raw_dir / type_dir(spec.resource_type) / region
             dest_dir.mkdir(parents=True, exist_ok=True)
 
-            filename = f"{self._safe_filename(spec)}_raw.json"
-            target_path = dest_dir / filename
-
-            # Write raw response as preserved string
-            target_path.write_text(spec.raw_response, encoding="utf-8")
+            target_path = dest_dir / f"{self._safe_filename(spec)}_raw.json"
+            raw = spec.raw_response
+            content = raw if isinstance(raw, str) else json.dumps(raw, indent=2, sort_keys=True)
+            target_path.write_text(content, encoding="utf-8")
             self._register_written_file(target_path)
             stored_paths.append(target_path)
 
         return stored_paths
+
+    # ========================================================================
+    # Loading and manifest (Requirements 3.3, 5.3)
+    # ========================================================================
+
+    @staticmethod
+    def load_specs(output_dir: str | Path, errors: list[str] | None = None) -> list[ResourceSpec]:
+        """
+        Load the per-resource spec files ``<type>/<region>/*.json`` of an Output_Dir.
+
+        Only directories named after a Supported_Resource_Type are read, so other
+        output (raw_responses/, analysis/, terraform/, ...) is never mistaken for
+        specs. Unreadable files are reported in ``errors`` and skipped.
+        """
+        root = Path(output_dir)
+        specs: list[ResourceSpec] = []
+        for type_id in sorted(REGISTRY):
+            for path in sorted((root / type_id).glob("*/*.json")):
+                rel = path.relative_to(root).as_posix()
+                try:
+                    data = json.loads(path.read_text(encoding="utf-8"))
+                    if not isinstance(data, dict) or "arn" not in data:
+                        raise ValueError("not a resource spec document")
+                    specs.append(ResourceSpec.from_dict(data))
+                except (OSError, ValueError) as exc:
+                    if errors is not None:
+                        errors.append(f"{rel}: {exc}")
+        return specs
+
+    def write_manifest(
+        self,
+        account_id: str,
+        regions: list[str],
+        started_at: str,
+        finished_at: str,
+        specs: list[ResourceSpec],
+    ) -> Path:
+        """Write manifest.json describing the collection run (Requirement 3.3)."""
+        counts: dict[str, int] = {}
+        for spec in specs:
+            counts[spec.resource_type] = counts.get(spec.resource_type, 0) + 1
+        manifest = {
+            "account_id": account_id,
+            "regions": sorted(regions),
+            "started_at": started_at,
+            "finished_at": finished_at,
+            "tool_version": __version__,
+            "total_resources": len(specs),
+            "resource_counts": dict(sorted(counts.items())),
+        }
+        path = self.output_dir / "manifest.json"
+        path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+        self._register_written_file(path)
+        return path
 
     # ========================================================================
     # Checksums (Requirement 3.5)
@@ -430,9 +484,7 @@ class OutputGenerator:
 """
         return report
 
-    def format_terminal_summary(
-        self, specs: list[ResourceSpec], duration_seconds: float
-    ) -> str:
+    def format_terminal_summary(self, specs: list[ResourceSpec], duration_seconds: float) -> str:
         """
         Format a colorful summary report suitable for display in terminal CLI.
 
@@ -488,3 +540,18 @@ class OutputGenerator:
             "checksum_file": checksum_file,
             "summary_report": summary_report,
         }
+
+
+def _tags_as_dict(tags: Any) -> dict[str, str]:
+    """Normalize AWS tag shapes (dict, [{Key, Value}], [{key, value}]) to a dict."""
+    if isinstance(tags, dict):
+        return {str(k): str(v) for k, v in tags.items()}
+    if isinstance(tags, list):
+        result: dict[str, str] = {}
+        for item in tags:
+            if isinstance(item, dict):
+                key = item.get("Key", item.get("key"))
+                if key is not None:
+                    result[str(key)] = str(item.get("Value", item.get("value", "")))
+        return result
+    return {}

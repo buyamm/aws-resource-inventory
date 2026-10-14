@@ -343,12 +343,12 @@ Tasks 1–13 were implemented against the first draft of the design. Tasks 14–
   - [x] 15.3 Refactor shared retry/classification code; remove `"unknown"` region/account placeholders
   - Commit: `feat(collector): collect all supported resource types with classified retries (Task 15)`
 
-- [ ] 16. Integrity and persistence alignment
-  - [ ] 16.1 Write tests (RED)
+- [x] 16. Integrity and persistence alignment
+  - [x] 16.1 Write tests (RED)
     - `tests/unit/test_integrity.py`: `test_spec_checksum_is_canonical_req_3_5`, `test_seal_specs_sanitizes_and_sets_checksum_req_3_5`, `test_resolve_property_path`, `test_find_property_line_req_8_4`, `test_verify_output_dir_detects_tampered_file_req_8_4`, `test_verify_output_dir_detects_wrong_evidence_req_8_3`
     - `tests/unit/test_output_generator.py`: `test_output_generator_sanitizes_raw_responses_req_3_6`, `test_output_generator_load_specs_reads_only_spec_files_req_5_3`, `test_output_generator_writes_manifest_req_3_3`
     - _Requirements: 3.3, 3.5, 3.6, 8.3, 8.4_
-  - [ ] 16.2 Implement `src/integrity.py` and update `src/output_generator.py` (GREEN)
+  - [x] 16.2 Implement `src/integrity.py` and update `src/output_generator.py` (GREEN)
   - Commit: `feat(integrity): add spec checksums, sealing and output verification (Task 16)`
 
 - [ ] 17. Analysis and diagram alignment

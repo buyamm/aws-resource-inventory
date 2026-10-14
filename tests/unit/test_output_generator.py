@@ -418,3 +418,99 @@ class TestOutputGeneratorEdgeCases:
         generator = OutputGenerator(output_dir=tmp_path)
         json_files = generator.generate_json([spec])
         assert any("my-custom-res" in f.name for f in json_files)
+
+
+# ============================================================================
+# Task 16: sealing, raw response sanitization, loading, manifest
+# ============================================================================
+
+import json as _json  # noqa: E402
+
+from src.integrity import spec_checksum  # noqa: E402
+
+
+def _aws_lambda_spec() -> ResourceSpec:
+    return ResourceSpec(
+        resource_type="aws_lambda_function",
+        arn="arn:aws:lambda:us-east-1:123456789012:function:worker",
+        region="us-east-1",
+        account_id="123456789012",
+        specifications={
+            "FunctionName": "worker",
+            "Environment": {"Variables": {"DB_PASSWORD": "hunter2"}},
+            "Tags": {"team": "a"},
+        },
+        metadata=SpecMetadata("2026-01-01T00:00:00Z", "0.1.0", "2015-03-31", ""),
+        raw_response={
+            "GetFunction": {
+                "Configuration": {"Environment": {"Variables": {"DB_PASSWORD": "hunter2"}}},
+                "ResponseMetadata": {"HTTPStatusCode": 200},
+            }
+        },
+    )
+
+
+class TestOutputGeneratorIntegrity:
+    def test_output_generator_json_checksum_matches_specifications_req_3_5(self, tmp_path):
+        (path, *_rest) = OutputGenerator(tmp_path).generate_json([_aws_lambda_spec()])
+        doc = _json.loads(path.read_text())
+        assert path == tmp_path / "aws_lambda_function/us-east-1/worker.json"
+        assert doc["metadata"]["checksum"] == spec_checksum(doc["specifications"])
+        assert doc["specifications"]["Environment"]["Variables"]["DB_PASSWORD"] == "[REDACTED]"
+        assert path.read_text() == _json.dumps(doc, indent=2, sort_keys=True)
+
+    def test_output_generator_sanitizes_raw_responses_req_3_6(self, tmp_path):
+        (path,) = OutputGenerator(tmp_path).store_raw_responses([_aws_lambda_spec()])
+        assert path == tmp_path / "raw_responses/aws_lambda_function/us-east-1/worker_raw.json"
+        content = path.read_text()
+        assert "hunter2" not in content
+        raw = _json.loads(content)
+        assert raw["GetFunction"]["ResponseMetadata"]["HTTPStatusCode"] == 200
+
+    def test_output_generator_load_specs_reads_only_spec_files_req_5_3(self, tmp_path):
+        generator = OutputGenerator(tmp_path)
+        generator.generate_all([_aws_lambda_spec()], duration_seconds=1.0)
+        # Files that live elsewhere in Output_Dir must not be mistaken for specs
+        (tmp_path / "analysis").mkdir()
+        (tmp_path / "analysis" / "analysis.json").write_text("{}")
+        (tmp_path / "not_a_type" / "us-east-1").mkdir(parents=True)
+        (tmp_path / "not_a_type" / "us-east-1" / "x.json").write_text("{}")
+        errors: list[str] = []
+        specs = OutputGenerator.load_specs(tmp_path, errors=errors)
+        assert [s.arn for s in specs] == ["arn:aws:lambda:us-east-1:123456789012:function:worker"]
+        assert specs[0].metadata.checksum == spec_checksum(specs[0].specifications)
+        assert errors == []
+
+    def test_output_generator_load_specs_reports_invalid_files(self, tmp_path):
+        bad = tmp_path / "aws_vpc" / "us-east-1"
+        bad.mkdir(parents=True)
+        (bad / "vpc-1.json").write_text("{not json")
+        errors: list[str] = []
+        assert OutputGenerator.load_specs(tmp_path, errors=errors) == []
+        assert len(errors) == 1 and "aws_vpc/us-east-1/vpc-1.json" in errors[0]
+
+    def test_output_generator_writes_manifest_req_3_3(self, tmp_path):
+        path = OutputGenerator(tmp_path).write_manifest(
+            account_id="123456789012",
+            regions=["us-east-1", "eu-west-1"],
+            started_at="2026-01-01T00:00:00Z",
+            finished_at="2026-01-01T00:01:00Z",
+            specs=[_aws_lambda_spec()],
+        )
+        manifest = _json.loads(path.read_text())
+        assert manifest["account_id"] == "123456789012"
+        assert manifest["regions"] == ["eu-west-1", "us-east-1"]
+        assert manifest["resource_counts"] == {"aws_lambda_function": 1}
+        assert manifest["total_resources"] == 1
+        assert manifest["tool_version"]
+
+    def test_output_generator_markdown_renders_aws_tag_list_req_3_4(self, tmp_path):
+        spec = _aws_lambda_spec()
+        spec.resource_type = "aws_dynamodb_table"
+        spec.specifications = {"TableName": "t", "Tags": [{"Key": "team", "Value": "orders"}]}
+        md_files = OutputGenerator(tmp_path).generate_markdown([spec])
+        content = md_files[0].read_text()
+        assert "## Resource Tags" in content
+        import re
+
+        assert re.search(r"\|\s*team\s*\|\s*orders\s*\|", content)
