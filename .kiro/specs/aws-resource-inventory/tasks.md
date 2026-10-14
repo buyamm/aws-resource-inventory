@@ -330,17 +330,17 @@ Tasks 1–13 were implemented against the first draft of the design. Tasks 14–
     - _Requirements: 3.2, 7.7_
   - Commit: `feat(core): add resource type registry and align sanitizer rules (Task 14)`
 
-- [ ] 15. Collection alignment: all resource types, error classification, sessions
-  - [ ] 15.1 Write tests (RED)
+- [x] 15. Collection alignment: all resource types, error classification, sessions
+  - [x] 15.1 Write tests (RED)
     - `tests/unit/test_collector.py`: `test_collector_maps_client_error_access_denied_no_retry_req_2_5`, `test_collector_uses_retry_after_header_req_12_3`, `test_collector_counts_api_calls_req_10_2`, `test_collector_s3_missing_subconfig_not_error_req_2_2`
-    - `tests/integration/test_aws_api.py` (moto): one `test_integration_collector_<type>_spec_req_2_1` per type not yet covered (vpc, security group, rds, log group, state machine, dynamodb, iam role), each asserting the schema in design.md and `ResponseMetadata` absence
+    - `tests/integration/test_collector_types.py` (moto, sample account from `src/sample_account.py`): one `test_integration_collector_<type>_spec_req_2_x` per type (vpc, security group, rds, log group, state machine, dynamodb, iam role), each asserting the schema in design.md and `ResponseMetadata` absence
     - `tests/integration/test_inventory.py`: `test_integration_inventory_collects_all_discovered_types_req_2_1`, `test_inventory_sets_region_and_account_req_3_3`, `test_inventory_records_failed_operations_req_12_2`
     - `tests/unit/test_aws_session.py`: `test_session_uses_default_chain_req_9_1`, `test_session_assume_role_req_9_3`, `test_session_disables_botocore_retries_req_12_1`
     - `tests/unit/test_discovery.py`: `test_discovery_follows_pagination_req_1_5`
     - _Requirements: 1.5, 2.1–2.6, 9.1, 9.3, 12.1–12.3_
-  - [ ] 15.2 Implement (GREEN): `SpecCollector` per-type `collect_*` methods + `collect_resource()` dispatcher, `ClientError` classification, `src/inventory.py`, `src/aws_session.py`, discovery pagination and API-call counting
+  - [x] 15.2 Implement (GREEN): `SpecCollector` per-type `collect_*` methods + `collect_resource()` dispatcher, `ClientError` classification, `src/inventory.py`, `src/aws_session.py`, discovery pagination and API-call counting
     - _Requirements: 1.5, 2.1–2.6, 9.1, 9.3, 12.1–12.3_
-  - [ ] 15.3 Refactor shared retry/classification code; remove `"unknown"` region/account placeholders
+  - [x] 15.3 Refactor shared retry/classification code; remove `"unknown"` region/account placeholders
   - Commit: `feat(collector): collect all supported resource types with classified retries (Task 15)`
 
 - [ ] 16. Integrity and persistence alignment

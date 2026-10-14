@@ -200,7 +200,7 @@ Aliases accepted on input (CLI filters, MCP parameters) and normalized to the ca
 
 #### Acceptance Criteria
 
-1. WHEN an AWS API call fails with a transient error (throttling, 5xx, connection/timeout), THE CLI_Tool SHALL make at most 3 attempts in total (1 initial + up to 2 retries), waiting 1 s then 2 s (base 1 s, multiplier 2). botocore's own retries SHALL be disabled (`max_attempts=1`) so this is the only retry layer.
+1. WHEN an AWS API call fails with a transient error (throttling, 5xx, connection/timeout), THE CLI_Tool SHALL make at most 3 attempts in total (1 initial + up to 2 retries), waiting 1 s then 2 s (base 1 s, multiplier 2). botocore's own retries SHALL be disabled (`total_max_attempts=1`) so this is the only retry layer.
 2. IF all attempts fail, THE CLI_Tool SHALL record a collection error `{resource_arn, operation, error_type, error_message, timestamp, retry_count}` and continue with the next resource.
 3. WHEN a throttling error carries a `Retry-After` HTTP header, THE CLI_Tool SHALL wait that many seconds before the next attempt instead of the backoff delay.
 4. THE CLI_Tool SHALL write `<Output_Dir>/collection_report.json` listing every attempted operation with status `success` or `failed`, the discovery and collection errors, the phase timings and metrics of Requirement 10.

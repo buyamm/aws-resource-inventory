@@ -17,6 +17,9 @@ if os.environ.get("AWS_INVENTORY_LIVE_TESTS") != "1":
     os.environ["AWS_SECURITY_TOKEN"] = "testing"
     os.environ["AWS_SESSION_TOKEN"] = "testing"
     os.environ.setdefault("AWS_DEFAULT_REGION", "us-east-1")
+    # botocore's account-id based endpoints (e.g. DynamoDB) bypass moto 4.x's URL
+    # matching and would reach real AWS; force the classic regional endpoints.
+    os.environ["AWS_ACCOUNT_ID_ENDPOINT_MODE"] = "disabled"
 
 import json
 import pytest
@@ -375,3 +378,34 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "slow: mark test as slow running"
     )
+
+
+# ============================================================================
+# Sample account (all ten Supported_Resource_Types) inside moto
+# ============================================================================
+
+@pytest.fixture
+def moto_all_services():
+    """Start moto mocks for every service the inventory touches."""
+    from moto import mock_logs, mock_rds, mock_stepfunctions, mock_sts
+
+    mocks = [
+        mock_ec2(), mock_iam(), mock_lambda(), mock_logs(), mock_s3(),
+        mock_stepfunctions(), mock_rds(), mock_dynamodb(), mock_sts(),
+    ]
+    for m in mocks:
+        m.start()
+    try:
+        yield
+    finally:
+        for m in reversed(mocks):
+            m.stop()
+
+
+@pytest.fixture
+def sample_account(moto_all_services):
+    """A moto account populated by src.sample_account (returns (session, ids))."""
+    from src.sample_account import build_sample_account
+
+    session = boto3.Session(region_name="us-east-1")
+    return session, build_sample_account(session)

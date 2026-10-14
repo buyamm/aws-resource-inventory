@@ -280,12 +280,12 @@ def test_integration_collector_ec2_all_specs_req_2_3():
     )
 
     # The raw response should be the describe_instances dict with Reservations key
-    assert "Reservations" in spec.raw_response, (
+    assert "Reservations" in spec.raw_response["DescribeInstances"], (
         "raw_response should contain the Reservations key from describe_instances()"
     )
 
     # Spot-check: the returned instance ID is present in the raw response
-    reservations = spec.raw_response["Reservations"]
+    reservations = spec.raw_response["DescribeInstances"]["Reservations"]
     all_instance_ids = [
         inst["InstanceId"]
         for reservation in reservations
@@ -402,7 +402,7 @@ def test_integration_collector_lambda_all_specs_req_2_4():
     )
 
     # get_function() returns a dict with a 'Configuration' key
-    assert "Configuration" in spec.raw_response, (
+    assert "Configuration" in spec.raw_response["GetFunction"], (
         "raw_response should contain the 'Configuration' key from get_function()"
     )
 

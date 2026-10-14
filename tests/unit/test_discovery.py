@@ -334,3 +334,29 @@ class TestDiscoveryProgressReporting:
         completed_values = sorted(c for (_, c, _) in progress_calls)
         assert completed_values == [1, 2]
         assert all(total == 2 for (_, _, total) in progress_calls)
+
+
+# ===========================================================================
+# Task 15: pagination and API call counting
+# ===========================================================================
+
+def test_discovery_follows_pagination_req_1_5():
+    region_client = _empty_client()
+    region_client.can_paginate.side_effect = lambda method: method == "list_functions"
+    paginator = Mock()
+    paginator.paginate.return_value = iter([
+        {"Functions": [{"FunctionName": "f1", "FunctionArn": "arn:aws:lambda:us-east-1:1:function:f1"}]},
+        {"Functions": [{"FunctionName": "f2", "FunctionArn": "arn:aws:lambda:us-east-1:1:function:f2"}]},
+    ])
+    region_client.get_paginator.return_value = paginator
+    services = ("ec2", "lambda", "rds", "logs", "stepfunctions", "dynamodb")
+    session = _make_session({"us-east-1": {svc: region_client for svc in services}})
+
+    discovery = ResourceDiscovery(session, regions=["us-east-1"])
+    resources = discovery.discover_all_resources()
+
+    names = sorted(r.resource_id for r in resources if r.resource_type == "aws_lambda_function")
+    assert names == ["f1", "f2"]
+    region_client.get_paginator.assert_called_with("list_functions")
+    # 8 regional list operations (lambda counted per page: 2) + 2 global = 11 calls
+    assert discovery.get_api_calls() == 11

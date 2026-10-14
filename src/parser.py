@@ -65,7 +65,7 @@ class ResourceSpec:
     account_id: str
     specifications: Dict[str, Any]
     metadata: SpecMetadata
-    raw_response: Optional[str] = None
+    raw_response: Any = None  # {operation: full API response}; legacy str accepted
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization"""

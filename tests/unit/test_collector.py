@@ -389,8 +389,9 @@ class TestCollectorRawResponsePreservation:
         # The raw response must include data from the original payload
         raw = spec.raw_response
         if isinstance(raw, dict):
-            assert "Reservations" in raw, (
-                "raw_response dict must contain the original 'Reservations' key"
+            # raw_response is keyed by API operation name (design.md, Specification schema)
+            assert "Reservations" in raw["DescribeInstances"], (
+                "raw_response['DescribeInstances'] must contain the original 'Reservations' key"
             )
         elif isinstance(raw, str):
             assert "Reservations" in raw, (
@@ -449,3 +450,163 @@ class TestCollectorRawResponsePreservation:
             )
 
 
+
+
+# ===========================================================================
+# Task 15: error classification, API call counting, operation records
+# ===========================================================================
+
+from botocore.exceptions import ClientError, EndpointConnectionError  # noqa: E402
+
+from src.collector import CallStatus  # noqa: E402
+
+
+def _client_error(code: str, status: int = 400, operation: str = "Op", retry_after: str | None = None):
+    headers = {"retry-after": retry_after} if retry_after is not None else {}
+    return ClientError(
+        {
+            "Error": {"Code": code, "Message": f"{code} message"},
+            "ResponseMetadata": {"HTTPStatusCode": status, "HTTPHeaders": headers},
+        },
+        operation,
+    )
+
+
+_EC2_OK = {"Reservations": [{"Instances": [{"InstanceId": "i-1", "VpcId": "vpc-1"}]}]}
+
+
+class TestCollectorErrorClassification:
+    def test_collector_maps_client_error_access_denied_no_retry_req_2_5(self):
+        api = Mock()
+        api.describe_instances.side_effect = _client_error("UnauthorizedOperation", 403)
+        with patch("time.sleep") as sleep:
+            collector = SpecCollector(api_client=api)
+            result = collector.collect_ec2_spec("i-1")
+        assert result.is_err()
+        assert api.describe_instances.call_count == 1
+        sleep.assert_not_called()
+        assert any("ec2:DescribeInstances" in line for line in collector.get_logs())
+        assert result.error.error_type == "AccessDenied"
+
+    def test_collector_uses_retry_after_header_req_12_3(self):
+        api = Mock()
+        api.describe_instances.side_effect = [
+            _client_error("Throttling", 400, retry_after="7"),
+            _EC2_OK,
+        ]
+        with patch("time.sleep") as sleep:
+            result = SpecCollector(api_client=api).collect_ec2_spec("i-1")
+        assert result.is_ok()
+        assert [c.args[0] for c in sleep.call_args_list] == [7]
+
+    def test_collector_throttling_without_header_uses_backoff_req_12_1(self):
+        api = Mock()
+        api.describe_instances.side_effect = [
+            _client_error("ThrottlingException", 400),
+            _client_error("RequestLimitExceeded", 503),
+            _EC2_OK,
+        ]
+        with patch("time.sleep") as sleep:
+            result = SpecCollector(api_client=api).collect_ec2_spec("i-1")
+        assert result.is_ok()
+        assert [c.args[0] for c in sleep.call_args_list] == [1.0, 2.0]
+
+    def test_collector_server_error_and_connection_error_retried_req_12_1(self):
+        api = Mock()
+        api.describe_instances.side_effect = [
+            _client_error("InternalError", 500),
+            EndpointConnectionError(endpoint_url="https://ec2.us-east-1.amazonaws.com"),
+            _EC2_OK,
+        ]
+        with patch("time.sleep"):
+            collector = SpecCollector(api_client=api)
+            result = collector.collect_ec2_spec("i-1")
+        assert result.is_ok()
+        assert api.describe_instances.call_count == 3
+
+    def test_collector_does_not_retry_permanent_client_error_req_12_2(self):
+        api = Mock()
+        api.describe_instances.side_effect = _client_error("InvalidInstanceID.NotFound", 400)
+        with patch("time.sleep") as sleep:
+            result = SpecCollector(api_client=api).collect_ec2_spec("i-1")
+        assert result.is_err()
+        assert api.describe_instances.call_count == 1
+        sleep.assert_not_called()
+        assert result.error.error_type == "InvalidInstanceID.NotFound"
+
+    def test_collector_counts_api_calls_req_10_2(self):
+        api = Mock()
+        api.describe_instances.side_effect = [Exception("timeout"), Exception("timeout"), _EC2_OK]
+        with patch("time.sleep"):
+            collector = SpecCollector(api_client=api)
+            collector.collect_ec2_spec("i-1")
+        assert collector.api_calls == 3
+
+    def test_collector_s3_missing_subconfig_not_error_req_2_2(self):
+        api = Mock()
+        api.get_bucket_cors.side_effect = _client_error("NoSuchCORSConfiguration", 404)
+        api.get_bucket_website.side_effect = _client_error("NoSuchWebsiteConfiguration", 404)
+        api.get_bucket_policy.side_effect = _client_error("NoSuchBucketPolicy", 404)
+        for name in (
+            "get_bucket_acl",
+            "get_bucket_encryption",
+            "get_bucket_lifecycle_configuration",
+            "get_bucket_tagging",
+            "get_bucket_versioning",
+        ):
+            getattr(api, name).return_value = {"ResponseMetadata": {"HTTPStatusCode": 200}, "X": 1}
+        with patch("time.sleep") as sleep:
+            collector = SpecCollector(api_client=api)
+            result = collector.collect_s3_specs("b1")
+        assert result.is_ok()
+        specs = result.value.specifications
+        assert "bucket-cors" not in specs and "bucket-website" not in specs
+        assert "bucket-policy" not in specs
+        assert specs["Name"] == "b1"
+        assert "ResponseMetadata" not in specs["bucket-acl"]
+        assert api.get_bucket_cors.call_count == 1
+        sleep.assert_not_called()
+        statuses = {op.operation: op.status for op in collector.operations}
+        assert statuses["GetBucketCors"] == CallStatus.NOT_CONFIGURED
+        assert statuses["GetBucketAcl"] == CallStatus.SUCCESS
+
+    def test_collector_raw_response_keyed_by_operation_req_2_6(self):
+        api = Mock()
+        api.get_function.return_value = {
+            "Configuration": {"FunctionName": "fn", "FunctionArn": "arn:aws:lambda:us-east-1:1:function:fn"},
+            "Tags": {"team": "a"},
+            "ResponseMetadata": {"HTTPStatusCode": 200},
+        }
+        spec = SpecCollector(api_client=api).collect_lambda_spec("fn").value
+        assert set(spec.raw_response) == {"GetFunction"}
+        assert "ResponseMetadata" in spec.raw_response["GetFunction"]
+        assert spec.specifications["Tags"] == {"team": "a"}
+        assert "ResponseMetadata" not in spec.specifications
+
+    def test_collector_records_failed_operation_req_12_4(self):
+        api = Mock()
+        api.describe_instances.side_effect = Exception("boom")
+        with patch("time.sleep"):
+            collector = SpecCollector(api_client=api)
+            collector.collect_ec2_spec("i-1")
+        (record,) = collector.operations
+        assert record.operation == "DescribeInstances"
+        assert record.status == CallStatus.FAILED
+        assert record.attempts == 3
+
+    def test_collector_sets_region_and_account_req_3_3(self):
+        api = Mock()
+        api.describe_instances.return_value = _EC2_OK
+        spec = SpecCollector(api_client=api).collect_ec2_spec(
+            "i-1", region="eu-west-1", account_id="111122223333"
+        ).value
+        assert spec.region == "eu-west-1"
+        assert spec.account_id == "111122223333"
+        assert spec.arn == "arn:aws:ec2:eu-west-1:111122223333:instance/i-1"
+        assert spec.specifications["InstanceId"] == "i-1"
+
+    def test_collect_resource_unknown_type_returns_err(self):
+        result = SpecCollector(api_client=Mock()).collect_resource(
+            "aws_unknown", "x", "arn:aws:x:::x", "us-east-1", "1"
+        )
+        assert result.is_err()

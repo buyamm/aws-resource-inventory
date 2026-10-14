@@ -128,13 +128,17 @@ class DiscoveryError:                # src/discovery.py
     region: str; resource_type: str; message: str
 
 @dataclass
-class CollectionError:               # src/inventory.py (Req 12.2)
+class CollectionError:               # src/inventory.py (Req 12.2); one per DENIED or FAILED operation
     resource_arn: str; operation: str; error_type: str; error_message: str
     timestamp: str; retry_count: int
 
+class CallStatus(str, Enum):         # src/collector.py
+    SUCCESS = "success"; NOT_CONFIGURED = "not_configured"; DENIED = "denied"; FAILED = "failed"
+
 @dataclass
-class OperationRecord:               # src/inventory.py (Req 12.4)
-    resource_arn: str; operation: str; status: Literal["success", "failed", "skipped"]; detail: str
+class OperationRecord:               # src/collector.py (Req 12.4)
+    resource_arn: str; operation: str; status: CallStatus; attempts: int
+    error_type: str = ""; detail: str = ""; timestamp: str = ""
 
 @dataclass
 class CollectionResult:
@@ -196,9 +200,11 @@ Secondary calls (tags, attributes, policies) are best-effort: an access-denied s
 | other `ClientError` with HTTP status ≥ 500, `EndpointConnectionError`, `ConnectTimeoutError`, `ReadTimeoutError` | transient | retry with backoff |
 | other `ClientError` (4xx) | permanent | no retry; operation failed |
 
-`RetryConfig(max_attempts=3, base_delay=1.0, backoff_multiplier=2.0)`: attempts at t=0, +1 s, +2 s. A rate-limit wait replaces the backoff delay for that attempt. `SpecCollector.api_calls` counts every attempt.
+`RetryConfig(max_attempts=3, base_delay=1.0, backoff_multiplier=2.0)`: attempts at t=0, +1 s, +2 s. A rate-limit wait replaces the backoff delay for that attempt. `SpecCollector.api_calls` counts every attempt. Operations with status `denied` or `failed` (primary or secondary) are collection errors and make the run exit with code 1; `not_configured` is not an error. `raw_response` keys are the API operation names, with `:<attribute>` / `:<policy name>` suffixes for repeated operations (e.g. `DescribeVpcAttribute:enableDnsSupport`).
 
-`src/aws_session.py` builds the session: `boto3.Session(profile_name=profile)`; with `role_arn`, calls `sts.assume_role(RoleArn, RoleSessionName="aws-resource-inventory", ExternalId?)` and builds a new session from the temporary credentials. All clients are created with `botocore.config.Config(retries={"max_attempts": 1, "mode": "standard"}, user_agent_extra="aws-resource-inventory")` (botocore's `max_attempts` counts the initial call, so 1 disables its retries). `get_account_id(session)` calls `sts.get_caller_identity()`.
+`ResourceDiscovery(session, regions, max_workers, progress_callback, account_id)` uses `account_id` for ARNs that list APIs do not return (EC2, DynamoDB) and strips the `:*` suffix from log group ARNs.
+
+`src/aws_session.py` builds the session: `boto3.Session(profile_name=profile)`; with `role_arn`, calls `sts.assume_role(RoleArn, RoleSessionName="aws-resource-inventory", ExternalId?)` and builds a new session from the temporary credentials. All clients are created with `botocore.config.Config(retries={"total_max_attempts": 1, "mode": "standard"}, user_agent_extra="aws-resource-inventory")` (`total_max_attempts` counts the initial call, so 1 disables botocore retries; the legacy `max_attempts` key counts retries only). `get_account_id(session)` calls `sts.get_caller_identity()`.
 
 ### InventoryCollector
 
