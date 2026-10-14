@@ -30,10 +30,15 @@ class SessionError(Exception):
 
 
 class InventorySession:
-    """Wraps a boto3.Session so every client gets :data:`CLIENT_CONFIG`."""
+    """Wraps a boto3.Session so every client gets :data:`CLIENT_CONFIG`.
 
-    def __init__(self, boto3_session: Any) -> None:
+    ``source_session`` is the session that called AssumeRole, kept only so its
+    credentials are scrubbed from logs too.
+    """
+
+    def __init__(self, boto3_session: Any, source_session: Any = None) -> None:
         self.boto3_session = boto3_session
+        self.source_session = source_session
 
     def client(self, service_name: str, region_name: str | None = None) -> Any:
         return self.boto3_session.client(
@@ -41,15 +46,21 @@ class InventorySession:
         )
 
     def secret_values(self) -> list[str]:
-        """Credential strings of this session, used only to scrub log output (Req 9.2)."""
-        try:
-            credentials = self.boto3_session.get_credentials()
-        except Exception:  # noqa: BLE001 - no credentials means nothing to scrub
-            return []
-        if credentials is None:
-            return []
-        frozen = credentials.get_frozen_credentials()
-        return [v for v in (frozen.access_key, frozen.secret_key, frozen.token) if v]
+        """Credential strings of this session (and the AssumeRole caller), used only
+        to scrub log output (Req 9.2)."""
+        sessions = [s for s in (self.source_session, self.boto3_session) if s is not None]
+        return [value for session in sessions for value in _credential_values(session)]
+
+
+def _credential_values(boto3_session: Any) -> list[str]:
+    try:
+        credentials = boto3_session.get_credentials()
+    except Exception:  # noqa: BLE001 - no credentials means nothing to scrub
+        return []
+    if credentials is None:
+        return []
+    frozen = credentials.get_frozen_credentials()
+    return [v for v in (frozen.access_key, frozen.secret_key, frozen.token) if v]
 
 
 def create_session(
@@ -76,7 +87,7 @@ def create_session(
         aws_secret_access_key=credentials["SecretAccessKey"],
         aws_session_token=credentials["SessionToken"],
     )
-    return InventorySession(assumed)
+    return InventorySession(assumed, source_session=base)
 
 
 def get_account_id(session: InventorySession) -> str:

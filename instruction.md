@@ -92,6 +92,8 @@ python scripts/demo.py --live --profile audit --region ap-southeast-1   # chạy
 
 Demo xoá thư mục output trước khi chạy, nhưng **chỉ** khi thư mục rỗng hoặc là Output_Dir cũ (có `manifest.json`). Thư mục khác sẽ được giữ nguyên và demo thoát với mã 2.
 
+Đo hiệu năng: `python scripts/benchmark.py` chạy `collect` trên account moto gồm 1000 tài nguyên ở 17 region, mỗi API call trễ thêm 100 ms. Kết quả đo nằm trong [docs/ACCURACY_AND_SECURITY.md](docs/ACCURACY_AND_SECURITY.md#performance-benchmark).
+
 ---
 
 ## 5. Quy trình trên account thật

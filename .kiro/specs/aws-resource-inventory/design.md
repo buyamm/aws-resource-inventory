@@ -421,7 +421,7 @@ Logging: root handler to stderr with `SanitizingFilter`, which runs `DataSanitiz
 
 ## Performance Targets
 
-- Discovery: < 5 min for 1000 resources at ≤ 100 ms/call (Req 1.5) — `test_discovery_completes_under_5_minutes_req_1_5` checks 1000 resources from mocked clients (no simulated latency); the measured benchmark is in `docs/ACCURACY_AND_SECURITY.md`.
+- Discovery: < 5 min for 1000 resources at ≤ 100 ms/call (Req 1.5) — `test_discovery_completes_under_5_minutes_req_1_5` checks 1000 resources from mocked clients (no simulated latency); `scripts/benchmark.py` measures 1000 resources in 17 regions on moto with 100 ms per call (results in `docs/ACCURACY_AND_SECURITY.md`).
 - Collection: ≥ 10 resources/s with 10 workers against moto.
 - MCP: 10 requests/s accepted (Req 5.7).
 - IaC generation: < 10 s for 1000 specs.

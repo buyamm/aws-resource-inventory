@@ -16,6 +16,9 @@ responses>=0.23.0
 # HCL parsing, used by tests to validate generated Terraform syntax
 python-hcl2>=4.3.0
 
+# YAML parsing, used by tests/unit/test_ci_workflow.py
+pyyaml>=6.0
+
 # Code quality
 black>=24.0.0
 mypy>=1.8.0

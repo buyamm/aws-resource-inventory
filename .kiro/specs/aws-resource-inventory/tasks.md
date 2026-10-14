@@ -414,11 +414,11 @@ Tasks 1–13 were implemented against the first draft of the design. Tasks 14–
   - [x] 23.7 Rewrite `instruction.md` (Vietnamese user guide) to match the real CLI; remove obsolete `TASK_*_COMPLETED.md` notes
   - Commit: `docs: README, architecture, testing, accuracy/security docs and demo (Task 23)`
 
-- [ ] 24. Final Integration and Polish
-  - [ ] 24.1 Coverage: ≥ 80 % overall, 100 % for `src/parser.py` and `src/sanitizer.py`
-  - [ ] 24.2 `bandit -r src -ll` clean; review credential handling
-  - [ ] 24.3 Benchmark: mocked 1000-resource discovery+collection timing recorded in `docs/ACCURACY_AND_SECURITY.md` — _Req 1.5, 10.1, 10.2_
-  - [ ] 24.4 `ruff check`, `black --check`, `mypy src` clean; CI workflow gates point at the real module files
+- [x] 24. Final Integration and Polish
+  - [x] 24.1 Coverage: ≥ 80 % overall, 100 % for `src/parser.py` and `src/sanitizer.py` — 95 % overall; unreachable parser branches removed, `RecursionError` on deeply nested JSON reported as a ParseError
+  - [x] 24.2 `bandit -r src -ll` clean; review credential handling — fixed: a dict/list referenced twice (or cyclic) was returned unsanitized on the second visit; with `--role-arn` the AssumeRole caller's credentials are now scrubbed from logs too
+  - [x] 24.3 Benchmark: mocked 1000-resource discovery+collection timing recorded in `docs/ACCURACY_AND_SECURITY.md` — _Req 1.5, 10.1, 10.2_ — `scripts/benchmark.py` (17 regions, 100 ms per call), tested by `tests/e2e/test_benchmark.py`
+  - [x] 24.4 `ruff check`, `black --check`, `mypy src` clean; CI workflow gates point at the real module files — checked by `tests/unit/test_ci_workflow.py`; obsolete `scripts/validate_workflow.py`/`.sh` removed
   - Commit: `chore: final quality gates (Task 24)`
 
 - [ ] 25. Final Checkpoint - Production Ready

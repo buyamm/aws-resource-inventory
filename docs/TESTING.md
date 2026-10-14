@@ -48,7 +48,7 @@ tests/
 |---|---|---|
 | Unit | One component in isolation | `test_sanitizer.py`, `test_integrity.py`, `test_cli.py`, `test_docs.py` |
 | Integration | Components together against moto or a subprocess | `test_collector_types.py` (all 10 types), `test_mcp_stdio.py` (real MCP client over stdio), `test_iac_generator.py` (plan verification with a mocked `terraform`) |
-| End-to-end | Whole CLI workflows | `test_workflows.py` (collect → analyze → IaC → MCP → verify, tampering, partial failure), `test_demo.py` |
+| End-to-end | Whole CLI workflows | `test_workflows.py` (collect → analyze → IaC → MCP → verify, tampering, partial failure), `test_demo.py`, `test_benchmark.py` (`scripts/benchmark.py` at 40 resources) |
 | Live (opt-in) | Real account | `test_live_iac.py`: import and `terraform plan` with zero changes |
 
 ## Markers

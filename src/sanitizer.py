@@ -15,9 +15,9 @@ Design:
 - Both key-name matching and value-pattern matching are applied
 - Redaction logs record the full path to each redacted field without exposing the value
 - All nested structures (dicts, lists) are recursively traversed
-- Performance: compiled regex patterns are cached at class construction; a shared
-  object-identity set prevents duplicate work when the same container is referenced
-  from multiple places in a large structure
+- Performance: compiled regex patterns are cached at class construction; an
+  object-identity memo sanitizes a container referenced from several places once
+  and reuses the sanitized copy (which also makes self-referencing input safe)
 """
 
 import re
@@ -82,8 +82,8 @@ class DataSanitizer:
     - Value-pattern regexes are compiled once at construction time.
     - A combined single-regex is built from all value patterns so each string
       value is scanned in one pass instead of N separate regex searches.
-    - An object-identity visited set prevents duplicate traversal of containers
-      that are referenced from multiple places in a large structure.
+    - An object-identity memo sanitizes a container referenced from multiple
+      places once; every reference then points at the same sanitized copy.
     """
 
     def __init__(self) -> None:
@@ -100,11 +100,11 @@ class DataSanitizer:
         combined = "|".join(
             f"(?P<g{i}>{pattern})" for i, (pattern, _) in enumerate(SENSITIVE_VALUE_PATTERNS)
         )
-        self._combined_value_pattern: re.Pattern | None = re.compile(combined) if combined else None
+        self._combined_value_pattern = re.compile(combined)
 
-        # Internal: set of container object ids seen during the current
-        # top-level sanitize() call, used to skip already-processed nodes.
-        self._visited: set[int] = set()
+        # Internal: container id -> sanitized copy for the current top-level
+        # sanitize() call. The input is kept alive by the caller, so ids stay unique.
+        self._memo: dict[int, Any] = {}
 
     # ------------------------------------------------------------------ #
     # Public API                                                           #
@@ -126,7 +126,7 @@ class DataSanitizer:
         # Reset state on every top-level call (i.e. when called without _path)
         if _path is None:
             self._redaction_logs = []
-            self._visited = set()
+            self._memo = {}
 
         if isinstance(data, dict):
             return self._sanitize_dict(data, _path or "")
@@ -148,17 +148,13 @@ class DataSanitizer:
     def _sanitize_dict(self, data: dict[str, Any], path: str) -> dict[str, Any]:
         """Sanitize every value in a dictionary, preserving all keys.
 
-        Skips re-processing if this exact container object has already been
-        visited during the current sanitize() call (handles shared references
-        in large structures without redundant work).
+        A dictionary reached again (shared or cyclic reference) returns the
+        sanitized copy made on first visit, never the raw input.
         """
-        obj_id = id(data)
-        if obj_id in self._visited:
-            # Already processed — return a shallow copy to avoid mutation
-            return dict(data)
-        self._visited.add(obj_id)
-
+        if id(data) in self._memo:
+            return self._memo[id(data)]  # type: ignore[no-any-return]
         result: dict[str, Any] = {}
+        self._memo[id(data)] = result
         for key, value in data.items():
             child_path = f"{path}.{key}" if path else key
             redaction_label = self._sensitive_key_redaction(key)
@@ -174,15 +170,15 @@ class DataSanitizer:
     def _sanitize_list(self, data: list, path: str) -> list:
         """Sanitize every element in a list.
 
-        Uses the same visited-set guard as ``_sanitize_dict`` to avoid
-        re-traversing the same list when it is referenced multiple times.
+        Uses the same memo as ``_sanitize_dict``, so a list referenced several
+        times is sanitized once and every reference gets the sanitized copy.
         """
-        obj_id = id(data)
-        if obj_id in self._visited:
-            return list(data)
-        self._visited.add(obj_id)
-
-        return [self.sanitize(item, f"{path}[{idx}]") for idx, item in enumerate(data)]
+        if id(data) in self._memo:
+            return self._memo[id(data)]  # type: ignore[no-any-return]
+        result: list = []
+        self._memo[id(data)] = result
+        result.extend(self.sanitize(item, f"{path}[{idx}]") for idx, item in enumerate(data))
+        return result
 
     def _sanitize_string_value(self, value: str, path: str) -> str:
         """
@@ -194,9 +190,6 @@ class DataSanitizer:
         Key-name-based redaction is handled by ``_sanitize_dict``; this
         method only performs regex matching on the *content* of a string.
         """
-        if self._combined_value_pattern is None:
-            return value
-
         # Fast path: combined pattern tells us if *any* sensitive value is present
         if not self._combined_value_pattern.search(value):
             return value

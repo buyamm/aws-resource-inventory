@@ -72,7 +72,7 @@ If someone edits a cited value in a spec file after `analyze`, `verify` reports 
 
 - Credentials come only from the boto3 default chain (environment, shared config/credentials files, SSO, container/instance role), optionally with `--profile`. There are no credential options on the command line.
 - With `--role-arn` (and optional `--external-id`), the tool calls `sts:AssumeRole` with session name `aws-resource-inventory` and uses the temporary credentials for every later call.
-- Credentials are never written to files or passed to log calls. The CLI installs one log handler on stderr whose `SanitizingFilter` runs the Data_Sanitizer on each message, including exception tracebacks, and additionally replaces the literal access key, secret key and session token of the active session. Console output passes through the same filter. Tests check that none of these values appear in stdout, stderr, logs or any file in the Output_Dir.
+- Credentials are never written to files or passed to log calls. The CLI installs one log handler on stderr whose `SanitizingFilter` runs the Data_Sanitizer on each message, including exception tracebacks, and additionally replaces the literal access key, secret key and session token of the active session; with `--role-arn` that covers both the assumed-role credentials and the credentials that called `sts:AssumeRole`. Console output passes through the same filter. Tests check that none of these values appear in stdout, stderr, logs or any file in the Output_Dir.
 
 ### Read-only access (Requirement 9.4)
 
@@ -91,7 +91,7 @@ If someone edits a cited value in a spec file after `analyze`, `verify` reports 
 | A string containing a PEM private key header | `[REDACTED_PRIVATE_KEY]` |
 | The string value of a key containing `password`, `passwd`, `secret`, `private_key`, `token`, `api_key` or `credential` (keys containing `public` are exempt) | `[REDACTED]` |
 
-Keys, list lengths and nesting are always preserved, and sanitizing twice gives the same result (property tests). Names like `KeyName`, `KmsKeyId` and `KeyType` are not redacted. Each redaction is logged with its JSON path and placeholder, never the original value.
+Keys, list lengths and nesting are always preserved, and sanitizing twice gives the same result (property tests). A dict or list referenced from several places (or from itself) is sanitized once and every reference gets the sanitized copy, so a shared object can never pass through unredacted. Names like `KeyName`, `KmsKeyId` and `KeyType` are not redacted. Each redaction is logged with its JSON path and placeholder, never the original value.
 
 The sanitizer runs on per-resource JSON and Markdown, aggregates, raw responses, reports, analysis and documentation files, every MCP response, and every log record. In the example output the Lambda environment variable `DB_PASSWORD` is stored as `[REDACTED]`. The Terraform generator turns placeholders into a `# REDACTED: set manually` comment plus a `lifecycle.ignore_changes` entry, so secrets are never written into IaC.
 
@@ -107,19 +107,28 @@ The sanitizer runs on per-resource JSON and Markdown, aggregates, raw responses,
 
 - Tests run with fake credentials forced by `tests/conftest.py` and moto mocks. `AWS_ACCOUNT_ID_ENDPOINT_MODE=disabled` stops botocore's account-based DynamoDB endpoint from bypassing moto. Live tests are opt-in (`AWS_INVENTORY_LIVE_TESTS=1`, marker `aws`).
 - `scripts/demo.py` applies the same fake credentials and endpoint setting in its default (moto) mode.
-- `bandit -r src -ll` runs in CI.
+- `bandit -r src -ll` (medium and high severity) runs in CI and is clean. The remaining low-severity notes are intentional: `subprocess` runs fixed commands (`terraform plan`, `drawio-ai validate`) without a shell, `xml.etree` only parses the `.drawio` file the tool wrote itself, `assert` narrows a type in the collector, and `hunter2-demo` is the deliberately insecure Lambda variable of the moto sample account.
 
 ## Performance benchmark
 
-**Status: pending.** The measured discovery and collection time for a mocked 1000-resource account is recorded by Task 24.3 (see [tasks.md](../.kiro/specs/aws-resource-inventory/tasks.md)).
+Measured with `scripts/benchmark.py` on 2026-10-14 (Apple M1, 8 cores, Python 3.11.9, moto 4.x, default 10 workers). The script creates **1000 resources in 17 regions** in moto (per region: default VPC and security group, 9 instances, 9 security groups, 9 log groups, 9 DynamoDB tables, 4 Lambda functions, 4 state machines, 3 RDS instances; plus 24 IAM roles and 24 S3 buckets), adds a fixed delay to every AWS API call the CLI makes (a botocore `before-call` hook on each client of `InventorySession`), runs `aws-inventory collect` in-process and reads the phase timings from `collection_report.json`.
 
-Targets from the design:
+| Phase | 100 ms per API call | 0 ms (moto overhead only) | Target |
+|---|---|---|---|
+| Discovery (17 regions) | 4.48 s | 5.08 s | < 5 minutes (Requirement 1.5) |
+| Collection (1000 specs) | 24.06 s = 41.6 resources/s | 2.77 s = 361.6 resources/s | ≥ 10 resources/s |
+| Output (1000 spec files + reports) | 2.54 s | 1.97 s | - |
+| `generate-iac` on the 1000 specs | - | 0.87 s (whole command) | < 10 s |
 
-| Phase | Target |
-|---|---|
-| Discovery of 1000 resources at ≤ 100 ms per call | < 5 minutes (Requirement 1.5) |
-| Collection against moto with 10 workers | ≥ 10 resources/s |
-| IaC generation for 1000 specs | < 10 s |
-| MCP server | 10 accepted requests/s |
+Both runs made 1876 API calls (every one delayed in the first run), collected 1000/1000 specs and had no failures. Discovery time is dominated by moto building each region's backend, not by the simulated latency: regions are scanned concurrently and each region needs only about one list call per resource type. Collection with 100 ms latency is bounded by `calls per resource × latency / workers` (1876 × 0.1 s / 10 ≈ 19 s plus moto time).
 
-Existing check: `test_discovery_completes_under_5_minutes_req_1_5` (tests/unit/test_discovery.py) discovers 1000 instances across 20 regions from mocked clients (no simulated latency) and asserts the 5-minute budget. The demo account (14 resources, 44 API calls) collects in well under a second; every run records its phase timings in `collection_report.json` and `summary_report.md`.
+Reproduce:
+
+```bash
+python scripts/benchmark.py                               # 1000 resources, 17 regions, 100 ms per call
+python scripts/benchmark.py --latency-ms 0 --json result.json
+```
+
+The script exits 1 when a target is missed. `tests/e2e/test_benchmark.py` runs it at a small scale (40 resources, 2 regions) and checks that every API call was delayed. `test_discovery_completes_under_5_minutes_req_1_5` (tests/unit/test_discovery.py) additionally checks 1000 instances across 20 regions from mocked clients. Every real run records its own phase timings in `collection_report.json` and `summary_report.md`.
+
+The MCP server accepts at most 10 requests per sliding second by design (rate limit), so its throughput target is a limit, checked by the rate-limit tests rather than measured.

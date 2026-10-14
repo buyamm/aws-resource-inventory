@@ -1,5 +1,6 @@
 name: TDD Pipeline
 
+# Quality gates, same commands as CLAUDE.md "Commands".
 on:
   push:
     branches:
@@ -16,123 +17,69 @@ jobs:
     name: Type Checking (mypy)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
+          cache: pip
+          cache-dependency-path: requirements*.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
           pip install -r requirements-dev.txt
-
-      - name: Run mypy type checking
+          pip install -e .
+      - name: mypy (strictness configured in pyproject.toml)
         run: |
-          mypy src/ --strict --ignore-missing-imports
+          mypy src
+
 
   lint:
     name: Linting (ruff) and Formatting (black)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
+          cache: pip
+          cache-dependency-path: requirements*.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
-
-      - name: Run ruff linting
+      - name: ruff
         run: |
-          ruff check src/ tests/
-
-      - name: Check black formatting
+          ruff check src tests
+      - name: black
         run: |
-          black --check src/ tests/
+          black --check src tests
+
 
   unit-tests:
-    name: Unit Tests with Coverage Gate (≥80%)
+    name: Unit Tests with Coverage Gates
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
+          cache: pip
+          cache-dependency-path: requirements*.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
           pip install -r requirements-dev.txt
-
-      - name: Run unit tests with coverage
+          pip install -e .
+      - name: Unit tests with coverage
         run: |
-          pytest tests/unit/ -v \
-            --cov=src \
-            --cov-report=term-missing \
-            --cov-report=xml \
-            --cov-report=html
-
-      - name: Enforce 80% coverage gate
+          pytest tests/unit --cov=src --cov-report=term-missing --cov-report=xml --cov-report=html
+      - name: Overall coverage >= 80 %
         run: |
           coverage report --fail-under=80
-
-      - name: Enforce 100% coverage for critical paths
+      - name: Parser and sanitizer coverage = 100 %
         run: |
-          # Parser module must have 100% coverage
-          if [ -d "src/parser" ]; then
-            coverage report --include="src/parser/*" --fail-under=100 || echo "Warning: Parser coverage below 100%"
-          fi
-          # Sanitizer module must have 100% coverage
-          if [ -d "src/sanitizer" ]; then
-            coverage report --include="src/sanitizer/*" --fail-under=100 || echo "Warning: Sanitizer coverage below 100%"
-          fi
-
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v4
-        if: always()
-        with:
-          files: ./coverage.xml
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false
-
+          coverage report --include="src/parser.py" --fail-under=100
+          coverage report --include="src/sanitizer.py" --fail-under=100
       - name: Upload coverage HTML report
         uses: actions/upload-artifact@v4
         if: always()
@@ -140,76 +87,45 @@ jobs:
           name: coverage-report
           path: htmlcov/
 
+
   property-tests:
-    name: Property-Based Tests (≥100 iterations)
+    name: Property-Based Tests (100 examples each)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
+          cache: pip
+          cache-dependency-path: requirements*.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
           pip install -r requirements-dev.txt
-
-      - name: Run property-based tests
+          pip install -e .
+      - name: Property tests (hypothesis profile in tests/conftest.py)
         run: |
-          pytest tests/unit/ -k property -v \
-            --hypothesis-show-statistics \
-            --hypothesis-seed=0
-        env:
-          HYPOTHESIS_MAX_EXAMPLES: 100
+          pytest tests -k property --hypothesis-show-statistics --hypothesis-seed=0
 
-      - name: Verify property test iterations
-        run: |
-          echo "Property-based tests executed with minimum 100 iterations per property"
-          echo "Hypothesis statistics shown above confirm iteration counts"
 
   integration-tests:
-    name: Integration Tests
+    name: Integration Tests (moto)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
+          cache: pip
+          cache-dependency-path: requirements*.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
           pip install -r requirements-dev.txt
-
-      - name: Run integration tests
+          pip install -e .
+      - name: Integration tests
         run: |
-          pytest tests/integration/ -v \
-            --tb=short
-
+          pytest tests/integration --junitxml=pytest-results/integration.xml
       - name: Upload integration test results
         uses: actions/upload-artifact@v4
         if: always()
@@ -217,38 +133,26 @@ jobs:
           name: integration-test-results
           path: pytest-results/
 
+
   e2e-tests:
     name: End-to-End Tests
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
+          cache: pip
+          cache-dependency-path: requirements*.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
           pip install -r requirements-dev.txt
-
-      - name: Run end-to-end tests
+          pip install -e .
+      - name: End-to-end tests (live AWS tests are skipped)
         run: |
-          pytest tests/e2e/ -v \
-            --tb=short
+          pytest tests/e2e --junitxml=pytest-results/e2e.xml
         timeout-minutes: 15
-
       - name: Upload E2E test results
         uses: actions/upload-artifact@v4
         if: always()
@@ -256,42 +160,35 @@ jobs:
           name: e2e-test-results
           path: pytest-results/
 
+
   security-scan:
-    name: Security Scanning
+    name: Security Scanning (bandit)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
+          cache: pip
+          cache-dependency-path: requirements*.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
-
-      - name: Run bandit security scanner
+      - name: bandit, medium and high severity (gate)
         run: |
-          bandit -r src/ -f json -o bandit-report.json || true
-          bandit -r src/ -f screen
-
+          bandit -r src -ll
+      - name: bandit, full JSON report
+        if: always()
+        run: |
+          bandit -r src -f json -o bandit-report.json || true
       - name: Upload security scan results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: security-scan-results
           path: bandit-report.json
+
 
   test-summary:
     name: Test Summary
@@ -301,29 +198,21 @@ jobs:
     steps:
       - name: Check all jobs status
         run: |
-          echo "Type Check: ${{ needs.type-check.result }}"
-          echo "Lint: ${{ needs.lint.result }}"
-          echo "Unit Tests: ${{ needs.unit-tests.result }}"
-          echo "Property Tests: ${{ needs.property-tests.result }}"
-          echo "Integration Tests: ${{ needs.integration-tests.result }}"
-          echo "E2E Tests: ${{ needs.e2e-tests.result }}"
-          echo "Security Scan: ${{ needs.security-scan.result }}"
-          
+          echo "type-check: ${{ needs.type-check.result }}"
+          echo "lint: ${{ needs.lint.result }}"
+          echo "unit-tests: ${{ needs.unit-tests.result }}"
+          echo "property-tests: ${{ needs.property-tests.result }}"
+          echo "integration-tests: ${{ needs.integration-tests.result }}"
+          echo "e2e-tests: ${{ needs.e2e-tests.result }}"
+          echo "security-scan: ${{ needs.security-scan.result }}"
           if [ "${{ needs.type-check.result }}" != "success" ] || \
              [ "${{ needs.lint.result }}" != "success" ] || \
              [ "${{ needs.unit-tests.result }}" != "success" ] || \
              [ "${{ needs.property-tests.result }}" != "success" ] || \
              [ "${{ needs.integration-tests.result }}" != "success" ] || \
-             [ "${{ needs.e2e-tests.result }}" != "success" ]; then
-            echo "❌ Pipeline failed - one or more jobs did not succeed"
+             [ "${{ needs.e2e-tests.result }}" != "success" ] || \
+             [ "${{ needs.security-scan.result }}" != "success" ]; then
+            echo "Pipeline failed: one or more gates did not succeed"
             exit 1
           fi
-          
-          echo "✅ All tests passed successfully!"
-          echo "- Type checking: PASSED"
-          echo "- Linting and formatting: PASSED"
-          echo "- Unit tests (≥80% coverage): PASSED"
-          echo "- Property tests (≥100 iterations): PASSED"
-          echo "- Integration tests: PASSED"
-          echo "- End-to-end tests: PASSED"
-          echo "- Security scan: COMPLETED"
+          echo "All quality gates passed"

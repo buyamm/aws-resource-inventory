@@ -84,3 +84,12 @@ def test_get_account_id_without_credentials_raises_session_error_req_12_5():
     with patch.object(session, "client", side_effect=Exception("Unable to locate credentials")):
         with pytest.raises(SessionError):
             get_account_id(session)
+
+
+def test_session_assume_role_scrubs_base_credentials_req_9_2():
+    with mock_sts():
+        base_secrets = create_session().secret_values()
+        session = create_session(role_arn="arn:aws:iam::123456789012:role/ReadOnly")
+        secrets = session.secret_values()
+    assert base_secrets and set(base_secrets) <= set(secrets)
+    assert len(secrets) > len(base_secrets)  # assumed-role key, secret and token too

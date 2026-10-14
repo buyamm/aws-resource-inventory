@@ -545,3 +545,24 @@ class TestDataSanitizerRevisedRules:
         once = DataSanitizer().sanitize(data)
         twice = DataSanitizer().sanitize(once)
         assert twice == once
+
+    def test_sanitizer_redacts_shared_dict_reference_req_9_5(self):
+        secret = {"Password": "hunter2"}
+        sanitized = DataSanitizer().sanitize({"a": secret, "b": secret})
+        assert sanitized == {"a": {"Password": "[REDACTED]"}, "b": {"Password": "[REDACTED]"}}
+
+    def test_sanitizer_redacts_shared_list_reference_req_9_5(self):
+        keys = ["AKIAIOSFODNN7EXAMPLE"]
+        sanitized = DataSanitizer().sanitize({"a": keys, "b": [keys]})
+        assert sanitized == {"a": ["[REDACTED_AWS_KEY]"], "b": [["[REDACTED_AWS_KEY]"]]}
+
+    def test_sanitizer_handles_self_referencing_structure_req_9_5(self):
+        data: dict = {"Token": "abc"}
+        data["self"] = data
+        items: list = ["AKIAIOSFODNN7EXAMPLE"]
+        items.append(items)
+        sanitized = DataSanitizer().sanitize({"d": data, "l": items})
+        assert sanitized["d"]["Token"] == "[REDACTED]"
+        assert sanitized["d"]["self"] is sanitized["d"]
+        assert sanitized["l"][0] == "[REDACTED_AWS_KEY]"
+        assert sanitized["l"][1] is sanitized["l"]

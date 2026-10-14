@@ -14,7 +14,7 @@ Requirements Coverage:
 Refactored in Task 3.4 for:
 - Comprehensive error handling with descriptive messages
 - Improved type annotations (mypy strict compliance)
-- Extracted helper functions for JSON normalization
+- Extracted helper functions for structure validation and error excerpts
 - Enhanced maintainability and readability
 """
 
@@ -191,9 +191,7 @@ class Result(Generic[T, E]):
         """
         if self.is_ok():
             raise ValueError("Cannot get error from success result")
-        if self._error is None:
-            raise ValueError("Result error is None")
-        return self._error
+        return self._error  # type: ignore[return-value]  # non-None: is_ok() is False
 
     @staticmethod
     def ok(value: T) -> "Result[T, E]":
@@ -209,26 +207,6 @@ class Result(Generic[T, E]):
 # ============================================================================
 # Helper Functions for JSON Processing
 # ============================================================================
-
-
-def normalize_json_string(json_str: str) -> str:
-    """
-    Normalize a JSON string for comparison by parsing and re-serializing.
-
-    This removes whitespace differences and standardizes key ordering,
-    making it easier to compare JSON structures.
-
-    Args:
-        json_str: JSON string to normalize
-
-    Returns:
-        Normalized JSON string with sorted keys and consistent formatting
-
-    Raises:
-        json.JSONDecodeError: If the input is not valid JSON
-    """
-    parsed = json.loads(json_str)
-    return json.dumps(parsed, indent=2, sort_keys=True)
 
 
 def validate_resource_spec_structure(data: dict[str, Any]) -> str | None:
@@ -372,35 +350,25 @@ class ResourceParser:
             parsed_data = json.loads(json_data)
         except json.JSONDecodeError as e:
             # Extract helpful excerpt around the error location
-            excerpt = extract_json_excerpt(json_data, e.pos if hasattr(e, "pos") else 0)
+            excerpt = extract_json_excerpt(json_data, e.pos)
 
             return Result.err(
                 ParseError(
                     message=f"Invalid JSON syntax: {e.msg}",
-                    context=f"Error at position {e.pos if hasattr(e, 'pos') else 'unknown'}, "
-                    f"line {e.lineno if hasattr(e, 'lineno') else 'unknown'}, "
-                    f"column {e.colno if hasattr(e, 'colno') else 'unknown'}: {excerpt}",
+                    context=f"Error at position {e.pos}, line {e.lineno}, "
+                    f"column {e.colno}: {excerpt}",
                     original_input=json_data,
                     error_type="JSONDecodeError",
                 )
             )
-        except ValueError as e:
+        except RecursionError:
+            # The only other failure of json.loads on a str: nesting too deep
             return Result.err(
                 ParseError(
-                    message=f"Invalid JSON format: {str(e)}",
-                    context="Could not parse JSON structure",
+                    message="Invalid JSON: nesting exceeds the interpreter recursion limit",
+                    context=f"Input of {len(json_data)} characters is too deeply nested",
                     original_input=json_data,
-                    error_type="ValueError",
-                )
-            )
-        except Exception as e:
-            # Catch any other unexpected errors
-            return Result.err(
-                ParseError(
-                    message=f"Unexpected error during JSON parsing: {str(e)}",
-                    context=f"Error type: {type(e).__name__}",
-                    original_input=json_data,
-                    error_type="UnexpectedError",
+                    error_type="RecursionError",
                 )
             )
 
@@ -427,28 +395,8 @@ class ResourceParser:
                 )
             )
 
-        # Try to create ResourceSpec from validated data
-        try:
-            spec = ResourceSpec.from_dict(parsed_data)
-            return Result.ok(spec)
-        except TypeError as e:
-            return Result.err(
-                ParseError(
-                    message=f"Type error creating ResourceSpec: {str(e)}",
-                    context="Data types did not match ResourceSpec field requirements",
-                    original_input=json_data,
-                    error_type="TypeCreationError",
-                )
-            )
-        except Exception as e:
-            return Result.err(
-                ParseError(
-                    message=f"Failed to create ResourceSpec: {str(e)}",
-                    context=f"Error during object creation: {type(e).__name__}",
-                    original_input=json_data,
-                    error_type="CreationError",
-                )
-            )
+        # Field types were validated above, so construction cannot fail
+        return Result.ok(ResourceSpec.from_dict(parsed_data))
 
     def print_spec(self, spec: ResourceSpec) -> str:
         """
@@ -469,20 +417,3 @@ class ResourceParser:
         """
         data = spec.to_dict()
         return json.dumps(data, indent=2, sort_keys=True)
-
-    def _extract_error_excerpt(self, text: str, position: int, context_chars: int = 40) -> str:
-        """
-        Extract an excerpt from text around the given position for error messages.
-
-        DEPRECATED: Use the module-level extract_json_excerpt() function instead.
-        Kept for backward compatibility.
-
-        Args:
-            text: The full text
-            position: Position of the error
-            context_chars: Number of characters to show on each side
-
-        Returns:
-            Excerpt string showing the context around the error
-        """
-        return extract_json_excerpt(text, position, context_chars)

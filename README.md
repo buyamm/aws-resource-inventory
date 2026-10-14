@@ -56,6 +56,8 @@ python scripts/demo.py --live --profile audit --region eu-west-1   # real accoun
 
 It runs `collect → analyze → generate-iac → generate-docs → verify` and stops at the first failing step. The output directory is emptied first, but only if it is empty or an earlier Output_Dir (contains `manifest.json`); any other directory is left untouched and the demo exits with code 2.
 
+`python scripts/benchmark.py` times `collect` on a moto account with 1000 resources in 17 regions and 100 ms added to every API call; the results are in [docs/ACCURACY_AND_SECURITY.md](docs/ACCURACY_AND_SECURITY.md#performance-benchmark).
+
 ## Commands
 
 Global options (before the command): `--log-level DEBUG|INFO|WARNING|ERROR` (default `INFO`; logs go to stderr), `--no-color`, `--version`, `-h/--help`. Every command prints examples with `--help`.

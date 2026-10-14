@@ -467,3 +467,97 @@ def test_parser_missing_metadata_field_returns_descriptive_error():
     assert result.is_err(), "Parser should reject incomplete metadata"
     error = result.error
     assert "metadata" in str(error).lower() and "checksum" in str(error).lower()
+
+
+# ============================================================================
+# Remaining error paths and helpers (Task 24.1 - 100 % parser coverage)
+# ============================================================================
+
+
+def _valid_spec_dict() -> dict[str, Any]:
+    return {
+        "resource_type": "aws_s3_bucket",
+        "arn": "arn:aws:s3:::bucket",
+        "region": "us-east-1",
+        "account_id": "123456789012",
+        "specifications": {},
+        "metadata": {
+            "collected_at": "2024-01-01T00:00:00Z",
+            "collector_version": "1.0.0",
+            "api_version": "2.0",
+            "checksum": "abc",
+        },
+    }
+
+
+def test_parser_non_string_metadata_field_returns_error_req_4_2():
+    from src.parser import ResourceParser
+
+    data = _valid_spec_dict()
+    data["metadata"]["checksum"] = 42
+    result = ResourceParser().parse_spec(json.dumps(data))
+    assert result.is_err()
+    assert "Metadata field 'checksum' must be a string" in result.error.message
+
+
+def test_parser_deeply_nested_json_returns_error_req_4_2():
+    from src.parser import ResourceParser
+
+    deep = "[" * 100_000 + "]" * 100_000
+    result = ResourceParser().parse_spec(deep)
+    assert result.is_err()
+    assert result.error.error_type == "RecursionError"
+    assert result.error.original_input == deep
+
+
+def test_parser_error_accessors_and_str_req_4_2():
+    from src.parser import ResourceParser
+
+    error = ResourceParser().parse_spec('{"a": }').error
+    assert error.error_message() == error.message
+    assert error.error_context() == error.context
+    assert str(error).startswith("JSONDecodeError: Invalid JSON syntax")
+    assert "line 1, column 7" in error.context
+
+
+def test_parser_result_accessors_reject_wrong_variant_req_4_1():
+    from src.parser import Result
+
+    ok: Result[int, str] = Result.ok(1)
+    err: Result[int, str] = Result.err("boom")
+    assert ok.value == 1 and err.error == "boom"
+    with pytest.raises(ValueError, match="error result"):
+        _ = err.value
+    with pytest.raises(ValueError, match="success result"):
+        _ = ok.error
+    with pytest.raises(ValueError, match="value is None"):
+        _ = Result.ok(None).value
+
+
+@pytest.mark.parametrize(
+    ("text", "position", "expected"),
+    [
+        ("", 0, ""),
+        ("short", -1, "short"),
+        ("x" * 100, -1, "x" * 80 + "..."),
+        ("abcdef", 10, "abcdef"),
+        ("a" * 50 + "b" * 50, 200, "..." + "a" * 30 + "b" * 50),
+        ("a" * 100, 50, "..." + "a" * 80 + "..."),
+        ("abcdef", 2, "abcdef"),
+    ],
+)
+def test_parser_extract_json_excerpt_bounds_req_4_2(text: str, position: int, expected: str):
+    from src.parser import extract_json_excerpt
+
+    assert extract_json_excerpt(text, position) == expected
+
+
+def test_parser_roundtrip_preserves_raw_response_req_4_5():
+    from src.parser import ResourceParser
+
+    data = _valid_spec_dict()
+    data["raw_response"] = {"GetBucketVersioning": {"Status": "Enabled"}}
+    parser = ResourceParser()
+    spec = parser.parse_spec(json.dumps(data)).value
+    assert spec.raw_response == data["raw_response"]
+    assert json.loads(parser.print_spec(spec)) == data

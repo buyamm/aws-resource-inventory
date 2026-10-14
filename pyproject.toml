@@ -84,7 +84,7 @@ follow_imports = "normal"
 strict_optional = true
 
 [[tool.mypy.overrides]]
-module = ["boto3.*", "botocore.*", "moto.*", "hypothesis.*"]
+module = ["boto3.*", "botocore.*"]
 ignore_missing_imports = true
 
 [tool.ruff]
