@@ -391,16 +391,16 @@ Tasks 1–13 were implemented against the first draft of the design. Tasks 14–
   - [x] 21.5 Refactor: progress output on stderr, `--no-color`, help texts with examples (REFACTOR)
   - Commit: `feat(cli): add aws-inventory CLI with metrics, reports and verification (Task 21)`
 
-- [ ] 22. End-to-End Testing (CliRunner + moto)
-  - [ ] 22.1 `test_e2e_discovery_collection_output_workflow`: collect on a moto account with all 10 types → every expected file exists, checksums verify, exit 0
+- [x] 22. End-to-End Testing (CliRunner + moto)
+  - [x] 22.1 `test_e2e_discovery_collection_output_workflow`: collect on a moto account with all 10 types → every expected file exists, checksums verify, exit 0
     - _Requirements: 1.1, 2.1, 3.1–3.6_
-  - [ ] 22.2 `test_e2e_iac_generation_workflow`: collect → generate-iac → HCL parses, one block per resource, `import.sh` has one import per block
+  - [x] 22.2 `test_e2e_iac_generation_workflow`: collect → generate-iac → HCL parses, one block per resource, `import.sh` has one import per block
     - _Requirements: 7.1–7.4_
-  - [ ] 22.3 `test_e2e_mcp_server_analysis_workflow`: collect → MCPServer over Output_Dir → list/get/analyze/generate-documentation; all citations verify
+  - [x] 22.3 `test_e2e_mcp_server_analysis_workflow`: collect → MCPServer over Output_Dir → list/get/analyze/generate-documentation; all citations verify
     - _Requirements: 5.1, 6.1, 8.1_
-  - [ ] 22.4 `test_e2e_verify_detects_tampering`: collect → analyze → edit a spec value → verify exits 1 and prints `path:line: reason`
+  - [x] 22.4 `test_e2e_verify_detects_tampering`: collect → analyze → edit a spec value → verify exits 1 and prints `path:line: reason`
     - _Requirements: 8.3, 8.4_
-  - [ ] 22.5 `test_e2e_partial_failure_exit_code`: one resource's primary call denied → exit 1, report lists the failure, other resources written
+  - [x] 22.5 `test_e2e_partial_failure_exit_code`: one resource's primary call denied → exit 1, report lists the failure, other resources written
     - _Requirements: 12.2, 12.4, 12.5_
   - Commit: `test(e2e): end-to-end workflows for collect, IaC, MCP and verify (Task 22)`
 
