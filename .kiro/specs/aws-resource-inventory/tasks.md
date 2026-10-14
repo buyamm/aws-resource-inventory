@@ -2,7 +2,9 @@
 
 ## Overview
 
-This implementation plan follows Test-Driven Development (TDD) methodology with the Red-Green-Refactor cycle. Every implementation task is preceded by writing tests first. The system will be built using Python 3.11+ with comprehensive test coverage including property-based tests, unit tests, integration tests, and end-to-end tests.
+This implementation plan follows Test-Driven Development (TDD) methodology with the Red-Green-Refactor cycle. Every implementation task is preceded by writing tests first. The system is built with Python 3.11+ with property-based, unit, integration (moto) and end-to-end tests.
+
+Tasks 1–13 were implemented against the first draft of the design. Tasks 14–18 align that code with the revised requirements/design (canonical resource types, AWS-field-name spec schema, checksums and citations, Terraform mapping). Each top-level task ends with a commit that is pushed. Tests are always run with `venv/bin/python -m pytest`.
 
 ## Tasks
 
@@ -312,272 +314,137 @@ This implementation plan follows Test-Driven Development (TDD) methodology with 
     - Improve confidence score algorithms
     - _Requirements: 6.5_
 
-- [ ] 14. MCP Server - TDD Implementation
-  - [x] 14.1 Write integration tests for MCP server (RED phase)
-    - Write test: `test_mcp_server_list_resources_returns_cached_data_req_5_3`
-    - Write test: `test_mcp_server_blocks_unauthorized_operations_req_5_6`
-    - Write test: `test_mcp_server_enforces_rate_limit_req_5_7`
-    - Write test: `test_mcp_server_no_aws_credentials_in_responses_req_5_2`
-    - _Requirements: 5.3, 5.6, 5.7, 5.2_
+- [ ] 14. Foundations alignment: resource registry and sanitizer
+  - [ ] 14.1 Write tests for the resource type registry (RED)
+    - `tests/unit/test_resource_types.py`: `test_registry_has_ten_supported_types_req_1_3`, `test_canonical_type_resolves_aliases`, `test_resource_id_per_type_req_3_2`, `test_file_id_replaces_unsafe_characters_req_3_2`, `test_spec_relpath_layout_req_3_2`
+    - _Requirements: 1.3, 3.2_
+  - [ ] 14.2 Implement `src/resource_types.py` (GREEN)
+    - `ResourceTypeInfo`, `REGISTRY`, `canonical_type()`, `resource_id()`, `file_id()`, `spec_relpath()`, draw.io style per type
+    - _Requirements: 1.3, 3.2_
+  - [ ] 14.3 Write sanitizer tests for the revised rules (RED)
+    - `test_sanitizer_does_not_redact_keyname_kmskeyid_keytype_req_9_5`, `test_sanitizer_redacts_pem_private_key_req_9_5`, `test_sanitizer_does_not_redact_role_unique_ids_req_9_5`, `test_property_sanitizer_idempotent_req_9_6`
+    - _Requirements: 9.5, 9.6_
+  - [ ] 14.4 Update `src/sanitizer.py` (GREEN): remove the generic `key` rule and non-credential ID prefixes, add the PEM rule and `[REDACTED_PRIVATE_KEY]`
+    - _Requirements: 9.5, 9.6_
+  - [ ] 14.5 Use the registry everywhere a type name, id or file name is derived (`output_generator`, `iac_generator`, `diagram_generator`, `analysis_engine`, `discovery`) (REFACTOR)
+    - _Requirements: 3.2, 7.7_
+  - Commit: `feat(core): add resource type registry and align sanitizer rules (Task 14)`
 
-  - [ ] 14.2 Integration tests for MCP server
-    - Test cached data retrieval without AWS calls
-    - Test operation authorization
-    - Test rate limiting
-    - Test credential sanitization
-    - _Requirements: 5.3, 5.6, 5.7, 5.2_
+- [ ] 15. Collection alignment: all resource types, error classification, sessions
+  - [ ] 15.1 Write tests (RED)
+    - `tests/unit/test_collector.py`: `test_collector_maps_client_error_access_denied_no_retry_req_2_5`, `test_collector_uses_retry_after_header_req_12_3`, `test_collector_counts_api_calls_req_10_2`, `test_collector_s3_missing_subconfig_not_error_req_2_2`
+    - `tests/integration/test_aws_api.py` (moto): one `test_integration_collector_<type>_spec_req_2_1` per type not yet covered (vpc, security group, rds, log group, state machine, dynamodb, iam role), each asserting the schema in design.md and `ResponseMetadata` absence
+    - `tests/integration/test_inventory.py`: `test_integration_inventory_collects_all_discovered_types_req_2_1`, `test_inventory_sets_region_and_account_req_3_3`, `test_inventory_records_failed_operations_req_12_2`
+    - `tests/unit/test_aws_session.py`: `test_session_uses_default_chain_req_9_1`, `test_session_assume_role_req_9_3`, `test_session_disables_botocore_retries_req_12_1`
+    - `tests/unit/test_discovery.py`: `test_discovery_follows_pagination_req_1_5`
+    - _Requirements: 1.5, 2.1–2.6, 9.1, 9.3, 12.1–12.3_
+  - [ ] 15.2 Implement (GREEN): `SpecCollector` per-type `collect_*` methods + `collect_resource()` dispatcher, `ClientError` classification, `src/inventory.py`, `src/aws_session.py`, discovery pagination and API-call counting
+    - _Requirements: 1.5, 2.1–2.6, 9.1, 9.3, 12.1–12.3_
+  - [ ] 15.3 Refactor shared retry/classification code; remove `"unknown"` region/account placeholders
+  - Commit: `feat(collector): collect all supported resource types with classified retries (Task 15)`
 
-  - [ ] 14.3 Implement MCPServer class (GREEN phase)
-    - Create `src/mcp_server.py` with `MCPServer` class
-    - Implement `handle_request()` method with authorization
-    - Implement rate limiting middleware
-    - Implement whitelisted operations: list-resources, get-resource-spec, analyze-activity-flow, generate-documentation
-    - _Requirements: 5.1, 5.5, 5.6, 5.7_
+- [ ] 16. Integrity and persistence alignment
+  - [ ] 16.1 Write tests (RED)
+    - `tests/unit/test_integrity.py`: `test_spec_checksum_is_canonical_req_3_5`, `test_seal_specs_sanitizes_and_sets_checksum_req_3_5`, `test_resolve_property_path`, `test_find_property_line_req_8_4`, `test_verify_output_dir_detects_tampered_file_req_8_4`, `test_verify_output_dir_detects_wrong_evidence_req_8_3`
+    - `tests/unit/test_output_generator.py`: `test_output_generator_sanitizes_raw_responses_req_3_6`, `test_output_generator_load_specs_reads_only_spec_files_req_5_3`, `test_output_generator_writes_manifest_req_3_3`
+    - _Requirements: 3.3, 3.5, 3.6, 8.3, 8.4_
+  - [ ] 16.2 Implement `src/integrity.py` and update `src/output_generator.py` (GREEN)
+  - Commit: `feat(integrity): add spec checksums, sealing and output verification (Task 16)`
 
-  - [ ] 14.4 Implement MCP server operations (GREEN phase)
-    - Implement `list_resources()` using cached data
-    - Implement `get_resource_spec()` from cache
-    - Ensure no AWS API calls are made
-    - Ensure no credentials in responses
-    - _Requirements: 5.2, 5.3, 5.4_
+- [ ] 17. Analysis and diagram alignment
+  - [ ] 17.1 Rewrite analysis/diagram test fixtures to the AWS-field-name schema; add `test_analysis_engine_citations_include_spec_file_req_8_2`, `test_analysis_engine_log_group_relationship_req_6_1`, `test_analysis_engine_flags_admin_managed_policy_req_6_6`, `test_analysis_engine_flags_public_bucket_policy_req_6_6`, `test_analysis_engine_flags_ipv6_open_ingress_req_6_6`, `test_analysis_engine_reports_undetectable_patterns_req_6_2`, `test_property_citations_resolve_req_8_5`, `test_diagram_uses_aws4_stencils_req_6_4` (RED)
+    - _Requirements: 6.1, 6.2, 6.4, 6.5, 6.6, 8.1, 8.2, 8.5_
+  - [ ] 17.2 Implement rules, citations, `AnalysisReport.to_dict()`, stencil styles and region layout (GREEN)
+  - Commit: `feat(analysis): align relationship rules, citations and diagram styles with design (Task 17)`
 
-  - [ ] 14.5 Refactor MCP server for security (REFACTOR phase)
-    - Add comprehensive security logging
-    - Add request validation
-    - Ensure sandboxing from AWS credentials
-    - _Requirements: 5.2, 5.6, 9.7_
+- [ ] 18. Terraform mapping alignment
+  - [ ] 18.1 Write tests (RED): per-type mapping tests `test_iac_<type>_maps_arguments_req_7_3` (10 types), `test_iac_generated_files_parse_as_hcl_req_7_2` (python-hcl2), `test_iac_import_ids_per_type_req_7_4`, `test_iac_companion_resources_s3_iam_req_7_4`, `test_iac_redacted_values_ignored_req_7_5`, `test_iac_verify_plan_uses_exit_code_only_req_7_5`, `test_iac_provider_alias_per_region_req_7_2`; keep Property 3
+    - _Requirements: 7.2–7.7_
+  - [ ] 18.2 Implement the mapping table, companion resources, provider aliases and exit-code-only plan verification (GREEN)
+  - [ ] 18.3 Add live test `test_live_iac_terraform_plan_zero_changes_req_7_5` (`@pytest.mark.aws`, skipped by default)
+  - Commit: `feat(iac): map specifications to Terraform arguments per resource type (Task 18)`
 
-- [ ] 15. Checkpoint - MCP server tests passing
-  - Ensure all tests pass, ask the user if questions arise.
+- [ ] 19. MCP Server - TDD Implementation
+  - [x] 19.1 Write integration tests for MCP server core (RED) — formerly 14.1, done
+    - `test_mcp_server_list_resources_returns_cached_data_req_5_3`, `test_mcp_server_blocks_unauthorized_operations_req_5_6`, `test_mcp_server_enforces_rate_limit_req_5_7`, `test_mcp_server_no_aws_credentials_in_responses_req_5_2`
+  - [ ] 19.2 Extend tests to the revised contract (RED)
+    - Cache fixtures use the Output_Dir layout and canonical types
+    - `test_mcp_server_list_resources_filters_by_alias_req_5_1`, `test_mcp_server_rejects_unknown_params_req_5_5`, `test_mcp_server_security_log_entries_req_5_6`, `test_mcp_server_rate_limited_requests_not_counted_req_5_7`, `test_mcp_server_analyze_activity_flow_uses_cache_req_5_1`, `test_mcp_server_generate_documentation_cited_req_8_1`, `test_mcp_server_unknown_arn_rejected_req_8_6`, `test_mcp_server_module_does_not_import_boto3_req_5_2`, `test_property_mcp_server_no_credentials_req_5_2`
+    - `tests/integration/test_mcp_stdio.py`: `test_mcp_stdio_lists_four_tools_req_5_1`, `test_mcp_stdio_tool_call_roundtrip_req_5_1`, `test_sandbox_environment_removes_aws_vars_req_9_7`
+    - _Requirements: 5.1–5.7, 8.6, 9.7_
+  - [ ] 19.3 Implement `MCPServer` revisions: parameter schemas, security log, registry-based cache loading, analysis/documentation operations (GREEN)
+  - [ ] 19.4 Implement `src/mcp_stdio.py` (FastMCP tools + `sandbox_environment`) (GREEN)
+  - [ ] 19.5 Refactor for security: sanitize every response at a single exit point, no boto3 import (REFACTOR)
+  - Commit: `feat(mcp): MCP stdio server over cached specs with whitelist, validation and rate limit (Task 19)`
 
-- [ ] 16. CLI Tool - TDD Implementation
-  - [ ] 16.1 Write unit tests for CLI (RED phase)
-    - Write test: `test_cli_never_logs_credentials_req_9_2`
-    - Write test: `test_cli_uses_aws_credential_chain_req_9_1`
-    - Write test: `test_cli_supports_assume_role_req_9_3`
-    - Write test: `test_cli_exits_nonzero_on_errors_req_12_5`
-    - _Requirements: 9.2, 9.1, 9.3, 12.5_
+- [ ] 20. Checkpoint - Foundations, collector, analysis, IaC and MCP tests passing
+  - Run the full suite; fix regressions before continuing.
 
-  - [ ] 16.2 Unit tests for CLI tool
-    - Test credential handling security
-    - Test AWS credential chain integration
-    - Test assume-role support
-    - Test error exit codes
-    - _Requirements: 9.1, 9.2, 9.3, 12.5_
+- [ ] 21. CLI Tool - TDD Implementation
+  - [ ] 21.1 Write tests (RED) in `tests/unit/test_cli.py` and `tests/unit/test_metrics.py`
+    - `test_cli_never_logs_credentials_req_9_2`, `test_cli_uses_aws_credential_chain_req_9_1`, `test_cli_supports_assume_role_req_9_3`, `test_cli_exits_nonzero_on_errors_req_12_5`, `test_cli_exits_2_without_credentials_req_12_5`, `test_cli_collect_prints_time_savings_req_10_5`, `test_cli_collection_report_lists_operations_req_12_4`, `test_metrics_time_savings_formula_req_10_4`, `test_metrics_phase_timings_req_10_1`, `test_cli_only_read_only_api_calls_req_9_4`
+    - _Requirements: 9.1–9.4, 10.1–10.5, 12.4, 12.5_
+  - [ ] 21.2 Implement `src/cli.py` commands `discover`, `collect`, `analyze`, `generate-iac`, `generate-docs`, `verify`, `mcp-serve` with exit codes and `SanitizingFilter` (GREEN)
+  - [ ] 21.3 Implement `src/metrics.py` and `collection_report.json` / `summary_report.md` (GREEN)
+  - [ ] 21.4 Implement `src/documentation.py` (`docs/infrastructure.md`, every statement cited) (GREEN)
+    - _Requirements: 6.3, 8.1_
+  - [ ] 21.5 Refactor: progress output on stderr, `--no-color`, help texts with examples (REFACTOR)
+  - Commit: `feat(cli): add aws-inventory CLI with metrics, reports and verification (Task 21)`
 
-  - [ ] 16.3 Implement CLI interface (GREEN phase)
-    - Create `src/cli.py` with CLI application using argparse or Click
-    - Implement commands: discover, collect, analyze, generate-iac, generate-docs
-    - Implement AWS credential chain integration
-    - Implement logging without credential exposure
-    - _Requirements: 9.1, 9.2, 9.3, 9.4_
-
-  - [ ] 16.4 Implement performance metrics collection (GREEN phase)
-    - Add timing instrumentation
-    - Implement metrics collection: resources discovered, API calls made, data volume
-    - Calculate time savings vs manual effort
-    - Generate summary report
-    - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
-
-  - [ ] 16.5 Implement collection report generation (GREEN phase)
-    - Generate report of successful/failed operations
-    - List all errors with details
-    - Display time savings metrics
-    - _Requirements: 12.4_
-
-  - [ ] 16.6 Refactor CLI for usability (REFACTOR phase)
-    - Add progress bars for long operations
-    - Improve help messages and examples
-    - Add colored output for better readability
-    - _Requirements: All_
-
-- [ ] 17. End-to-End Testing
-  - [ ] 17.1 Write E2E test for complete discovery workflow
-    - Write test: `test_e2e_discovery_collection_output_workflow`
-    - Test: CLI discovery → collection → output generation
-    - Verify all output files created correctly
-    - _Requirements: 1.1, 2.1, 3.1_
-
-  - [ ] 17.2 E2E test - complete workflow
-    - Test full discovery and collection pipeline
-    - Validate output file generation
-    - _Requirements: 1.1, 2.1, 3.1_
-
-  - [ ] 17.3 Write E2E test for IaC generation workflow
-    - Write test: `test_e2e_iac_generation_terraform_plan_zero_req_7_5`
-    - Test: Collection → IaC generation → Terraform validation
-    - _Requirements: 7.5_
-
-  - [ ] 17.4 E2E test - IaC generation
-    - Test complete IaC generation pipeline
-    - Validate Terraform plan output
-    - _Requirements: 7.5_
-
-  - [ ] 17.5 Write E2E test for MCP server analysis workflow
-    - Write test: `test_e2e_mcp_server_analysis_workflow`
-    - Test: Collection → MCP server → AI Agent → Documentation
+- [ ] 22. End-to-End Testing (CliRunner + moto)
+  - [ ] 22.1 `test_e2e_discovery_collection_output_workflow`: collect on a moto account with all 10 types → every expected file exists, checksums verify, exit 0
+    - _Requirements: 1.1, 2.1, 3.1–3.6_
+  - [ ] 22.2 `test_e2e_iac_generation_workflow`: collect → generate-iac → HCL parses, one block per resource, `import.sh` has one import per block
+    - _Requirements: 7.1–7.4_
+  - [ ] 22.3 `test_e2e_mcp_server_analysis_workflow`: collect → MCPServer over Output_Dir → list/get/analyze/generate-documentation; all citations verify
     - _Requirements: 5.1, 6.1, 8.1_
+  - [ ] 22.4 `test_e2e_verify_detects_tampering`: collect → analyze → edit a spec value → verify exits 1 and prints `path:line: reason`
+    - _Requirements: 8.3, 8.4_
+  - [ ] 22.5 `test_e2e_partial_failure_exit_code`: one resource's primary call denied → exit 1, report lists the failure, other resources written
+    - _Requirements: 12.2, 12.4, 12.5_
+  - Commit: `test(e2e): end-to-end workflows for collect, IaC, MCP and verify (Task 22)`
 
-  - [ ] 17.6 E2E test - MCP server analysis
-    - Test MCP server with AI Agent integration
-    - Validate generated documentation
-    - _Requirements: 5.1, 6.1, 8.1_
+- [ ] 23. Documentation and Demo
+  - [ ] 23.1 `README.md`: prerequisites, install, every command with an example, MCP client config, troubleshooting, known limitations — _Req 11.1_
+  - [ ] 23.2 `docs/ARCHITECTURE.md`: component + data-flow diagrams (Mermaid) — _Req 11.2_
+  - [ ] 23.3 `docs/TESTING.md`: TDD workflow, markers, fixtures, how to add a resource type — _Req 11.1_
+  - [ ] 23.4 `scripts/demo.py` (moto by default, `--live` optional) — _Req 11.3_
+  - [ ] 23.5 `examples/output/` generated by the demo — _Req 11.5_
+  - [ ] 23.6 `docs/ACCURACY_AND_SECURITY.md` (citation method, security measures, measured benchmark) and `docs/iam-policy.json` — _Req 9.4, 11.4_
+  - [ ] 23.7 Rewrite `instruction.md` (Vietnamese user guide) to match the real CLI; remove obsolete `TASK_*_COMPLETED.md` notes
+  - Commit: `docs: README, architecture, testing, accuracy/security docs and demo (Task 23)`
 
-  - [ ] 17.7 Implement AI Agent integration for analysis
-    - Integrate LLM for activity flow analysis
-    - Implement citation generation
-    - Implement hallucination prevention checks
-    - _Requirements: 6.3, 8.1, 8.2, 8.5_
+- [ ] 24. Final Integration and Polish
+  - [ ] 24.1 Coverage: ≥ 80 % overall, 100 % for `src/parser.py` and `src/sanitizer.py`
+  - [ ] 24.2 `bandit -r src -ll` clean; review credential handling
+  - [ ] 24.3 Benchmark: mocked 1000-resource discovery+collection timing recorded in `docs/ACCURACY_AND_SECURITY.md` — _Req 1.5, 10.1, 10.2_
+  - [ ] 24.4 `ruff check`, `black --check`, `mypy src` clean; CI workflow gates point at the real module files
+  - Commit: `chore: final quality gates (Task 24)`
 
-  - [ ] 17.8 Implement verification command
-    - Create verification command that validates citations
-    - Check checksums against source files
-    - Report discrepancies
-    - _Requirements: 8.3, 8.4, 8.6_
-
-- [ ] 18. Checkpoint - All E2E tests passing
-  - Ensure all tests pass, ask the user if questions arise.
-
-- [ ] 19. Documentation and Demo
-  - [ ] 19.1 Create README.md with installation and usage
-    - Document prerequisites and dependencies
-    - Provide installation instructions
-    - Include usage examples for all CLI commands
-    - Add troubleshooting section
-    - _Requirements: 11.1_
-
-  - [ ] 19.2 Create architecture documentation
-    - Create architecture diagrams showing component interaction
-    - Document CLI, MCP Server, and AI Agent flow
-    - Document data flow from AWS to output
-    - _Requirements: 11.2_
-
-  - [ ] 19.3 Create TESTING.md documentation
-    - Document TDD workflow and methodology
-    - Explain how to write new tests
-    - Document test fixture structure
-    - Provide examples of property tests, unit tests, integration tests
-    - _Requirements: 11.1_
-
-  - [ ] 19.4 Create demo script and sample AWS account setup
-    - Create demo script that runs against sample AWS environment
-    - Set up sample AWS resources using moto or real test account
-    - Create demo video or walkthrough
-    - _Requirements: 11.3_
-
-  - [ ] 19.5 Create example output files
-    - Generate example JSON output
-    - Generate example Markdown reports
-    - Generate example Terraform IaC
-    - Generate example diagrams
-    - Generate example analysis reports
-    - _Requirements: 11.5_
-
-  - [ ] 19.6 Document accuracy methodology and security measures
-    - Document citation methodology
-    - Document hallucination prevention approach
-    - Document security measures and credential handling
-    - Document performance benchmarks
-    - _Requirements: 11.4_
-
-- [ ] 20. Final Integration and Polish
-  - [ ] 20.1 Run complete test suite and validate coverage
-    - Run all unit tests with coverage report
-    - Verify 80% minimum coverage achieved
-    - Verify 100% coverage for parser and sanitizer
-    - Run all property tests with 100+ iterations
-    - Run all integration and E2E tests
-    - _Requirements: All_
-
-  - [ ] 20.2 Final test suite validation
-    - Run complete test suite
-    - Validate coverage requirements met
-    - _Requirements: All_
-
-  - [ ] 20.3 Security audit and vulnerability scanning
-    - Run bandit security scanner
-    - Review all credential handling code
-    - Verify no secrets in logs or outputs
-    - Test MCP server sandboxing
-    - _Requirements: 9.1, 9.2, 9.5, 9.6, 9.7_
-
-  - [ ] 20.4 Performance optimization and benchmarking
-    - Profile performance bottlenecks
-    - Optimize slow operations
-    - Validate 5-minute discovery requirement
-    - Generate performance benchmark report
-    - _Requirements: 1.5, 10.1, 10.2_
-
-  - [ ] 20.5 Code quality checks
-    - Run mypy type checking
-    - Run ruff linting
-    - Run black formatting
-    - Fix all type errors and linting issues
-    - _Requirements: All_
-
-- [ ] 21. Final Checkpoint - Production Ready
-  - Ensure all tests pass, ask the user if questions arise.
+- [ ] 25. Final Checkpoint - Production Ready
+  - Full suite green, CI configuration consistent, ask the user if questions arise.
 
 ## Notes
 
-- Tasks marked with `*` are optional test-related sub-tasks and can be skipped for faster MVP
-- Each task references specific requirements for traceability
-- TDD methodology requires writing tests BEFORE implementation code
-- RED-GREEN-REFACTOR cycle must be followed strictly
-- Property tests must run minimum 100 iterations
-- Minimum 80% code coverage required; 100% for parser and sanitizer
-- Integration tests use moto for AWS service mocking
-- E2E tests validate complete workflows end-to-end
-- Checkpoints ensure incremental validation before proceeding
-- All security-sensitive code must have dedicated security tests
-- Performance tests validate time and resource constraints
-- Documentation must include test examples and TDD workflow explanation
+- TDD is mandatory: every sub-task marked (RED) is committed together with its (GREEN) implementation in the same top-level task commit, but the test must have been run and seen failing first.
+- Property tests run ≥ 100 examples (hypothesis profile in `tests/conftest.py`).
+- Integration tests use moto 4.x (`mock_s3`, `mock_ec2`, ...). No test may reach a real AWS account unless marked `@pytest.mark.aws` and run with `AWS_INVENTORY_LIVE_TESTS=1`.
+- Every top-level task is committed and pushed when its tests pass.
 
 ## Task Dependency Graph
 
 ```json
 {
   "waves": [
-    { "id": 0, "tasks": ["1.1", "1.2"] },
-    { "id": 1, "tasks": ["1.3", "1.4"] },
-    { "id": 2, "tasks": ["3.1"] },
-    { "id": 3, "tasks": ["3.2", "3.3"] },
-    { "id": 4, "tasks": ["3.4", "5.1"] },
-    { "id": 5, "tasks": ["5.2", "5.3"] },
-    { "id": 6, "tasks": ["5.4", "6.1"] },
-    { "id": 7, "tasks": ["6.2", "6.3"] },
-    { "id": 8, "tasks": ["6.4"] },
-    { "id": 9, "tasks": ["6.5", "6.6"] },
-    { "id": 10, "tasks": ["6.7"] },
-    { "id": 11, "tasks": ["6.8", "6.9"] },
-    { "id": 12, "tasks": ["6.10", "8.1"] },
-    { "id": 13, "tasks": ["8.2", "8.3"] },
-    { "id": 14, "tasks": ["8.4", "9.1"] },
-    { "id": 15, "tasks": ["9.2", "9.3"] },
-    { "id": 16, "tasks": ["9.4", "10.1"] },
-    { "id": 17, "tasks": ["10.2", "10.3"] },
-    { "id": 18, "tasks": ["10.4", "10.5"] },
-    { "id": 19, "tasks": ["10.6"] },
-    { "id": 20, "tasks": ["10.7", "12.1"] },
-    { "id": 21, "tasks": ["12.2", "12.3", "12.4"] },
-    { "id": 22, "tasks": ["12.5", "13.1"] },
-    { "id": 23, "tasks": ["13.2", "13.3"] },
-    { "id": 24, "tasks": ["13.4"] },
-    { "id": 25, "tasks": ["13.5", "14.1"] },
-    { "id": 26, "tasks": ["14.2", "14.3"] },
-    { "id": 27, "tasks": ["14.4"] },
-    { "id": 28, "tasks": ["14.5", "16.1"] },
-    { "id": 29, "tasks": ["16.2", "16.3"] },
-    { "id": 30, "tasks": ["16.4", "16.5"] },
-    { "id": 31, "tasks": ["16.6", "17.1"] },
-    { "id": 32, "tasks": ["17.2", "17.3"] },
-    { "id": 33, "tasks": ["17.4", "17.5"] },
-    { "id": 34, "tasks": ["17.6", "17.7"] },
-    { "id": 35, "tasks": ["17.8", "19.1", "19.2"] },
-    { "id": 36, "tasks": ["19.3", "19.4", "19.5"] },
-    { "id": 37, "tasks": ["19.6", "20.1"] },
-    { "id": 38, "tasks": ["20.2", "20.3", "20.4"] },
-    { "id": 39, "tasks": ["20.5"] }
+    { "id": 0, "tasks": ["14"] },
+    { "id": 1, "tasks": ["15", "16"] },
+    { "id": 2, "tasks": ["17", "18"] },
+    { "id": 3, "tasks": ["19"] },
+    { "id": 4, "tasks": ["20"] },
+    { "id": 5, "tasks": ["21"] },
+    { "id": 6, "tasks": ["22"] },
+    { "id": 7, "tasks": ["23"] },
+    { "id": 8, "tasks": ["24", "25"] }
   ]
 }
 ```

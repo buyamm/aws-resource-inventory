@@ -2,1762 +2,406 @@
 
 ## Overview
 
-AWS Resource Inventory is a system that automatically discovers, collects, and analyzes AWS infrastructure resources. The system follows **Test-Driven Development (TDD)** methodology, where all tests are written before implementation code. This approach ensures correctness, maintainability, and verifiable behavior across all components.
+AWS Resource Inventory discovers, collects, persists and analyzes AWS resources of an account that has no IaC or documentation. A CLI collects data with read-only AWS calls into a local **Output_Dir**. All later steps (analysis, diagram, Terraform, documentation, verification, MCP serving) are **offline** and read only from Output_Dir.
+
+Binding scope decisions are listed in requirements.md §"Scope decisions". In short: Python 3.11+, no embedded LLM, MCP over stdio with the official `mcp` SDK, draw.io output with `mxgraph.aws4.*` stencils, moto-mocked tests only (live tests opt-in).
 
 ### Core Design Principles
 
-1. **Test-First Development**: Every feature begins with a failing test
-2. **Red-Green-Refactor Cycle**: Rigorous adherence to TDD workflow
-3. **Property-Based Testing**: Universal properties verified across generated inputs for parsers and transformations
-4. **Integration Testing**: API contracts and MCP server behavior validated before implementation
-5. **Verifiable Accuracy**: All AI-generated output traceable to source data
+1. **Test-first development**: every behavior is introduced by a failing test (Red → Green → Refactor).
+2. **Online/offline split**: only `discover` and `collect` talk to AWS. Everything else consumes Output_Dir, which makes results reproducible and auditable.
+3. **Single source of truth per concept**: resource types (`src/resource_types.py`), checksums and citations (`src/integrity.py`), sanitization (`src/sanitizer.py`).
+4. **Verifiable accuracy**: every analysis statement carries a Citation that `aws-inventory verify` can check mechanically.
+5. **Defense in depth for secrets**: sanitize before writing anything, sanitize every MCP response, sanitize every log record.
 
 ### System Components
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                         CLI Tool                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │   Resource   │  │     Spec     │  │    Output    │     │
-│  │   Discovery  │─▶│  Collector   │─▶│  Generator   │     │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
-│         │                  │                  │              │
-│         ▼                  ▼                  ▼              │
-│  ┌──────────────────────────────────────────────────┐      │
-│  │           Local Spec Storage (JSON)              │      │
-│  └──────────────────────────────────────────────────┘      │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                        MCP Server                            │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │  Safe Query  │  │   Analysis   │  │   Diagram    │     │
-│  │  Interface   │─▶│    Engine    │─▶│  Generator   │     │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
-│         │                  │                  │              │
-│         ▼                  ▼                  ▼              │
-│  ┌──────────────────────────────────────────────────┐      │
-│  │              AI Agent (LLM)                      │      │
-│  └──────────────────────────────────────────────────┘      │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-                  ┌───────────────────────┐
-                  │  Generated Artifacts  │
-                  │  - Documentation      │
-                  │  - Diagrams           │
-                  │  - Terraform IaC      │
-                  └───────────────────────┘
+                      ONLINE (AWS credentials)                         OFFLINE (Output_Dir only)
+┌──────────────────────────────────────────────────────────┐   ┌──────────────────────────────────────────┐
+│ CLI: aws-inventory collect                                │   │ CLI: analyze / generate-iac /            │
+│                                                           │   │      generate-docs / verify              │
+│  ResourceDiscovery ──▶ InventoryCollector ──▶ seal_specs ─┼──▶│  AnalysisEngine ─▶ DiagramGenerator      │
+│  (src/discovery.py)    (src/inventory.py)    (integrity)  │   │  IaCGenerator   ─▶ terraform/            │
+│                         └─ SpecCollector                  │   │  DocumentationGenerator ─▶ docs/         │
+│                            (src/collector.py)             │   │  verify_output_dir (integrity)           │
+│                                    │                      │   └──────────────────────────────────────────┘
+│                                    ▼                      │   ┌──────────────────────────────────────────┐
+│                           OutputGenerator ───────────────┼──▶│ MCP: aws-inventory mcp-serve (stdio)     │
+│                           (src/output_generator.py)       │   │  mcp_stdio (FastMCP tools)               │
+└──────────────────────────────────────────────────────────┘   │   └─▶ MCPServer core (whitelist, params,  │
+                                                                │       rate limit, sanitize, cache only)  │
+                                                                └───────────────────▲──────────────────────┘
+                                                                                    │ MCP tool calls
+                                                                         External AI_Agent (Claude, ...)
 ```
+
+### Module map
+
+| Module | Responsibility |
+|---|---|
+| `src/resource_types.py` | Registry of the 10 Supported_Resource_Types: canonical id, aliases, service, scope, id extraction, file id, Terraform type, import id, draw.io style. |
+| `src/parser.py` | `ResourceSpec`, `SpecMetadata`, `Result`, `ParseError`, `ResourceParser` (parse/print JSON). |
+| `src/sanitizer.py` | `DataSanitizer`: structure-preserving redaction with a redaction log. |
+| `src/discovery.py` | `ResourceDiscovery`: concurrent per-region listing with pagination; `DiscoveredResource`, `DiscoveryError`. |
+| `src/collector.py` | `SpecCollector`: per-type spec collection for one boto3 client, retry/backoff, error classification, API call counting. |
+| `src/inventory.py` | `InventoryCollector`: turns `DiscoveredResource`s into `ResourceSpec`s (one SpecCollector per service+region), `CollectionError`, `CollectionResult`. |
+| `src/integrity.py` | Canonical JSON, Spec_Checksum, `seal_specs()`, citation path resolution, `verify_output_dir()`. |
+| `src/output_generator.py` | JSON/Markdown/raw/checksum/summary files, `load_specs()` from Output_Dir. |
+| `src/analysis_engine.py` | Relationships, patterns, security findings, citations, `AnalysisReport` (+ JSON serialization). |
+| `src/diagram_generator.py` | Relationship detection + `.drawio` generation. |
+| `src/iac_generator.py` | Terraform generation per type mapping, `import.sh`, `verify_state.sh`, `verify_terraform_plan()`. |
+| `src/documentation.py` | `docs/infrastructure.md` from an `AnalysisReport` (every statement cited). |
+| `src/metrics.py` | Phase timer, run metrics, time-savings computation, `collection_report.json`. |
+| `src/aws_session.py` | boto3 session creation (profile, assume-role, botocore retry config), account id lookup. |
+| `src/mcp_server.py` | `MCPServer` core (no boto3 import). |
+| `src/mcp_stdio.py` | FastMCP stdio adapter + environment sandboxing. |
+| `src/cli.py` | Click CLI `aws-inventory`, logging setup with sanitizing filter, exit codes. |
 
 ## Development Methodology: Test-Driven Development
 
-### TDD Workflow
+1. **RED**: write a failing test that encodes one acceptance criterion; run it and see it fail.
+2. **GREEN**: write the minimal code that makes it pass.
+3. **REFACTOR**: improve structure with all tests green.
+4. **REPEAT**.
 
-All development follows the **Red-Green-Refactor** cycle:
-
-1. **RED**: Write a failing test that defines desired behavior
-   - Write property-based test for parsers/transformations
-   - Write unit test for specific behavior
-   - Write integration test for API contracts
-   - Verify test fails (proves test is actually testing something)
-
-2. **GREEN**: Write minimal code to make the test pass
-   - Implement only what's needed to pass the test
-   - No premature optimization
-   - Keep implementation simple and focused
-
-3. **REFACTOR**: Improve code quality while keeping tests green
-   - Remove duplication
-   - Improve naming and structure
-   - Optimize performance if needed
-   - Ensure all tests still pass
-
-4. **REPEAT**: Move to next test/feature
-
-### Test Coverage Requirements
-
-- **Minimum 80% code coverage** across all components
-- **100% coverage** for critical paths: parsing, credential handling, data sanitization
-- **Property-based tests** must run minimum 100 iterations per property
-- **Integration tests** must cover all MCP server operations
-- **End-to-end tests** must validate complete workflows
-
-### Test Organization
+### Test organization and naming
 
 ```
-aws-resource-inventory/
-├── src/
-│   ├── parser/
-│   ├── collector/
-│   ├── generator/
-│   └── mcp_server/
-├── tests/
-│   ├── unit/
-│   │   ├── test_parser.py          # Property-based parser tests
-│   │   ├── test_collector.py       # Retry/resilience tests
-│   │   ├── test_generator.py       # Output validation tests
-│   │   └── test_sanitizer.py       # Security tests
-│   ├── integration/
-│   │   ├── test_mcp_server.py      # API contract tests
-│   │   ├── test_aws_api.py         # AWS SDK mock tests
-│   │   └── test_iac_generator.py   # Terraform validation tests
-│   ├── e2e/
-│   │   └── test_full_workflow.py   # Complete collection workflow
-│   ├── fixtures/
-│   │   ├── sample_aws_responses/   # Mock AWS API responses
-│   │   ├── sample_specs/           # Sample resource specifications
-│   │   └── expected_outputs/       # Expected test outputs
-│   └── conftest.py                 # Shared test configuration
+tests/
+├── conftest.py            # fake AWS creds, hypothesis profile (100 examples), live-test skipping
+├── unit/                  # one file per src module, no AWS (mocks only)
+├── integration/           # moto-backed AWS tests, MCP server tests
+├── e2e/                   # full CLI workflows via click.testing.CliRunner + moto
+└── fixtures/              # sample AWS responses and sample specs
 ```
 
-### Test Naming Conventions
-
-- Property tests: `test_property_<description>_<requirement_id>`
-- Unit tests: `test_<function>_<scenario>_<expected>`
-- Integration tests: `test_integration_<component>_<operation>`
+- Property tests: `test_property_<description>_req_<X>_<Y>`
+- Unit tests: `test_<component>_<scenario>_req_<X>_<Y>` (requirement suffix whenever a criterion is covered)
+- Integration tests: `test_integration_<component>_<operation>_req_<X>_<Y>` or `test_<component>_..._req_<X>_<Y>`
 - E2E tests: `test_e2e_<workflow>_<scenario>`
+- Live tests: `test_live_<...>`, marked `@pytest.mark.aws`
 
-Example:
-```python
-def test_property_parse_print_roundtrip_req_4_4():
-    """Property: For all valid parsed specs, parsing→printing→parsing produces equivalent structure"""
-    pass
+Markers (pytest.ini, `--strict-markers`): `unit`, `integration`, `e2e`, `property`, `slow`, `aws`.
 
-def test_collector_retry_on_rate_limit_success():
-    """Unit: Collector retries with exponential backoff on rate limit"""
-    pass
+### Coverage and quality gates (CI: `.github/workflows/tdd-pipeline.yml`)
 
-def test_integration_mcp_server_list_resources():
-    """Integration: MCP server list-resources returns cached data"""
-    pass
-```
-
-## Architecture
-
-### Technology Stack
-
-- **Language**: Python 3.11+ (for AWS SDK support, type hints, and property testing libraries)
-- **AWS SDK**: boto3 (AWS API interactions)
-- **MCP Framework**: Model Context Protocol SDK
-- **Property Testing**: Hypothesis (property-based testing framework)
-- **Unit Testing**: pytest (test framework)
-- **IaC Generation**: Terraform (infrastructure as code)
-- **Diagram Generation**: drawio-ai-kit (visual diagrams)
-- **Output Formats**: JSON, Markdown
-- **CI/CD**: GitHub Actions with test gates
-
-### Test Tooling Stack
-
-```python
-# requirements-dev.txt
-pytest>=7.4.0              # Test framework
-pytest-cov>=4.1.0          # Coverage reporting
-pytest-mock>=3.11.1        # Mocking utilities
-hypothesis>=6.82.0         # Property-based testing
-moto>=4.1.0                # AWS service mocking
-freezegun>=1.2.2           # Time mocking
-responses>=0.23.0          # HTTP mocking
-black>=23.7.0              # Code formatting
-mypy>=1.4.1                # Type checking
-ruff>=0.0.280              # Fast linting
-```
-
-### TDD Pipeline
-
-```yaml
-# .github/workflows/tdd-pipeline.yml
-name: TDD Pipeline
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run Unit Tests
-        run: pytest tests/unit/ -v --cov=src --cov-report=term-missing
-        # Must pass with >= 80% coverage
-      
-      - name: Run Property Tests
-        run: pytest tests/unit/ -k property -v --hypothesis-show-statistics
-        # Must run 100+ iterations per property
-      
-      - name: Run Integration Tests
-        run: pytest tests/integration/ -v
-      
-      - name: Run E2E Tests
-        run: pytest tests/e2e/ -v
-      
-      - name: Type Checking
-        run: mypy src/
-      
-      - name: Coverage Gate
-        run: |
-          coverage report --fail-under=80
-          coverage report --include="src/parser/*" --fail-under=100
-```
-
-## Components and Interfaces
-
-### 1. Resource Parser (TDD Component)
-
-**Purpose**: Parse AWS API responses into typed structures and format back to JSON
-
-#### Test Specification (Write FIRST)
-
-```python
-from hypothesis import given, strategies as st
-
-# Property Test 1: Round-trip (MUST WRITE FIRST)
-@given(st.from_type(ResourceSpec))
-def test_property_parse_print_roundtrip_req_4_4(spec):
-    """
-    Property: For all valid ResourceSpec objects,
-    parse(print(spec)) produces equivalent structure
-    
-    Validates: Requirement 4.4
-    """
-    json_output = print_spec(spec)
-    parsed = parse_spec(json_output)
-    assert parsed == spec
-
-# Property Test 2: Parse then Print Preserves JSON
-@given(st.text().filter(is_valid_json))
-def test_property_print_parse_roundtrip(json_text):
-    """
-    Property: For all valid JSON strings,
-    print(parse(json)) produces equivalent JSON
-    
-    Validates: Requirement 4.4
-    """
-    parsed = parse_spec(json_text)
-    output = print_spec(parsed)
-    assert normalize_json(output) == normalize_json(json_text)
-
-# Error Test (MUST WRITE FIRST)
-def test_parser_malformed_json_returns_descriptive_error_req_4_2():
-    """
-    Unit: Parser returns descriptive error with excerpt for malformed JSON
-    
-    Validates: Requirement 4.2
-    """
-    malformed = '{"key": invalid}'
-    result = parse_spec(malformed)
-    assert result.is_err()
-    assert "invalid" in result.error_message()
-    assert "excerpt" in result.error_context()
-```
-
-#### Interface
-
-```python
-from typing import Dict, Any, Result
-from dataclasses import dataclass
-
-@dataclass
-class ResourceSpec:
-    """Typed AWS resource specification"""
-    resource_type: str
-    arn: str
-    region: str
-    specifications: Dict[str, Any]
-    metadata: SpecMetadata
-    
-class ResourceParser:
-    """TDD: Tests written before implementation"""
-    
-    def parse_spec(self, json_data: str) -> Result[ResourceSpec, ParseError]:
-        """Parse AWS API response into ResourceSpec
-        
-        TDD: test_property_parse_print_roundtrip_req_4_4 MUST pass
-        TDD: test_parser_malformed_json_returns_descriptive_error_req_4_2 MUST pass
-        """
-        raise NotImplementedError("RED: Write test first")
-    
-    def print_spec(self, spec: ResourceSpec) -> str:
-        """Format ResourceSpec back to valid AWS JSON
-        
-        TDD: test_property_print_parse_roundtrip MUST pass
-        """
-        raise NotImplementedError("RED: Write test first")
-```
-
-### 2. Spec Collector (TDD Component)
-
-**Purpose**: Collect resource specifications with retry logic and resilience
-
-#### Test Specification (Write FIRST)
-
-```python
-import pytest
-from unittest.mock import Mock, patch
-
-# Resilience Test 1 (MUST WRITE FIRST)
-def test_collector_retry_exponential_backoff_req_12_1():
-    """
-    Unit: Collector retries up to 3 times with exponential backoff
-    
-    Validates: Requirement 12.1
-    """
-    mock_api = Mock()
-    mock_api.side_effect = [
-        Exception("Timeout"),
-        Exception("Timeout"),
-        {"InstanceId": "i-123"}  # Success on 3rd try
-    ]
-    
-    collector = SpecCollector(api_client=mock_api)
-    result = collector.collect_ec2_spec("i-123")
-    
-    assert result.is_ok()
-    assert mock_api.call_count == 3
-    # Assert exponential backoff delays
-
-# Resilience Test 2 (MUST WRITE FIRST)
-def test_collector_continues_after_permission_error_req_2_5():
-    """
-    Unit: Collector logs missing permission and continues
-    
-    Validates: Requirement 2.5
-    """
-    mock_api = Mock()
-    mock_api.get_bucket_policy.side_effect = AccessDenied("Missing s3:GetBucketPolicy")
-    
-    collector = SpecCollector(api_client=mock_api)
-    result = collector.collect_s3_specs("my-bucket")
-    
-    assert result.is_ok()
-    assert "bucket-policy" not in result.value.specifications
-    assert "Missing s3:GetBucketPolicy" in collector.get_logs()
-
-# Rate Limit Test (MUST WRITE FIRST)
-def test_collector_waits_on_rate_limit_req_12_3():
-    """
-    Unit: Collector respects AWS retry-after headers
-    
-    Validates: Requirement 12.3
-    """
-    mock_api = Mock()
-    mock_api.side_effect = [
-        RateLimitException(retry_after=5),
-        {"FunctionName": "my-function"}
-    ]
-    
-    with patch('time.sleep') as mock_sleep:
-        collector = SpecCollector(api_client=mock_api)
-        result = collector.collect_lambda_spec("my-function")
-        
-        assert result.is_ok()
-        mock_sleep.assert_called_with(5)
-```
-
-#### Interface
-
-```python
-class SpecCollector:
-    """TDD: Tests written before implementation"""
-    
-    def __init__(self, api_client: AWSClient):
-        self.api_client = api_client
-        self.retry_config = RetryConfig(max_attempts=3, backoff_multiplier=2)
-    
-    def collect_s3_specs(self, bucket_name: str) -> Result[ResourceSpec, CollectorError]:
-        """Collect all S3 bucket specifications
-        
-        TDD: test_collector_continues_after_permission_error_req_2_5 MUST pass
-        
-        Specifications: bucket-acl, bucket-cors, bucket-encryption,
-        bucket-lifecycle-configuration, bucket-policy, bucket-tagging,
-        bucket-versioning, bucket-website
-        """
-        raise NotImplementedError("RED: Write test first")
-    
-    def collect_ec2_spec(self, instance_id: str) -> Result[ResourceSpec, CollectorError]:
-        """Collect EC2 instance specifications with retry
-        
-        TDD: test_collector_retry_exponential_backoff_req_12_1 MUST pass
-        """
-        raise NotImplementedError("RED: Write test first")
-    
-    def collect_lambda_spec(self, function_name: str) -> Result[ResourceSpec, CollectorError]:
-        """Collect Lambda function specifications with rate limit handling
-        
-        TDD: test_collector_waits_on_rate_limit_req_12_3 MUST pass
-        """
-        raise NotImplementedError("RED: Write test first")
-```
-
-### 3. IaC Generator (TDD Component)
-
-**Purpose**: Generate Terraform code from collected specifications
-
-#### Test Specification (Write FIRST)
-
-```python
-# Validation Test (MUST WRITE FIRST)
-def test_iac_generator_terraform_plan_zero_changes_req_7_5():
-    """
-    E2E: Generated Terraform plan shows zero changes vs actual AWS
-    
-    Validates: Requirement 7.5
-    """
-    # Given: Collected specs from AWS
-    specs = load_fixture("sample_specs/complete_infrastructure.json")
-    
-    # When: Generate Terraform code
-    generator = IaCGenerator()
-    tf_code = generator.generate_terraform(specs)
-    
-    # Then: terraform plan shows zero changes
-    with terraform_workspace(tf_code):
-        plan_output = run_terraform_plan()
-        assert "No changes" in plan_output
-        assert plan_output.changes_count == 0
-
-# Property Test (MUST WRITE FIRST)
-@given(st.from_type(ResourceSpec))
-def test_property_iac_generator_includes_all_specs(spec):
-    """
-    Property: For all ResourceSpecs, generated Terraform includes all specifications
-    
-    Validates: Requirement 7.3
-    """
-    generator = IaCGenerator()
-    tf_code = generator.generate_resource_block(spec)
-    
-    # All spec keys should appear in generated Terraform
-    for key, value in spec.specifications.items():
-        assert key_appears_in_tf(tf_code, key)
-
-# Import Command Test (MUST WRITE FIRST)
-def test_iac_generator_includes_import_commands_req_7_4():
-    """
-    Unit: Generator creates terraform import commands for all resources
-    
-    Validates: Requirement 7.4
-    """
-    specs = [
-        ResourceSpec(resource_type="aws_s3_bucket", arn="arn:aws:s3:::my-bucket"),
-        ResourceSpec(resource_type="aws_lambda_function", arn="arn:aws:lambda:us-east-1:123:function:my-func")
-    ]
-    
-    generator = IaCGenerator()
-    import_script = generator.generate_import_script(specs)
-    
-    assert "terraform import aws_s3_bucket.my_bucket my-bucket" in import_script
-    assert "terraform import aws_lambda_function.my_func my-func" in import_script
-```
-
-#### Interface
-
-```python
-class IaCGenerator:
-    """TDD: Tests written before implementation"""
-    
-    def generate_terraform(self, specs: List[ResourceSpec]) -> TerraformCode:
-        """Generate complete Terraform configuration
-        
-        TDD: test_iac_generator_terraform_plan_zero_changes_req_7_5 MUST pass
-        TDD: test_iac_generator_includes_import_commands_req_7_4 MUST pass
-        """
-        raise NotImplementedError("RED: Write test first")
-    
-    def generate_resource_block(self, spec: ResourceSpec) -> str:
-        """Generate single Terraform resource block
-        
-        TDD: test_property_iac_generator_includes_all_specs MUST pass
-        """
-        raise NotImplementedError("RED: Write test first")
-    
-    def generate_import_script(self, specs: List[ResourceSpec]) -> str:
-        """Generate terraform import commands
-        
-        TDD: test_iac_generator_includes_import_commands_req_7_4 MUST pass
-        """
-        raise NotImplementedError("RED: Write test first")
-    
-    def generate_verification_script(self, specs: List[ResourceSpec]) -> str:
-        """Generate script to verify Terraform state matches AWS
-        
-        TDD: test_iac_generator_verification_script_req_7_6 MUST pass
-        """
-        raise NotImplementedError("RED: Write test first")
-```
-
-### 4. MCP Server (TDD Component)
-
-**Purpose**: Provide safe, controlled interface for AI Agent to query infrastructure
-
-#### Test Specification (Write FIRST)
-
-```python
-# API Contract Tests (MUST WRITE FIRST)
-def test_mcp_server_list_resources_returns_cached_data_req_5_3():
-    """
-    Integration: MCP server returns cached local data, not AWS API calls
-    
-    Validates: Requirement 5.3
-    """
-    # Given: Cached specs exist
-    cached_specs = load_fixture("sample_specs/resources.json")
-    server = MCPServer(cache_dir="/tmp/specs")
-    
-    # When: AI Agent requests resource list
-    with mock.patch('boto3.client') as mock_boto:
-        response = server.handle_request({
-            "operation": "list-resources",
-            "filters": {"region": "us-east-1"}
-        })
-        
-        # Then: Returns cached data, no AWS API calls
-        assert response.is_ok()
-        assert len(response.value) > 0
-        mock_boto.assert_not_called()
-
-# Security Test (MUST WRITE FIRST)
-def test_mcp_server_blocks_unauthorized_operations_req_5_6():
-    """
-    Integration: MCP server rejects non-whitelisted operations
-    
-    Validates: Requirement 5.6
-    """
-    server = MCPServer()
-    
-    # When: AI Agent requests unauthorized operation
-    response = server.handle_request({
-        "operation": "delete-resource",  # NOT in whitelist
-        "resource_id": "i-123"
-    })
-    
-    # Then: Returns error and logs attempt
-    assert response.is_err()
-    assert "unauthorized" in response.error_message().lower()
-    assert server.get_security_logs()[0].operation == "delete-resource"
-
-# Rate Limit Test (MUST WRITE FIRST)
-def test_mcp_server_enforces_rate_limit_req_5_7():
-    """
-    Integration: MCP server limits AI Agent to 10 requests/second
-    
-    Validates: Requirement 5.7
-    """
-    server = MCPServer()
-    
-    # When: AI Agent sends 15 requests in 1 second
-    responses = []
-    for i in range(15):
-        responses.append(server.handle_request({"operation": "list-resources"}))
-    
-    # Then: First 10 succeed, remaining 5 are rate limited
-    assert sum(r.is_ok() for r in responses) == 10
-    assert sum(r.is_err() for r in responses) == 5
-    assert "rate limit" in responses[-1].error_message().lower()
-
-# No Credential Exposure Test (MUST WRITE FIRST)
-def test_mcp_server_no_aws_credentials_in_responses_req_5_2():
-    """
-    Security: MCP server never exposes AWS credentials
-    
-    Validates: Requirement 5.2
-    """
-    server = MCPServer()
-    
-    # When: AI Agent requests any operation
-    response = server.handle_request({"operation": "get-resource-spec", "arn": "arn:aws:s3:::bucket"})
-    
-    # Then: Response contains no credential-like strings
-    response_text = json.dumps(response.value)
-    assert not contains_credential_pattern(response_text)
-    assert "aws_access_key_id" not in response_text.lower()
-    assert "aws_secret_access_key" not in response_text.lower()
-```
-
-#### Interface
-
-```python
-class MCPServer:
-    """TDD: Tests written before implementation"""
-    
-    WHITELISTED_OPERATIONS = [
-        "list-resources",
-        "get-resource-spec",
-        "analyze-activity-flow",
-        "generate-documentation"
-    ]
-    
-    def handle_request(self, request: Dict[str, Any]) -> Result[Dict, MCPError]:
-        """Handle AI Agent request with security checks
-        
-        TDD: test_mcp_server_list_resources_returns_cached_data_req_5_3 MUST pass
-        TDD: test_mcp_server_blocks_unauthorized_operations_req_5_6 MUST pass
-        TDD: test_mcp_server_enforces_rate_limit_req_5_7 MUST pass
-        TDD: test_mcp_server_no_aws_credentials_in_responses_req_5_2 MUST pass
-        """
-        raise NotImplementedError("RED: Write test first")
-    
-    def list_resources(self, filters: Dict[str, Any]) -> List[ResourceSummary]:
-        """List resources from cached data
-        
-        TDD: test_mcp_server_list_resources_returns_cached_data_req_5_3 MUST pass
-        """
-        raise NotImplementedError("RED: Write test first")
-    
-    def get_resource_spec(self, arn: str) -> Result[ResourceSpec, MCPError]:
-        """Get resource specification from cache
-        
-        TDD: test_mcp_server_get_spec_cache_miss_returns_error_req_5_4 MUST pass
-        """
-        raise NotImplementedError("RED: Write test first")
-```
-
-### 5. Diagram Generator (TDD Component)
-
-**Purpose**: Generate visual infrastructure diagrams using drawio-ai-kit
-
-#### Test Specification (Write FIRST)
-
-```python
-# Output Validation Test (MUST WRITE FIRST)
-def test_diagram_generator_creates_valid_drawio_xml_req_6_4():
-    """
-    Unit: Generator outputs valid drawio XML format
-    
-    Validates: Requirement 6.4
-    """
-    specs = load_fixture("sample_specs/vpc_with_ec2.json")
-    generator = DiagramGenerator()
-    
-    # When: Generate diagram
-    diagram_xml = generator.generate_diagram(specs)
-    
-    # Then: Output is valid drawio XML
-    assert is_valid_xml(diagram_xml)
-    assert diagram_xml.startswith('<mxfile')
-    assert can_open_in_drawio(diagram_xml)
-
-# Relationship Test (MUST WRITE FIRST)
-def test_diagram_generator_shows_relationships_req_6_1():
-    """
-    Unit: Diagram includes resource relationships
-    
-    Validates: Requirement 6.1
-    """
-    specs = [
-        ResourceSpec(resource_type="vpc", id="vpc-123"),
-        ResourceSpec(resource_type="ec2", id="i-456", vpc_id="vpc-123"),
-    ]
-    
-    generator = DiagramGenerator()
-    diagram = generator.generate_diagram(specs)
-    
-    # Then: Diagram shows connection between VPC and EC2
-    assert has_connection(diagram, from_id="vpc-123", to_id="i-456")
-
-# Property Test (MUST WRITE FIRST)
-@given(st.lists(st.from_type(ResourceSpec), min_size=1))
-def test_property_diagram_includes_all_resources(specs):
-    """
-    Property: For all non-empty resource lists, diagram includes all resources
-    
-    Validates: Requirement 6.4
-    """
-    generator = DiagramGenerator()
-    diagram = generator.generate_diagram(specs)
-    
-    for spec in specs:
-        assert resource_appears_in_diagram(diagram, spec.arn)
-```
-
-#### Interface
-
-```python
-class DiagramGenerator:
-    """TDD: Tests written before implementation"""
-    
-    def __init__(self, drawio_kit_path: str):
-        self.drawio_kit = load_drawio_kit(drawio_kit_path)
-    
-    def generate_diagram(self, specs: List[ResourceSpec]) -> str:
-        """Generate drawio XML diagram from resource specs
-        
-        TDD: test_diagram_generator_creates_valid_drawio_xml_req_6_4 MUST pass
-        TDD: test_diagram_generator_shows_relationships_req_6_1 MUST pass
-        TDD: test_property_diagram_includes_all_resources MUST pass
-        """
-        raise NotImplementedError("RED: Write test first")
-    
-    def identify_relationships(self, specs: List[ResourceSpec]) -> List[ResourceRelationship]:
-        """Identify relationships between resources
-        
-        TDD: test_diagram_generator_shows_relationships_req_6_1 MUST pass
-        """
-        raise NotImplementedError("RED: Write test first")
-```
-
-### 6. Data Sanitizer (TDD Component)
-
-**Purpose**: Remove sensitive data from output files
-
-#### Test Specification (Write FIRST)
-
-```python
-# Security Test (MUST WRITE FIRST)
-def test_sanitizer_removes_aws_credentials_req_9_5():
-    """
-    Security: Sanitizer replaces AWS credentials with placeholders
-    
-    Validates: Requirement 9.5
-    """
-    data = {
-        "environment_variables": {
-            "AWS_ACCESS_KEY_ID": "AKIAIOSFODNN7EXAMPLE",
-            "AWS_SECRET_ACCESS_KEY": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-        }
-    }
-    
-    sanitizer = DataSanitizer()
-    sanitized = sanitizer.sanitize(data)
-    
-    assert sanitized["environment_variables"]["AWS_ACCESS_KEY_ID"] == "[REDACTED_AWS_KEY]"
-    assert sanitized["environment_variables"]["AWS_SECRET_ACCESS_KEY"] == "[REDACTED_AWS_SECRET]"
-
-# Property Test (MUST WRITE FIRST)
-@given(st.dictionaries(keys=st.text(), values=st.text()))
-def test_property_sanitizer_preserves_structure(data):
-    """
-    Property: For all dictionaries, sanitization preserves structure
-    
-    Validates: Requirement 9.5
-    """
-    sanitizer = DataSanitizer()
-    sanitized = sanitizer.sanitize(data)
-    
-    assert sanitized.keys() == data.keys()
-
-# Logging Test (MUST WRITE FIRST)
-def test_sanitizer_logs_redactions_req_9_6():
-    """
-    Unit: Sanitizer logs what was redacted
-    
-    Validates: Requirement 9.6
-    """
-    data = {"password": "secret123"}
-    
-    sanitizer = DataSanitizer()
-    sanitized = sanitizer.sanitize(data)
-    
-    logs = sanitizer.get_redaction_logs()
-    assert any("password" in log for log in logs)
-```
-
-#### Interface
-
-```python
-class DataSanitizer:
-    """TDD: Tests written before implementation"""
-    
-    SENSITIVE_PATTERNS = [
-        r'AKIA[0-9A-Z]{16}',  # AWS Access Key
-        r'aws_secret_access_key',
-        r'password',
-        r'private_key',
-        r'secret',
-    ]
-    
-    def sanitize(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Remove sensitive data from dictionary
-        
-        TDD: test_sanitizer_removes_aws_credentials_req_9_5 MUST pass
-        TDD: test_property_sanitizer_preserves_structure MUST pass
-        TDD: test_sanitizer_logs_redactions_req_9_6 MUST pass
-        """
-        raise NotImplementedError("RED: Write test first")
-    
-    def get_redaction_logs(self) -> List[str]:
-        """Get log of what was redacted
-        
-        TDD: test_sanitizer_logs_redactions_req_9_6 MUST pass
-        """
-        raise NotImplementedError("RED: Write test first")
-```
+- Line coverage ≥ 80 % for `src/` across unit+integration+e2e.
+- 100 % line coverage for `src/parser.py` and `src/sanitizer.py`.
+- Property tests run ≥ 100 examples (hypothesis profile `default` registered in `tests/conftest.py`).
+- `ruff check src tests`, `black --check src tests`, `mypy src` and `bandit -r src -ll` pass.
 
 ## Data Models
 
-### Core Data Structures
+Implemented in `src/parser.py` (unchanged contract):
 
 ```python
-from dataclasses import dataclass
-from typing import Dict, Any, List, Optional
-from datetime import datetime
+@dataclass
+class SpecMetadata:
+    collected_at: str        # UTC ISO-8601, e.g. "2026-10-14T08:00:00Z"
+    collector_version: str   # src.__version__
+    api_version: str         # botocore service API version of the primary call, "" if unknown
+    checksum: str            # Spec_Checksum, "" until sealed
 
 @dataclass
 class ResourceSpec:
-    """Complete specification of an AWS resource"""
-    resource_type: str           # e.g., "aws_s3_bucket"
-    arn: str                     # AWS ARN
-    region: str                  # AWS region
-    account_id: str              # AWS account ID
-    specifications: Dict[str, Any]  # Resource-specific config
-    metadata: 'SpecMetadata'
-    raw_response: Optional[str]  # Original AWS API response (for audit)
+    resource_type: str       # canonical type id (see registry)
+    arn: str
+    region: str              # AWS region or "global"
+    account_id: str          # 12-digit account id
+    specifications: dict     # per-type schema below
+    metadata: SpecMetadata
+    raw_response: Any = None # dict of full API responses (incl. ResponseMetadata)
+
+class Result(Generic[T, E]):  # Result.ok(v) / Result.err(e), .is_ok(), .is_err(), .value, .error
+```
+
+Other models:
+
+```python
+@dataclass
+class DiscoveredResource:            # src/discovery.py
+    resource_type: str; resource_id: str; arn: str; region: str; tags: dict[str, str]
 
 @dataclass
-class SpecMetadata:
-    """Collection metadata"""
-    collected_at: datetime
-    collector_version: str
-    api_version: str
-    checksum: str
+class DiscoveryError:                # src/discovery.py
+    region: str; resource_type: str; message: str
 
 @dataclass
-class ResourceRelationship:
-    """Relationship between two resources"""
-    from_arn: str
-    to_arn: str
-    relationship_type: str  # e.g., "vpc_connection", "iam_role_usage"
-    confidence: float       # 0.0 to 1.0
+class CollectionError:               # src/inventory.py (Req 12.2)
+    resource_arn: str; operation: str; error_type: str; error_message: str
+    timestamp: str; retry_count: int
 
 @dataclass
-class CollectionReport:
-    """Report of collection process"""
-    start_time: datetime
-    end_time: datetime
-    total_resources: int
-    successful_collections: int
-    failed_collections: int
-    errors: List['CollectionError']
-    regions_scanned: List[str]
-    time_saved_hours: float
+class OperationRecord:               # src/inventory.py (Req 12.4)
+    resource_arn: str; operation: str; status: Literal["success", "failed", "skipped"]; detail: str
 
 @dataclass
-class CollectionError:
-    """Error during collection"""
-    resource_arn: str
-    operation: str
-    error_type: str
-    error_message: str
-    timestamp: datetime
-    retry_count: int
+class CollectionResult:
+    specs: list[ResourceSpec]; errors: list[CollectionError]
+    operations: list[OperationRecord]; api_calls: int
+
+@dataclass
+class ResourceRelationship:          # src/diagram_generator.py
+    from_arn: str; to_arn: str; relationship_type: str; confidence: float
+    citations: list[Citation]
+
+@dataclass
+class Citation:                      # src/analysis_engine.py (Req 8.2)
+    resource_arn: str; spec_file: str; property_path: str
+    source_checksum: str; evidence_value: Any
 ```
 
-## Data Flow
+## Resource type registry (`src/resource_types.py`)
 
-```
-1. Discovery Phase (TDD: test_e2e_discovery_workflow)
-   ┌─────────────┐
-   │  AWS APIs   │
-   └──────┬──────┘
-          │
-          ▼
-   ┌─────────────┐     Tests FIRST:
-   │  Discovery  │     - test_discovery_lists_all_regions
-   │   Module    │     - test_discovery_handles_inaccessible_region
-   └──────┬──────┘     - test_discovery_completes_under_5_minutes
-          │
-          ▼
-   [ Resource ARN List ]
+`ResourceTypeInfo(type_id, service, scope, terraform_type, aliases, drawio_style)` for each Supported_Resource_Type. Functions:
 
-2. Collection Phase (TDD: test_e2e_collection_workflow)
-   ┌─────────────────┐
-   │  Resource ARN   │
-   │      List       │
-   └────────┬────────┘
-            │
-            ▼
-   ┌────────────────┐  Tests FIRST:
-   │ Spec Collector │  - test_collector_retry_exponential_backoff
-   │  (with retry)  │  - test_collector_continues_after_permission_error
-   └────────┬───────┘  - test_collector_waits_on_rate_limit
-            │
-            ▼
-   ┌────────────────┐
-   │ Resource Parser│  Tests FIRST:
-   │                │  - test_property_parse_print_roundtrip
-   └────────┬───────┘  - test_parser_malformed_json_returns_error
-            │
-            ▼
-   [ Typed ResourceSpec Objects ]
+- `canonical_type(name: str) -> str | None`: case-insensitive lookup of canonical ids and aliases (alias list in requirements.md).
+- `resource_id(spec: ResourceSpec) -> str`: the id from the "Resource id" column of requirements.md, read from Specifications, falling back to the last ARN segment (after the last `/` or `:`).
+- `file_id(resource_id: str) -> str`: `re.sub(r"[^A-Za-z0-9_.-]", "_", id).strip("_") or "resource"`.
+- `spec_relpath(spec) -> str`: `f"{resource_type}/{region}/{file_id}.json"` (posix, relative to Output_Dir).
 
-3. Persistence Phase (TDD: test_e2e_persistence_workflow)
-   ┌────────────────┐
-   │  ResourceSpec  │
-   │    Objects     │
-   └────────┬───────┘
-            │
-            ▼
-   ┌────────────────┐  Tests FIRST:
-   │ Data Sanitizer │  - test_sanitizer_removes_aws_credentials
-   │                │  - test_property_sanitizer_preserves_structure
-   └────────┬───────┘
-            │
-            ▼
-   ┌────────────────┐  Tests FIRST:
-   │     Output     │  - test_output_generator_creates_json_and_markdown
-   │   Generator    │  - test_output_generator_includes_checksums
-   └────────┬───────┘
-            │
-            ▼
-   [ JSON + Markdown Files in Local Storage ]
+Every module that needs a type name, file name or id uses these functions; no module hard-codes alternative type names.
 
-4. Analysis Phase (TDD: test_e2e_analysis_workflow)
-   ┌────────────────┐
-   │  Local Specs   │
-   └────────┬───────┘
-            │
-            ▼
-   ┌────────────────┐  Tests FIRST:
-   │   MCP Server   │  - test_mcp_server_list_resources_returns_cached_data
-   │                │  - test_mcp_server_blocks_unauthorized_operations
-   └────────┬───────┘  - test_mcp_server_enforces_rate_limit
-            │
-            ▼
-   ┌────────────────┐  Tests FIRST:
-   │  AI Agent      │  - test_ai_agent_analysis_includes_citations
-   │  (LLM)         │  - test_ai_agent_no_hallucination
-   └────────┬───────┘
-            │
-            ▼
-   [ Documentation + Diagrams ]
+## Specification schema (per type)
 
-5. IaC Generation Phase (TDD: test_e2e_iac_generation_workflow)
-   ┌────────────────┐
-   │  Local Specs   │
-   └────────┬───────┘
-            │
-            ▼
-   ┌────────────────┐  Tests FIRST:
-   │ IaC Generator  │  - test_iac_generator_terraform_plan_zero_changes
-   │                │  - test_iac_generator_includes_import_commands
-   └────────┬───────┘  - test_property_iac_generator_includes_all_specs
-            │
-            ▼
-   [ Terraform .tf Files + Import Script ]
-```
+`specifications` holds the AWS API object(s) **with AWS field names unchanged** and `ResponseMetadata` removed. `raw_response` holds `{<OperationName>: <full response>}` for every successful call.
 
-## Testing Strategy
+| Type | API calls (client region) | `specifications` content |
+|---|---|---|
+| `aws_instance` | `ec2.describe_instances(InstanceIds=[id])` | the `Instances[0]` object |
+| `aws_vpc` | `ec2.describe_vpcs(VpcIds=[id])`, `ec2.describe_vpc_attribute(Attribute=enableDnsSupport / enableDnsHostnames)` | `Vpcs[0]` + `EnableDnsSupport: bool`, `EnableDnsHostnames: bool` |
+| `aws_security_group` | `ec2.describe_security_groups(GroupIds=[id])` | `SecurityGroups[0]` |
+| `aws_lambda_function` | `lambda.get_function(FunctionName=id)` | `Configuration` object + `Tags` (dict, from the same response) |
+| `aws_db_instance` | `rds.describe_db_instances(DBInstanceIdentifier=id)` | `DBInstances[0]` |
+| `aws_cloudwatch_log_group` | `logs.describe_log_groups(logGroupNamePrefix=id)`, `logs.list_tags_log_group(logGroupName=id)` | the log group whose `logGroupName == id` + `tags` |
+| `aws_sfn_state_machine` | `stepfunctions.describe_state_machine(stateMachineArn=arn)`, `stepfunctions.list_tags_for_resource(resourceArn=arn)` | describe response + `tags` (list of `{key, value}`) |
+| `aws_dynamodb_table` | `dynamodb.describe_table(TableName=id)`, `dynamodb.list_tags_of_resource(ResourceArn=arn)` | `Table` + `Tags` |
+| `aws_s3_bucket` | 8 `s3.get_bucket_*` calls (Req 2.2), client `us-east-1` | `{"Name": bucket, "bucket-acl": {...}, ...}` (missing sub-configs omitted) |
+| `aws_iam_role` | `iam.get_role`, `iam.list_attached_role_policies`, `iam.list_role_policies`, `iam.get_role_policy` per inline policy | `Role` + `AttachedPolicies: [{PolicyName, PolicyArn}]` + `InlinePolicies: {name: policy document dict}` |
 
-### Test-First Development Process
+Secondary calls (tags, attributes, policies) are best-effort: an access-denied secondary call omits that key and is logged (Req 2.5); a failure of the **primary** call (first call in the row) makes the resource fail (Req 12.2). `datetime` values are converted to ISO-8601 strings so Specifications are JSON-serializable.
 
-**Every feature begins with tests:**
+## Collection (`src/collector.py`, `src/inventory.py`, `src/aws_session.py`)
 
-1. **Write Property Tests** (for parsers, transformations, generators)
-   - Define universal properties that should hold
-   - Use Hypothesis to generate test inputs
-   - Minimum 100 iterations per property
-   - Tag with requirement reference
+### Error classification (Req 2.5, 12.1, 12.3)
 
-2. **Write Unit Tests** (for specific behaviors)
-   - Define expected behavior for edge cases
-   - Test error handling explicitly
-   - Test retry logic and resilience
-   - Mock external dependencies
+`botocore.exceptions.ClientError` codes are mapped:
 
-3. **Write Integration Tests** (for API contracts)
-   - Test MCP server operations end-to-end
-   - Test AWS SDK interactions with moto mocks
-   - Test component interactions
-   - Verify no AWS API calls where prohibited
+| Codes | Class | Behavior |
+|---|---|---|
+| `AccessDenied`, `AccessDeniedException`, `UnauthorizedOperation`, `AuthorizationError`, `AuthorizationErrorException` | `AccessDeniedError` | no retry; log `Missing <service>:<Action> permission` |
+| `Throttling`, `ThrottlingException`, `RequestLimitExceeded`, `TooManyRequestsException`, `SlowDown`, `ProvisionedThroughputExceededException` | `RateLimitError(retry_after)` | retry; wait `Retry-After` header seconds if present, else backoff delay |
+| `NoSuch*Configuration`, `NoSuchBucketPolicy`, `NoSuchTagSet`, `NoSuchWebsiteConfiguration`, `ServerSideEncryptionConfigurationNotFoundError`, `NoSuchEntity` (secondary IAM calls only) | `NotConfigured` | no retry, not an error; key omitted |
+| other `ClientError` with HTTP status ≥ 500, `EndpointConnectionError`, `ConnectTimeoutError`, `ReadTimeoutError` | transient | retry with backoff |
+| other `ClientError` (4xx) | permanent | no retry; operation failed |
 
-4. **Write E2E Tests** (for complete workflows)
-   - Test full discovery → collection → output workflow
-   - Test IaC generation → terraform plan validation
-   - Test MCP server → AI Agent → documentation generation
-   - Use fixtures and sample AWS data
+`RetryConfig(max_attempts=3, base_delay=1.0, backoff_multiplier=2.0)`: attempts at t=0, +1 s, +2 s. A rate-limit wait replaces the backoff delay for that attempt. `SpecCollector.api_calls` counts every attempt.
 
-5. **Implement Code** (only after tests are written)
-   - Write minimal code to pass tests
-   - Run tests continuously
-   - Refactor while keeping tests green
+`src/aws_session.py` builds the session: `boto3.Session(profile_name=profile)`; with `role_arn`, calls `sts.assume_role(RoleArn, RoleSessionName="aws-resource-inventory", ExternalId?)` and builds a new session from the temporary credentials. All clients are created with `botocore.config.Config(retries={"max_attempts": 1, "mode": "standard"}, user_agent_extra="aws-resource-inventory")` (botocore's `max_attempts` counts the initial call, so 1 disables its retries). `get_account_id(session)` calls `sts.get_caller_identity()`.
 
-### Test Categories and Coverage
+### InventoryCollector
 
-#### 1. Property-Based Tests (Hypothesis)
-
-**Parser Tests** - 100% coverage required
 ```python
-# Feature: aws-resource-inventory, Property 1: Parse-print round-trip
-@given(st.from_type(ResourceSpec))
-def test_property_parse_print_roundtrip_req_4_4(spec):
-    """For all valid ResourceSpecs, parse(print(spec)) == spec"""
-    json_output = print_spec(spec)
-    parsed = parse_spec(json_output)
-    assert parsed == spec
-
-# Feature: aws-resource-inventory, Property 2: Print-parse round-trip
-@given(st.text().filter(is_valid_json))
-def test_property_print_parse_roundtrip_req_4_4(json_text):
-    """For all valid JSON, print(parse(json)) preserves structure"""
-    parsed = parse_spec(json_text)
-    output = print_spec(parsed)
-    assert normalize_json(output) == normalize_json(json_text)
+class InventoryCollector:
+    def __init__(self, session, account_id: str, retry_config: RetryConfig | None = None,
+                 max_workers: int = 10, progress_callback=None): ...
+    def collect_all(self, resources: list[DiscoveredResource]) -> CollectionResult: ...
 ```
 
-**Sanitizer Tests** - 100% coverage required
+Groups resources by (service, client region), creates one client + `SpecCollector` per group, and collects resources concurrently (`max_workers`). Each result gets `region` and `account_id` from discovery/STS — never `"unknown"`.
+
+### Discovery pagination
+
+`ResourceDiscovery` uses `client.get_paginator(method)` when `client.can_paginate(method)` is true, else a single call. `get_api_calls()` reports the number of list calls made.
+
+## Integrity (`src/integrity.py`)
+
 ```python
-# Feature: aws-resource-inventory, Property 3: Sanitization preserves structure
-@given(st.dictionaries(keys=st.text(), values=st.recursive(
-    st.one_of(st.text(), st.integers(), st.booleans()),
-    lambda children: st.dictionaries(st.text(), children)
-)))
-def test_property_sanitizer_preserves_structure_req_9_5(data):
-    """For all nested dictionaries, sanitizer preserves structure"""
-    sanitizer = DataSanitizer()
-    sanitized = sanitizer.sanitize(data)
-    assert sanitized.keys() == data.keys()
-    assert get_structure(sanitized) == get_structure(data)
+def canonical_json(value) -> str            # json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str)
+def spec_checksum(specifications: dict) -> str   # sha256(canonical_json(specifications).encode()).hexdigest()
+def seal_specs(specs, sanitizer) -> list[ResourceSpec]
+    # returns NEW specs: specifications and raw_response sanitized; metadata.checksum = spec_checksum(sanitized specifications)
+def resolve_property_path(document: dict, path: str) -> Any   # raises KeyError if not resolvable
+def find_property_line(json_text: str, path: str) -> int      # 1-based line of the last path key in pretty JSON; 0 if absent
+def verify_output_dir(output_dir) -> VerificationReport       # Req 8.3 / 8.4
 ```
 
-**IaC Generator Tests**
+**Property path grammar**: `segment ("." segment)*`, `segment = key ("[" index "]")*`. The first segment is a top-level field of the spec file (normally `specifications`). Keys containing `.`, `[` or `]` are not addressable; citations then point to the closest addressable parent.
+
+**Verification algorithm** (`aws-inventory verify`):
+1. For each line of `checksums.sha256`: file must exist and hash must match → else `"<path>:0: checksum mismatch"` / `"missing file"`.
+2. Load `analysis/analysis.json`; for each Citation (in relationships, patterns, findings):
+   - `spec_file` exists, else discrepancy line 0.
+   - `spec_checksum(file["specifications"]) == source_checksum`, else discrepancy at the line of `"specifications"`.
+   - `resolve_property_path(file, property_path)` succeeds, else discrepancy line 0.
+   - resolved value `== evidence_value`, else discrepancy at `find_property_line`.
+3. Output: `OK: <n> files, <m> citations verified` (exit 0) or one `path:line: reason` line per discrepancy (exit 1).
+
+## Output directory layout
+
+```
+<Output_Dir>/
+├── manifest.json                     # account_id, regions, started_at, finished_at, tool version, resource counts
+├── resources.json  resources.md      # aggregates (Req 3.1)
+├── <canonical_type>/<region>/<file_id>.json|.md   # per-resource (Req 3.2) — the MCP cache
+├── raw_responses/<canonical_type>/<region>/<file_id>_raw.json   # sanitized raw responses (Req 3.6)
+├── discovery.json                    # DiscoveredResource list + discovery errors
+├── collection_report.json            # operations, errors, phases, metrics (Req 10, 12.4)
+├── summary_report.md                 # manual vs automated (Req 10.3)
+├── analysis/analysis.json  analysis/analysis.md   # `analyze`
+├── diagrams/architecture.drawio      # `analyze`
+├── docs/infrastructure.md            # `generate-docs`
+├── terraform/...                     # `generate-iac`
+└── checksums.sha256  checksums.json  # regenerated after every command that writes files
+```
+
+`OutputGenerator.load_specs(output_dir) -> list[ResourceSpec]` reads exactly the files matching `<canonical_type>/<region>/*.json` (directory names validated against the registry), so other directories are never mistaken for specs.
+
+## Analysis Engine (`src/analysis_engine.py`)
+
+Rules operate on the AWS-field-name schema. Every rule records Citations whose `spec_file = spec_relpath(spec)` and `source_checksum = spec.metadata.checksum`.
+
+| Relationship | Source field(s) | Target match | Confidence |
+|---|---|---|---|
+| `vpc_connection` | `VpcId` (EC2, SG), `VpcConfig.VpcId` (Lambda), `DBSubnetGroup.VpcId` (RDS) | VPC `VpcId` | 1.0 |
+| `iam_role_usage` | Lambda `Role`, Step Functions `roleArn`, EC2 `IamInstanceProfile.Arn` (profile name == role name) | role `Arn` or `RoleName` | 0.95 |
+| `security_group` | EC2 `SecurityGroups[].GroupId`, Lambda `VpcConfig.SecurityGroupIds[]`, RDS `VpcSecurityGroups[].VpcSecurityGroupId` | SG `GroupId` | 0.9 |
+| `dynamodb_access` | Lambda `Environment.Variables.<K>` | value equals a `TableName`/`TableArn`, or contains a table name of length > 3 | 1.0 if equal, else 0.85 |
+| `log_group` | Lambda `FunctionName` | log group `/aws/lambda/<FunctionName>` | 1.0 |
+
+Patterns (confidence = min of supporting relationship confidences):
+- **Serverless Application**: Lambda with ≥1 `iam_role_usage` or `dynamodb_access`.
+- **Compute in VPC**: EC2 instance with a `vpc_connection`.
+- **API Gateway + Lambda + DynamoDB**, **S3 + CloudFront**: reported in `undetectable_patterns` with reason "service not in Supported_Resource_Types" (no statement is made about them).
+
+Security findings: exactly the three rules of Req 6.6 (citation to the offending statement/grant/permission). `AnalysisReport.to_dict()` is what `analysis/analysis.json` stores: `{generated_at, resource_count, relationships, patterns, security_findings, undetectable_patterns}`; `summary_markdown` goes to `analysis/analysis.md`.
+
+## Diagram Generator (`src/diagram_generator.py`)
+
+- Output: uncompressed mxGraph XML, root `<mxfile host="aws-resource-inventory">` → `<diagram>` → `<mxGraphModel>` → `<root>` with cells `0` and `1`.
+- One vertex per spec: `id` = `res-` + sha1(arn)[:12], `value` = HTML label (type, id), `tooltip` = ARN, style = registry `drawio_style` (`shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.<service>` with the official category fill color) — unknown types get a plain rounded rectangle.
+- One edge per relationship, `value` = relationship type.
+- Layout: one column per region (`global` first), resources grouped by type in rows; deterministic for identical input.
+- `aws-inventory analyze --validate-diagram` runs `drawio-ai validate <file>` when the `drawio-ai` CLI is on PATH; otherwise prints that validation was skipped. XML well-formedness is always checked with `xml.etree.ElementTree`.
+
+## IaC Generator (`src/iac_generator.py`)
+
+Mapping from Specifications to Terraform arguments (AWS provider ~> 5.0). Values that equal a sanitizer placeholder produce the argument plus a `# REDACTED: set manually` comment and are added to `lifecycle.ignore_changes`.
+
+| Type | Terraform arguments | Companion resources | Import id | `ignore_changes` |
+|---|---|---|---|---|
+| `aws_instance` | `ami`←ImageId, `instance_type`, `subnet_id`, `vpc_security_group_ids`←SecurityGroups[].GroupId, `key_name`, `iam_instance_profile`←last segment of IamInstanceProfile.Arn, `ebs_optimized`, `monitoring`←Monitoring.State=="enabled", `tags`←Tags | – | InstanceId | `user_data`, `user_data_base64` |
+| `aws_vpc` | `cidr_block`, `instance_tenancy`, `enable_dns_support`, `enable_dns_hostnames`, `tags` | – | VpcId | – |
+| `aws_security_group` | `name`←GroupName, `description`, `vpc_id`, `ingress`/`egress` blocks from IpPermissions/IpPermissionsEgress (`from_port`/`to_port` 0 when absent, `protocol`←IpProtocol, `cidr_blocks`, `ipv6_cidr_blocks`, `prefix_list_ids`, `security_groups`, `self`), `tags` | – | GroupId | – |
+| `aws_lambda_function` | `function_name`, `role`, `handler`, `runtime`, `memory_size`, `timeout`, `description`, `architectures`, `layers`←Layers[].Arn, `environment { variables }`, `vpc_config { subnet_ids, security_group_ids }` (when SubnetIds non-empty), `tags`, `filename = "lambda_<name>.zip"` placeholder | – | FunctionName | `filename`, `source_code_hash` |
+| `aws_db_instance` | `identifier`, `engine`, `engine_version`, `instance_class`, `allocated_storage`, `storage_type`, `multi_az`, `publicly_accessible`, `storage_encrypted`, `kms_key_id`, `db_subnet_group_name`, `vpc_security_group_ids`, `username`←MasterUsername, `backup_retention_period`, `tags`←TagList | – | DBInstanceIdentifier | `password` |
+| `aws_cloudwatch_log_group` | `name`, `retention_in_days`, `kms_key_id`, `tags` | – | logGroupName | – |
+| `aws_sfn_state_machine` | `name`, `role_arn`, `definition` (string, heredoc), `type`, `tags` | – | stateMachineArn | – |
+| `aws_dynamodb_table` | `name`, `billing_mode`, `hash_key`, `range_key`, `attribute {}` blocks, `read_capacity`/`write_capacity` (PROVISIONED only), `global_secondary_index {}` blocks, `stream_enabled`, `stream_view_type`, `tags` | – | TableName | – |
+| `aws_s3_bucket` | `bucket`, `tags`←bucket-tagging.TagSet | `aws_s3_bucket_versioning` (when Status present), `aws_s3_bucket_policy` (when Policy present), `aws_s3_bucket_server_side_encryption_configuration` (when rules present) | bucket name (all) | – |
+| `aws_iam_role` | `name`, `path`, `assume_role_policy` (jsonencode), `description`, `max_session_duration`, `tags` | `aws_iam_role_policy_attachment` per AttachedPolicies (id `<role>/<policy_arn>`), `aws_iam_role_policy` per InlinePolicies (id `<role>:<policy>`) | RoleName | – |
+
+Unknown types fall back to emitting every top-level key as an argument (debug aid only). Terraform resource names are `file_id` with `.`/`-` → `_`, prefixed with `r_` when starting with a digit, and de-duplicated with `_2`, `_3`, ...
+
+`providers.tf` declares `provider "aws"` (region `us-east-1`, used for global types) and one aliased provider per other region (`alias = "<region with - replaced by _>"`); regional blocks set `provider = aws.<alias>`.
+
+`verify_terraform_plan(tf_dir) -> (bool, str)` runs `terraform plan -detailed-exitcode -no-color -input=false` and decides **only by exit code** (0 = ok, 2 = changes, else error).
+
+Known limitations (documented in README): resource types outside the registry are not generated; S3 lifecycle/CORS/website/ACL and DynamoDB TTL/PITR are not mapped (left unmanaged, so they do not cause plan diffs); security group rules with differing per-range descriptions are emitted without descriptions.
+
+## Documentation Generator (`src/documentation.py`)
+
+`generate_infrastructure_doc(report: AnalysisReport, specs) -> str` produces `docs/infrastructure.md`: inventory counts, one section per pattern ("what interacts with what"), one bullet per relationship, security findings, each followed by `[cite: <spec_file>#<property_path> sha256:<first 12 chars>]` markers. No sentence is emitted without at least one citation marker except headings and counts derived from `resources.json`.
+
+## MCP Server
+
+### Core (`src/mcp_server.py`)
+
 ```python
-# Feature: aws-resource-inventory, Property 4: IaC includes all specs
-@given(st.from_type(ResourceSpec))
-def test_property_iac_generator_includes_all_specs_req_7_3(spec):
-    """For all ResourceSpecs, generated Terraform includes all config"""
-    generator = IaCGenerator()
-    tf_code = generator.generate_resource_block(spec)
-    for key, value in spec.specifications.items():
-        assert key_appears_in_tf(tf_code, key)
+class MCPServer:
+    def __init__(self, cache_dir: str, clock: Callable[[], float] = time.monotonic): ...
+    def handle_request(self, operation: str, params: dict | None = None) -> dict: ...
+    def get_security_logs(self) -> list[SecurityLogEntry]: ...   # {timestamp, operation, reason}
 ```
 
-#### 2. Unit Tests (pytest)
+Processing order: (1) whitelist check → `Unauthorized operation` + security log; (2) parameter validation against the schema below → `Invalid parameters` + security log; (3) rate limit (sliding 1 s window, max 10 accepted) → `rate_limited`; (4) dispatch; (5) sanitize the whole response. Exceptions inside handlers become `{"status": "error", "message": <type>: <msg>}`. The module must not import `boto3`/`botocore` (enforced by a test that imports it in a fresh interpreter and inspects `sys.modules`).
 
-**Retry Logic Tests**
-```python
-def test_collector_retry_exponential_backoff_req_12_1():
-    """Collector retries up to 3 times with exponential backoff"""
-    mock_api = Mock(side_effect=[
-        Exception("Timeout"),
-        Exception("Timeout"),
-        {"InstanceId": "i-123"}
-    ])
-    collector = SpecCollector(api_client=mock_api)
-    result = collector.collect_ec2_spec("i-123")
-    assert result.is_ok()
-    assert mock_api.call_count == 3
+| Tool | Parameters | `data` on success |
+|---|---|---|
+| `list-resources` | `region?: str`, `resource_type?: str` (canonical or alias) | list of `{arn, resource_type, region, account_id, resource_id, spec_file, checksum}` sorted by `spec_file` |
+| `get-resource-spec` | `arn: str` (required) | the sanitized spec file content + `spec_file` |
+| `analyze-activity-flow` | `arn?: str` | `AnalysisReport.to_dict()` for all cached specs; with `arn`, only relationships/patterns/findings involving that ARN |
+| `generate-documentation` | – | `{"markdown": <docs/infrastructure.md content>, "citations": [...]}` generated in memory (no files written) |
+
+Unknown `resource_type` values are invalid parameters. An ARN not in the cache → `status: error` with "not found in collected data ... run `aws-inventory collect`". An empty cache → the same message for every tool.
+
+### Transport (`src/mcp_stdio.py`)
+
+`build_server(cache_dir) -> FastMCP` registers the four tools with the hyphenated names above; each tool calls `MCPServer.handle_request` and returns its dict (JSON). `sandbox_environment(environ)` deletes every `AWS_*` variable and sets `AWS_SHARED_CREDENTIALS_FILE` / `AWS_CONFIG_FILE` to `/nonexistent/aws-resource-inventory` (Req 9.7). `aws-inventory mcp-serve --cache-dir DIR` = `sandbox_environment(os.environ)` + `build_server(DIR).run("stdio")`.
+
+Client configuration example (Claude Desktop / Claude Code `.mcp.json`):
+
+```json
+{"mcpServers": {"aws-inventory": {"command": "aws-inventory", "args": ["mcp-serve", "--cache-dir", "/abs/path/output"]}}}
 ```
 
-**Error Handling Tests**
-```python
-def test_parser_malformed_json_returns_descriptive_error_req_4_2():
-    """Parser returns descriptive error for malformed JSON"""
-    malformed = '{"key": invalid}'
-    result = parse_spec(malformed)
-    assert result.is_err()
-    assert "invalid" in result.error_message()
-```
+## CLI (`src/cli.py`)
 
-**Security Tests**
-```python
-def test_sanitizer_removes_aws_credentials_req_9_5():
-    """Sanitizer replaces AWS credentials with placeholders"""
-    data = {
-        "AWS_ACCESS_KEY_ID": "AKIAIOSFODNN7EXAMPLE",
-        "AWS_SECRET_ACCESS_KEY": "wJalrXUtnFEMI/K7MDENG/bPxRfiCY"
-    }
-    sanitizer = DataSanitizer()
-    sanitized = sanitizer.sanitize(data)
-    assert sanitized["AWS_ACCESS_KEY_ID"] == "[REDACTED_AWS_KEY]"
-```
+Entry point `aws-inventory = "src.cli:main"`. Global options: `--log-level [DEBUG|INFO|WARNING|ERROR]` (default INFO), `--no-color`.
 
-#### 3. Integration Tests (pytest + moto)
+| Command | Options | Online? | Writes |
+|---|---|---|---|
+| `discover` | `--region` (repeatable), `--profile`, `--role-arn`, `--external-id`, `--output-dir` (default `./output`) | yes | `discovery.json` |
+| `collect` | same as discover + `--max-workers` (default 10) | yes | everything in "Output directory layout" up to `summary_report.md`, plus checksums |
+| `analyze` | `--output-dir`, `--validate-diagram` | no | `analysis/`, `diagrams/`, checksums |
+| `generate-iac` | `--output-dir`, `--terraform-dir` | no | `terraform/`, checksums |
+| `generate-docs` | `--output-dir` | no | `docs/infrastructure.md` (runs analysis in memory), checksums |
+| `verify` | `--output-dir` | no | nothing |
+| `mcp-serve` | `--cache-dir` (required) | no | nothing |
 
-**MCP Server Tests**
-```python
-def test_integration_mcp_server_list_resources_req_5_3():
-    """MCP server returns cached data without AWS API calls"""
-    with mock.patch('boto3.client') as mock_boto:
-        server = MCPServer(cache_dir="tests/fixtures/sample_specs")
-        response = server.handle_request({
-            "operation": "list-resources",
-            "filters": {"region": "us-east-1"}
-        })
-        assert response.is_ok()
-        mock_boto.assert_not_called()
+Exit codes: 0 success; 1 completed with errors (discovery/collection errors, verification discrepancies); 2 could not start (Click usage errors, no credentials, assume-role failure, Output_Dir without specs for offline commands).
 
-def test_integration_mcp_server_blocks_unauthorized_req_5_6():
-    """MCP server rejects non-whitelisted operations"""
-    server = MCPServer()
-    response = server.handle_request({"operation": "delete-resource"})
-    assert response.is_err()
-    assert "unauthorized" in response.error_message().lower()
-```
+Logging: root handler to stderr with `SanitizingFilter`, which runs `DataSanitizer` on `record.getMessage()` and additionally replaces the literal access key, secret key and session token of the active session if they appear. Credentials are never passed to log calls or written to files.
 
-**AWS API Mock Tests**
-```python
-@moto.mock_s3
-def test_integration_collector_s3_all_specs_req_2_2():
-    """Collector retrieves all S3 bucket specifications"""
-    # Setup mock S3 bucket
-    s3 = boto3.client('s3', region_name='us-east-1')
-    s3.create_bucket(Bucket='test-bucket')
-    
-    # Collect specs
-    collector = SpecCollector(api_client=s3)
-    result = collector.collect_s3_specs('test-bucket')
-    
-    # Verify all spec types collected
-    assert result.is_ok()
-    expected_specs = ['bucket-acl', 'bucket-cors', 'bucket-encryption', 
-                      'bucket-lifecycle-configuration', 'bucket-policy',
-                      'bucket-tagging', 'bucket-versioning', 'bucket-website']
-    for spec_type in expected_specs:
-        assert spec_type in result.value.specifications
-```
+## Metrics (`src/metrics.py`)
 
-#### 4. End-to-End Tests (pytest)
-
-**Full Workflow Tests**
-```python
-def test_e2e_discovery_collection_output_workflow():
-    """Complete workflow: discovery → collection → output"""
-    # Discovery phase
-    discoverer = ResourceDiscovery(aws_client=mock_aws_client())
-    resources = discoverer.discover_all_resources()
-    assert len(resources) > 0
-    
-    # Collection phase
-    collector = SpecCollector(api_client=mock_aws_client())
-    specs = [collector.collect_spec(r.arn) for r in resources]
-    assert all(s.is_ok() for s in specs)
-    
-    # Output phase
-    generator = OutputGenerator(output_dir="/tmp/test_output")
-    generator.generate_json(specs)
-    generator.generate_markdown(specs)
-    
-    # Verify outputs exist
-    assert os.path.exists("/tmp/test_output/resources.json")
-    assert os.path.exists("/tmp/test_output/resources.md")
-
-def test_e2e_iac_generation_terraform_plan_zero_req_7_5():
-    """Generated Terraform shows zero changes vs AWS"""
-    # Given: Collected specs
-    specs = load_fixture("tests/fixtures/sample_specs/complete_infra.json")
-    
-    # When: Generate Terraform
-    generator = IaCGenerator()
-    tf_code = generator.generate_terraform(specs)
-    
-    # Then: terraform plan shows zero changes
-    with terraform_workspace(tf_code) as workspace:
-        workspace.init()
-        plan_output = workspace.plan()
-        assert "No changes" in plan_output
-        assert plan_output.changes_count == 0
-```
-
-### Test Fixtures
-
-**Sample AWS Responses**
-```
-tests/fixtures/sample_aws_responses/
-├── ec2/
-│   ├── describe_instances.json
-│   ├── describe_security_groups.json
-│   └── describe_volumes.json
-├── s3/
-│   ├── list_buckets.json
-│   ├── get_bucket_policy.json
-│   ├── get_bucket_encryption.json
-│   └── get_bucket_versioning.json
-├── lambda/
-│   ├── list_functions.json
-│   └── get_function_configuration.json
-└── iam/
-    ├── list_roles.json
-    └── get_role.json
-```
-
-**Sample Specifications**
-```
-tests/fixtures/sample_specs/
-├── complete_infrastructure.json  # Full multi-service setup
-├── vpc_with_ec2.json            # Simple VPC + EC2 scenario
-├── api_gateway_lambda_dynamo.json  # Serverless pattern
-└── malformed/
-    ├── invalid_json.txt
-    ├── missing_required_fields.json
-    └── unknown_resource_type.json
-```
-
-### TDD Development Workflow Example
-
-**Example: Implementing Resource Parser**
-
-```bash
-# Step 1: RED - Write failing test
-$ cat > tests/unit/test_parser.py << EOF
-from hypothesis import given, strategies as st
-
-@given(st.from_type(ResourceSpec))
-def test_property_parse_print_roundtrip_req_4_4(spec):
-    json_output = print_spec(spec)
-    parsed = parse_spec(json_output)
-    assert parsed == spec
-EOF
-
-$ pytest tests/unit/test_parser.py
-# FAILS: NotImplementedError
-
-# Step 2: GREEN - Minimal implementation
-$ cat > src/parser.py << EOF
-def print_spec(spec: ResourceSpec) -> str:
-    return json.dumps(spec.__dict__)
-
-def parse_spec(json_text: str) -> ResourceSpec:
-    data = json.loads(json_text)
-    return ResourceSpec(**data)
-EOF
-
-$ pytest tests/unit/test_parser.py
-# PASSES
-
-# Step 3: REFACTOR - Improve while keeping tests green
-$ cat > src/parser.py << EOF
-class ResourceParser:
-    def print_spec(self, spec: ResourceSpec) -> str:
-        """Format spec to valid AWS JSON"""
-        return json.dumps(
-            spec.__dict__,
-            indent=2,
-            sort_keys=True,
-            default=str
-        )
-    
-    def parse_spec(self, json_text: str) -> Result[ResourceSpec, ParseError]:
-        """Parse AWS JSON into typed structure"""
-        try:
-            data = json.loads(json_text)
-            return Ok(ResourceSpec(**data))
-        except json.JSONDecodeError as e:
-            return Err(ParseError(f"Malformed JSON: {e}"))
-EOF
-
-$ pytest tests/unit/test_parser.py
-# STILL PASSES - refactor successful
-
-# Step 4: REPEAT - Add next test
-$ cat >> tests/unit/test_parser.py << EOF
-def test_parser_malformed_json_returns_descriptive_error_req_4_2():
-    malformed = '{"key": invalid}'
-    result = parse_spec(malformed)
-    assert result.is_err()
-    assert "invalid" in result.error_message()
-EOF
-
-# Continue RED-GREEN-REFACTOR cycle...
-```
+`PhaseTimer` records `{name, started_at, ended_at, duration_seconds}`. `RunMetrics` holds the Req 10.2 counters. `time_savings(resources, duration_seconds)` implements the Req 10.4 formulas; `OutputGenerator.generate_summary_report` and the CLI summary both use it.
 
 ## Error Handling
 
-### TDD Error Handling Strategy
-
-**All error paths MUST have tests written first:**
-
-1. **Expected Errors** (part of normal operation)
-   - Permission denied → continue with warning
-   - Rate limit → wait and retry
-   - Resource not found → log and skip
-
-2. **Unexpected Errors** (should not happen)
-   - Malformed API response → fail with diagnostic
-   - Network timeout → retry with backoff
-   - Invalid credentials → fail immediately
-
-### Error Types
-
-```python
-# TDD: Write tests for each error type FIRST
-
-class CollectorError(Exception):
-    """Base class for collection errors
-    
-    TDD: test_collector_error_includes_context
-    """
-    def __init__(self, message: str, resource_arn: str, context: Dict):
-        self.message = message
-        self.resource_arn = resource_arn
-        self.context = context
-
-class ParseError(CollectorError):
-    """Parsing AWS response failed
-    
-    TDD: test_parser_malformed_json_returns_descriptive_error_req_4_2
-    """
-    pass
-
-class PermissionError(CollectorError):
-    """AWS permission denied
-    
-    TDD: test_collector_continues_after_permission_error_req_2_5
-    """
-    pass
-
-class RateLimitError(CollectorError):
-    """AWS rate limit exceeded
-    
-    TDD: test_collector_waits_on_rate_limit_req_12_3
-    """
-    def __init__(self, message: str, retry_after: int):
-        super().__init__(message)
-        self.retry_after = retry_after
-```
-
-### Error Handling Tests (Write FIRST)
-
-```python
-# Resilience Tests
-def test_collector_retry_on_network_timeout():
-    """Collector retries on network timeout with exponential backoff"""
-    pass
-
-def test_collector_continues_after_permission_denied():
-    """Collector logs permission error and continues with other specs"""
-    pass
-
-def test_collector_waits_on_rate_limit():
-    """Collector respects retry-after header on rate limit"""
-    pass
-
-def test_collector_fails_fast_on_invalid_credentials():
-    """Collector fails immediately on credential errors"""
-    pass
-
-# Error Reporting Tests
-def test_collection_report_includes_all_errors():
-    """Collection report lists all failed operations"""
-    pass
-
-def test_cli_exits_nonzero_on_errors():
-    """CLI exits with non-zero status when errors occur"""
-    pass
-```
+| Situation | Handling |
+|---|---|
+| Region/type list call fails | `DiscoveryError`, continue (Req 1.4) |
+| Primary spec call fails after retries | `CollectionError`, resource skipped (Req 12.2) |
+| Secondary call access denied / not configured | key omitted, logged, resource still collected |
+| Unreadable/invalid spec file during offline commands | logged as error, file skipped, exit code 1 |
+| No credentials / assume-role fails | message on stderr, exit 2 |
+| Parse failure | `Result.err(ParseError)` with excerpt and original input (Req 4.2, 4.5) |
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system—essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+| # | Property | Requirement | Test |
+|---|---|---|---|
+| 1 | `parse(print(spec)) == spec` for all valid specs | 4.4 | `test_property_parse_print_roundtrip_req_4_4` |
+| 2 | Sanitization preserves keys, list lengths and nesting, and is idempotent | 9.5, 9.6 | `test_property_sanitizer_preserves_structure_req_9_5`, `test_property_sanitizer_idempotent_req_9_6` |
+| 3 | Every top-level Specifications key appears in the generated Terraform block | 7.3 | `test_property_iac_generator_includes_all_specs_req_7_3` |
+| 4 | Every spec ARN appears in the diagram | 6.4 | `test_property_diagram_includes_all_resources_req_6_4` |
+| 5 | Every citation produced by the engine resolves against its sealed spec | 8.5 | `test_property_citations_resolve_req_8_5` |
+| 6 | No MCP response contains a credential pattern | 5.2 | `test_property_mcp_server_no_credentials_req_5_2` |
 
-### Property 1: Parse-Print Round-Trip (Parser)
+## Performance Targets
 
-**For any** valid `ResourceSpec` object, parsing then printing then parsing SHALL produce an equivalent data structure.
+- Discovery: < 5 min for 1000 resources at ≤ 100 ms/call (Req 1.5) — `test_discovery_completes_under_5_minutes_req_1_5` simulates latency.
+- Collection: ≥ 10 resources/s with 10 workers against moto.
+- MCP: 10 requests/s accepted (Req 5.7).
+- IaC generation: < 10 s for 1000 specs.
 
-**Validates: Requirement 4.4**
+## Security Checklist
 
-**Test Implementation:**
-```python
-from hypothesis import given, strategies as st
-
-# Feature: aws-resource-inventory, Property 1: Parse-print round-trip
-@given(st.from_type(ResourceSpec))
-@settings(max_examples=100)
-def test_property_parse_print_roundtrip_req_4_4(spec):
-    """For all valid ResourceSpecs, parse(print(spec)) == spec"""
-    parser = ResourceParser()
-    json_output = parser.print_spec(spec)
-    parsed = parser.parse_spec(json_output)
-    assert parsed.is_ok()
-    assert parsed.value == spec
-```
-
-### Property 2: Sanitization Preserves Structure
-
-**For any** nested dictionary structure, sanitization SHALL preserve the dictionary structure (keys and nesting) while replacing only sensitive values.
-
-**Validates: Requirement 9.5**
-
-**Test Implementation:**
-```python
-# Feature: aws-resource-inventory, Property 2: Sanitization preserves structure
-@given(st.dictionaries(
-    keys=st.text(),
-    values=st.recursive(
-        st.one_of(st.text(), st.integers(), st.booleans()),
-        lambda children: st.dictionaries(st.text(), children)
-    )
-))
-@settings(max_examples=100)
-def test_property_sanitizer_preserves_structure_req_9_5(data):
-    """For all nested dicts, sanitizer preserves structure"""
-    sanitizer = DataSanitizer()
-    sanitized = sanitizer.sanitize(data)
-    assert get_structure(sanitized) == get_structure(data)
-```
-
-### Property 3: IaC Generation Completeness
-
-**For any** valid `ResourceSpec`, the generated Terraform resource block SHALL include all specifications from the original spec.
-
-**Validates: Requirement 7.3**
-
-**Test Implementation:**
-```python
-# Feature: aws-resource-inventory, Property 3: IaC includes all specs
-@given(st.from_type(ResourceSpec))
-@settings(max_examples=100)
-def test_property_iac_generator_includes_all_specs_req_7_3(spec):
-    """For all ResourceSpecs, Terraform includes all config keys"""
-    generator = IaCGenerator()
-    tf_code = generator.generate_resource_block(spec)
-    
-    for key, value in spec.specifications.items():
-        assert key_appears_in_tf(tf_code, key), f"Key {key} missing in Terraform"
-```
-
-### Property 4: Diagram Includes All Resources
-
-**For any** non-empty list of `ResourceSpec` objects, the generated diagram SHALL include a visual representation of every resource.
-
-**Validates: Requirement 6.4**
-
-**Test Implementation:**
-```python
-# Feature: aws-resource-inventory, Property 4: Diagram includes all resources
-@given(st.lists(st.from_type(ResourceSpec), min_size=1, max_size=20))
-@settings(max_examples=100)
-def test_property_diagram_includes_all_resources_req_6_4(specs):
-    """For all resource lists, diagram includes all resources"""
-    generator = DiagramGenerator()
-    diagram = generator.generate_diagram(specs)
-    
-    for spec in specs:
-        assert resource_appears_in_diagram(diagram, spec.arn), \
-            f"Resource {spec.arn} missing in diagram"
-```
-
-### Property 5: Collection Preserves AWS Data
-
-**For any** AWS API response that is successfully parsed, the raw response SHALL be preserved in the `ResourceSpec` for audit purposes.
-
-**Validates: Requirement 2.6**
-
-**Test Implementation:**
-```python
-# Feature: aws-resource-inventory, Property 5: Collection preserves raw data
-@given(st.from_type(AWSAPIResponse))
-@settings(max_examples=100)
-def test_property_collector_preserves_raw_response_req_2_6(aws_response):
-    """For all AWS responses, collector preserves raw response"""
-    collector = SpecCollector()
-    spec = collector.parse_aws_response(aws_response)
-    
-    if spec.is_ok():
-        assert spec.value.raw_response == aws_response.raw_data
-```
-
-### Property 6: MCP Server Never Exposes Credentials
-
-**For any** valid MCP server request, the response SHALL NOT contain AWS credentials or credential patterns.
-
-**Validates: Requirement 5.2**
-
-**Test Implementation:**
-```python
-# Feature: aws-resource-inventory, Property 6: MCP never exposes credentials
-@given(st.dictionaries(
-    keys=st.sampled_from(["list-resources", "get-resource-spec", "analyze-activity-flow"]),
-    values=st.dictionaries(st.text(), st.text())
-))
-@settings(max_examples=100)
-def test_property_mcp_server_no_credentials_req_5_2(request):
-    """For all MCP requests, response contains no credentials"""
-    server = MCPServer()
-    response = server.handle_request(request)
-    
-    response_text = json.dumps(response.value if response.is_ok() else response.error)
-    assert not contains_credential_pattern(response_text)
-```
-
-## Performance Requirements
-
-### TDD Performance Testing
-
-**Performance tests MUST be written before optimization:**
-
-```python
-# Performance Test (Write FIRST)
-def test_discovery_completes_under_5_minutes_req_1_5():
-    """
-    Performance: Discovery completes within 5 minutes for 1000 resources
-    
-    Validates: Requirement 1.5
-    """
-    # Given: Mock AWS with 1000 resources
-    mock_aws = create_mock_aws_with_resources(count=1000)
-    
-    # When: Run discovery
-    start = time.time()
-    discoverer = ResourceDiscovery(aws_client=mock_aws)
-    resources = discoverer.discover_all_resources()
-    elapsed = time.time() - start
-    
-    # Then: Completes under 5 minutes
-    assert elapsed < 300, f"Discovery took {elapsed}s, expected < 300s"
-    assert len(resources) == 1000
-```
-
-### Performance Targets
-
-- **Discovery**: Complete in < 5 minutes for 1000 resources (Requirement 1.5)
-- **Collection**: Process 10 resources/second with retry logic
-- **Parsing**: Parse 100 specs/second
-- **MCP Server**: Handle 10 requests/second (Requirement 5.7)
-- **IaC Generation**: Generate Terraform for 1000 resources in < 2 minutes
-
-## Security Considerations
-
-### TDD Security Testing
-
-**All security requirements MUST have tests written first:**
-
-```python
-# Security Test 1
-def test_cli_never_logs_credentials_req_9_2():
-    """Security: CLI never logs AWS credentials"""
-    with captured_logs() as logs:
-        cli = CLI(aws_access_key="AKIATEST", aws_secret="SECRET")
-        cli.run_discovery()
-        
-        assert "AKIATEST" not in logs
-        assert "SECRET" not in logs
-
-# Security Test 2
-def test_sanitizer_removes_all_sensitive_patterns_req_9_5():
-    """Security: Sanitizer removes all known sensitive patterns"""
-    sensitive_data = {
-        "aws_key": "AKIAIOSFODNN7EXAMPLE",
-        "password": "mypassword123",
-        "private_key": "-----BEGIN RSA PRIVATE KEY-----"
-    }
-    
-    sanitizer = DataSanitizer()
-    sanitized = sanitizer.sanitize(sensitive_data)
-    
-    assert all(v == "[REDACTED]" for v in sanitized.values())
-
-# Security Test 3
-def test_mcp_server_sandboxed_no_aws_access_req_9_7():
-    """Security: MCP server has no AWS credential access"""
-    server = MCPServer()
-    
-    # Attempt to access AWS credentials should fail
-    with pytest.raises(CredentialAccessError):
-        server._get_aws_credentials()
-```
-
-### Security Checklist
-
-- [ ] AWS credentials never logged (Req 9.2)
-- [ ] Credentials not persisted to disk (Req 9.2)
-- [ ] STS assume-role supported (Req 9.3)
-- [ ] Least-privilege IAM permissions (Req 9.4)
-- [ ] Sensitive data sanitized in outputs (Req 9.5)
-- [ ] MCP server sandboxed (Req 9.7)
-- [ ] Rate limiting enforced (Req 5.7)
-- [ ] Unauthorized operations blocked (Req 5.6)
-
-## Deployment and CI/CD
-
-### TDD CI/CD Pipeline
-
-**Test gates enforce TDD discipline:**
-
-```yaml
-# .github/workflows/tdd-pipeline.yml
-name: TDD Pipeline
-
-on: [push, pull_request]
-
-jobs:
-  unit-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
-      
-      - name: Run Unit Tests with Coverage
-        run: |
-          pytest tests/unit/ -v \
-            --cov=src \
-            --cov-report=term-missing \
-            --cov-report=xml \
-            --cov-report=html
-      
-      - name: Coverage Gate (80% minimum)
-        run: coverage report --fail-under=80
-      
-      - name: Critical Path Coverage Gate (100%)
-        run: |
-          coverage report --include="src/parser/*" --fail-under=100
-          coverage report --include="src/sanitizer/*" --fail-under=100
-      
-      - name: Upload Coverage Report
-        uses: codecov/codecov-action@v3
-  
-  property-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
-      
-      - name: Run Property-Based Tests
-        run: |
-          pytest tests/unit/ -k property -v \
-            --hypothesis-show-statistics \
-            --hypothesis-seed=random
-      
-      - name: Verify Property Test Iterations
-        run: |
-          # Ensure each property test runs 100+ iterations
-          pytest tests/unit/ -k property -v \
-            --hypothesis-show-statistics \
-            | grep "examples" \
-            | awk '{if ($1 < 100) exit 1}'
-  
-  integration-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
-      
-      - name: Run Integration Tests
-        run: pytest tests/integration/ -v
-  
-  e2e-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
-      
-      - name: Run E2E Tests
-        run: pytest tests/e2e/ -v --slow
-  
-  type-checking:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Install dependencies
-        run: pip install mypy
-      
-      - name: Type Check
-        run: mypy src/ --strict
-  
-  linting:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Install dependencies
-        run: pip install ruff black
-      
-      - name: Lint with Ruff
-        run: ruff check src/
-      
-      - name: Format Check with Black
-        run: black --check src/
-  
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Security Scan
-        run: |
-          pip install bandit
-          bandit -r src/ -ll
-  
-  test-summary:
-    needs: [unit-tests, property-tests, integration-tests, e2e-tests, type-checking, linting]
-    runs-on: ubuntu-latest
-    steps:
-      - name: All Tests Passed
-        run: echo "✅ All TDD gates passed"
-```
-
-### Test Execution Order
-
-1. **Fast Unit Tests** (< 1 minute) - Run on every commit
-2. **Property Tests** (1-5 minutes) - Run on every commit
-3. **Integration Tests** (5-10 minutes) - Run on every PR
-4. **E2E Tests** (10-20 minutes) - Run before merge
-5. **Type Checking** (< 1 minute) - Run on every commit
-6. **Linting** (< 1 minute) - Run on every commit
-
-## Documentation Requirements
-
-### TDD Documentation
-
-**Documentation MUST include test examples:**
-
-1. **README.md**
-   - Installation with test setup
-   - Running tests (unit, property, integration, e2e)
-   - TDD workflow explanation
-   - Coverage reports
-
-2. **TESTING.md**
-   - Complete testing strategy
-   - How to write new tests
-   - Test fixture documentation
-   - Mock setup guides
-
-3. **API_DOCS.md**
-   - Every function includes test example
-   - Property tests documented with examples
-   - Error cases with test references
-
-4. **CONTRIBUTING.md**
-   - TDD workflow mandatory
-   - No PR accepted without tests
-   - Coverage requirements
-   - Test naming conventions
-
-## Summary
-
-This design implements AWS Resource Inventory with **Test-Driven Development as a core principle**, not an afterthought. Every component has tests written before implementation, ensuring:
-
-- **Correctness**: Property-based testing verifies universal properties
-- **Reliability**: Comprehensive error handling with tests for every error path
-- **Security**: All security requirements have test coverage
-- **Maintainability**: High test coverage makes refactoring safe
-- **Confidence**: Developers can trust the system because tests prove correctness
-
-**Key TDD Requirements:**
-
-1. ✅ **Minimum 80% code coverage** across all components
-2. ✅ **100% coverage** for parser, sanitizer, credential handling
-3. ✅ **Property tests run 100+ iterations** per property
-4. ✅ **Tests written BEFORE implementation** (Red-Green-Refactor)
-5. ✅ **CI/CD pipeline enforces** test gates
-6. ✅ **Every PR requires tests** for new features
-7. ✅ **Test fixtures** provide comprehensive mock data
-8. ✅ **Integration tests** verify component interactions
-9. ✅ **E2E tests** validate complete workflows
-10. ✅ **Security tests** ensure no credential exposure
-
-**Next Steps:**
-
-1. Set up project structure with test directories
-2. Install testing frameworks (pytest, hypothesis, moto)
-3. Write first failing test for Resource Parser
-4. Begin Red-Green-Refactor cycle
-5. Build up test suite incrementally
-6. Implement features only after tests are green
+- [ ] Only `Describe*`/`List*`/`Get*` + `sts:AssumeRole`/`GetCallerIdentity` invoked (static test over the registry and collector method tables).
+- [ ] `docs/iam-policy.json` lists exactly those permissions.
+- [ ] Sanitizer applied to spec JSON, Markdown, raw responses, MCP responses and log records.
+- [ ] MCP module has no boto3 import; `mcp-serve` strips AWS env vars.
+- [ ] `bandit -r src -ll` clean.
+- [ ] Tests run with fake credentials only (conftest), live tests opt-in.
