@@ -1,0 +1,62 @@
+{
+  "GetBucketAcl": {
+    "Grants": [
+      {
+        "Grantee": {
+          "ID": "75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a",
+          "Type": "CanonicalUser"
+        },
+        "Permission": "FULL_CONTROL"
+      },
+      {
+        "Grantee": {
+          "Type": "Group",
+          "URI": "http://acs.amazonaws.com/groups/global/AllUsers"
+        },
+        "Permission": "READ"
+      }
+    ],
+    "Owner": {
+      "DisplayName": "webfile",
+      "ID": "75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a"
+    },
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "x-amzn-requestid": "B63Bs6s3fQcXSLCSOzzf9ZveFvB4cBhsxtPFSOpcoU8UG9aPshVk"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "B63Bs6s3fQcXSLCSOzzf9ZveFvB4cBhsxtPFSOpcoU8UG9aPshVk",
+      "RetryAttempts": 0
+    }
+  },
+  "GetBucketTagging": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "x-amzn-requestid": "yIiIE4OAlMSqfaGdScpzptEL7wxoOhICMs4SiAx65s5HoXA71wzQ"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "yIiIE4OAlMSqfaGdScpzptEL7wxoOhICMs4SiAx65s5HoXA71wzQ",
+      "RetryAttempts": 0
+    },
+    "TagSet": [
+      {
+        "Key": "team",
+        "Value": "orders"
+      }
+    ]
+  },
+  "GetBucketVersioning": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "x-amzn-requestid": "4QCgwWxFANtDv9moIXClhmPQJDNYDGVW7ANMfua8UpPsZFzdwHxO"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "4QCgwWxFANtDv9moIXClhmPQJDNYDGVW7ANMfua8UpPsZFzdwHxO",
+      "RetryAttempts": 0
+    },
+    "Status": "Enabled"
+  }
+}

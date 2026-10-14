@@ -356,3 +356,31 @@ def test_cli_discover_writes_discovery_json_req_1_1(runner, tmp_path, sample_acc
     assert data["account_id"] == "123456789012"
     assert data["resources"] and data["errors"] == []
     assert {"resource_type", "resource_id", "arn", "region"} <= set(data["resources"][0])
+
+
+# IAM action names that differ from the API operation name.
+IAM_ACTION_OVERRIDES = {
+    "s3:GetBucketCors": "s3:GetBucketCORS",
+    "s3:GetBucketEncryption": "s3:GetEncryptionConfiguration",
+    "s3:GetBucketLifecycleConfiguration": "s3:GetLifecycleConfiguration",
+    "s3:ListBuckets": "s3:ListAllMyBuckets",
+}
+
+
+def test_cli_api_calls_covered_by_iam_policy_req_9_4(runner, tmp_path, sample_account):
+    calls: set[str] = set()
+    original = BaseClient._make_api_call
+
+    def record(self, operation_name, api_params):
+        action = f"{self.meta.service_model.endpoint_prefix}:{operation_name}"
+        calls.add(IAM_ACTION_OVERRIDES.get(action, action))
+        return original(self, operation_name, api_params)
+
+    with patch.object(BaseClient, "_make_api_call", record):
+        result = _collect(runner, tmp_path / "out", "--role-arn", "arn:aws:iam::1:role/r")
+    assert result.exit_code == 0, result.output
+
+    policy_path = Path(__file__).resolve().parents[2] / "docs" / "iam-policy.json"
+    policy = json.loads(policy_path.read_text(encoding="utf-8"))
+    allowed = {a for s in policy["Statement"] for a in s["Action"]}
+    assert sorted(calls - allowed) == []

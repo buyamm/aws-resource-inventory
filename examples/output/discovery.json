@@ -1,0 +1,113 @@
+{
+  "account_id": "123456789012",
+  "api_calls": 10,
+  "errors": [],
+  "regions": [
+    "global",
+    "us-east-1"
+  ],
+  "resources": [
+    {
+      "arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-9f9c49245e711cdd9",
+      "region": "us-east-1",
+      "resource_id": "i-9f9c49245e711cdd9",
+      "resource_type": "aws_instance",
+      "tags": {
+        "Name": "orders-web-1"
+      }
+    },
+    {
+      "arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-ce9c3403",
+      "region": "us-east-1",
+      "resource_id": "vpc-ce9c3403",
+      "resource_type": "aws_vpc",
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-db407a2e",
+      "region": "us-east-1",
+      "resource_id": "vpc-db407a2e",
+      "resource_type": "aws_vpc",
+      "tags": {
+        "Name": "orders-vpc"
+      }
+    },
+    {
+      "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-285ba61d10f344e74",
+      "region": "us-east-1",
+      "resource_id": "sg-285ba61d10f344e74",
+      "resource_type": "aws_security_group",
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-cc3138f31141d30f1",
+      "region": "us-east-1",
+      "resource_id": "sg-cc3138f31141d30f1",
+      "resource_type": "aws_security_group",
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-7c880b8c4789c2216",
+      "region": "us-east-1",
+      "resource_id": "sg-7c880b8c4789c2216",
+      "resource_type": "aws_security_group",
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:lambda:us-east-1:123456789012:function:order-processor",
+      "region": "us-east-1",
+      "resource_id": "order-processor",
+      "resource_type": "aws_lambda_function",
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:rds:us-east-1:123456789012:db:orders-db",
+      "region": "us-east-1",
+      "resource_id": "orders-db",
+      "resource_type": "aws_db_instance",
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor",
+      "region": "us-east-1",
+      "resource_id": "/aws/lambda/order-processor",
+      "resource_type": "aws_cloudwatch_log_group",
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:states:us-east-1:123456789012:stateMachine:order-flow",
+      "region": "us-east-1",
+      "resource_id": "order-flow",
+      "resource_type": "aws_sfn_state_machine",
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:dynamodb:us-east-1:123456789012:table/orders",
+      "region": "us-east-1",
+      "resource_id": "orders",
+      "resource_type": "aws_dynamodb_table",
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:s3:::orders-public-assets",
+      "region": "global",
+      "resource_id": "orders-public-assets",
+      "resource_type": "aws_s3_bucket",
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:iam::123456789012:role/orders-app-role",
+      "region": "global",
+      "resource_id": "orders-app-role",
+      "resource_type": "aws_iam_role",
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:iam::123456789012:role/order-lambda-role",
+      "region": "global",
+      "resource_id": "order-lambda-role",
+      "resource_type": "aws_iam_role",
+      "tags": {}
+    }
+  ]
+}

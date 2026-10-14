@@ -1,0 +1,73 @@
+{
+  "DescribeVpcAttribute:enableDnsHostnames": {
+    "EnableDnsHostnames": {
+      "Value": false
+    },
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Wed, 14 Oct 2026 23:28:57 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE",
+      "RetryAttempts": 0
+    },
+    "VpcId": "vpc-db407a2e"
+  },
+  "DescribeVpcAttribute:enableDnsSupport": {
+    "EnableDnsSupport": {
+      "Value": true
+    },
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Wed, 14 Oct 2026 23:28:57 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE",
+      "RetryAttempts": 0
+    },
+    "VpcId": "vpc-db407a2e"
+  },
+  "DescribeVpcs": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Wed, 14 Oct 2026 23:28:57 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "7a62c442-3484-4f42-9342-6942EXAMPLE",
+      "RetryAttempts": 0
+    },
+    "Vpcs": [
+      {
+        "CidrBlock": "10.0.0.0/16",
+        "CidrBlockAssociationSet": [
+          {
+            "AssociationId": "vpc-cidr-assoc-c8c24dbe",
+            "CidrBlock": "10.0.0.0/16",
+            "CidrBlockState": {
+              "State": "associated"
+            }
+          }
+        ],
+        "DhcpOptionsId": "default",
+        "InstanceTenancy": "default",
+        "Ipv6CidrBlockAssociationSet": [],
+        "IsDefault": false,
+        "OwnerId": "123456789012",
+        "State": "available",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "orders-vpc"
+          }
+        ],
+        "VpcId": "vpc-db407a2e"
+      }
+    ]
+  }
+}

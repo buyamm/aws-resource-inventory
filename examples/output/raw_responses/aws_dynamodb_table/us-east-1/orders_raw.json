@@ -1,0 +1,66 @@
+{
+  "DescribeTable": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Wed, 14 Oct 2026 23:28:57 GMT",
+        "server": "amazon.com",
+        "x-amz-crc32": "1324140097",
+        "x-amzn-requestid": "DIMSpMkKWejpdmdhUOu8HlNkrz220QGl141Ucm3XWIwRVteiWFw0"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "DIMSpMkKWejpdmdhUOu8HlNkrz220QGl141Ucm3XWIwRVteiWFw0",
+      "RetryAttempts": 0
+    },
+    "Table": {
+      "AttributeDefinitions": [
+        {
+          "AttributeName": "order_id",
+          "AttributeType": "S"
+        }
+      ],
+      "BillingModeSummary": {
+        "BillingMode": "PAY_PER_REQUEST"
+      },
+      "CreationDateTime": "2026-10-14T23:28:56.796319+07:00",
+      "GlobalSecondaryIndexes": [],
+      "ItemCount": 0,
+      "KeySchema": [
+        {
+          "AttributeName": "order_id",
+          "KeyType": "HASH"
+        }
+      ],
+      "LocalSecondaryIndexes": [],
+      "ProvisionedThroughput": {
+        "NumberOfDecreasesToday": 0,
+        "ReadCapacityUnits": 0,
+        "WriteCapacityUnits": 0
+      },
+      "TableArn": "arn:aws:dynamodb:us-east-1:123456789012:table/orders",
+      "TableName": "orders",
+      "TableSizeBytes": 0,
+      "TableStatus": "ACTIVE"
+    }
+  },
+  "ListTagsOfResource": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Wed, 14 Oct 2026 23:28:57 GMT",
+        "server": "amazon.com",
+        "x-amz-crc32": "588556648",
+        "x-amzn-requestid": "q80nXPSBG1JT2QX6Xj7EvM9ljp4RTnUAVUy6SSXQ9KqelEd7fR2P"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "q80nXPSBG1JT2QX6Xj7EvM9ljp4RTnUAVUy6SSXQ9KqelEd7fR2P",
+      "RetryAttempts": 0
+    },
+    "Tags": [
+      {
+        "Key": "team",
+        "Value": "orders"
+      }
+    ]
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Identity",
+      "Effect": "Allow",
+      "Action": ["sts:GetCallerIdentity"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AssumeRoleOnlyWithRoleArnOption",
+      "Effect": "Allow",
+      "Action": ["sts:AssumeRole"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "Ec2InstancesVpcsSecurityGroups",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeRegions",
+        "ec2:DescribeInstances",
+        "ec2:DescribeVpcs",
+        "ec2:DescribeVpcAttribute",
+        "ec2:DescribeSecurityGroups"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "LambdaFunctions",
+      "Effect": "Allow",
+      "Action": ["lambda:ListFunctions", "lambda:GetFunction", "lambda:ListTags"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "RdsInstances",
+      "Effect": "Allow",
+      "Action": ["rds:DescribeDBInstances"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchLogGroups",
+      "Effect": "Allow",
+      "Action": ["logs:DescribeLogGroups", "logs:ListTagsLogGroup", "logs:ListTagsForResource"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "StepFunctionsStateMachines",
+      "Effect": "Allow",
+      "Action": ["states:ListStateMachines", "states:DescribeStateMachine", "states:ListTagsForResource"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DynamoDbTables",
+      "Effect": "Allow",
+      "Action": ["dynamodb:ListTables", "dynamodb:DescribeTable", "dynamodb:ListTagsOfResource"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "S3Buckets",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListAllMyBuckets",
+        "s3:GetBucketAcl",
+        "s3:GetBucketCORS",
+        "s3:GetEncryptionConfiguration",
+        "s3:GetLifecycleConfiguration",
+        "s3:GetBucketPolicy",
+        "s3:GetBucketTagging",
+        "s3:GetBucketVersioning",
+        "s3:GetBucketWebsite"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IamRoles",
+      "Effect": "Allow",
+      "Action": [
+        "iam:ListRoles",
+        "iam:GetRole",
+        "iam:ListAttachedRolePolicies",
+        "iam:ListRolePolicies",
+        "iam:GetRolePolicy"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

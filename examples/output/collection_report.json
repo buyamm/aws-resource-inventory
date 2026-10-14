@@ -1,0 +1,375 @@
+{
+  "account_id": "123456789012",
+  "collection_errors": [],
+  "discovery_errors": [],
+  "finished_at": "2026-10-14T16:28:57.364292Z",
+  "metrics": {
+    "api_calls": 44,
+    "data_volume_bytes": 131383,
+    "resources_discovered": 14,
+    "specs_collected": 14,
+    "specs_failed": 0
+  },
+  "operations": [
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeTable",
+      "outcome": "success",
+      "resource_arn": "arn:aws:dynamodb:us-east-1:123456789012:table/orders",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "ListTagsOfResource",
+      "outcome": "success",
+      "resource_arn": "arn:aws:dynamodb:us-east-1:123456789012:table/orders",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeInstances",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-9f9c49245e711cdd9",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeSecurityGroups",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-285ba61d10f344e74",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeSecurityGroups",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-7c880b8c4789c2216",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeSecurityGroups",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-cc3138f31141d30f1",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeVpcs",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-ce9c3403",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeVpcAttribute:enableDnsSupport",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-ce9c3403",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeVpcAttribute:enableDnsHostnames",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-ce9c3403",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeVpcs",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-db407a2e",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeVpcAttribute:enableDnsSupport",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-db407a2e",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeVpcAttribute:enableDnsHostnames",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-db407a2e",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "GetRole",
+      "outcome": "success",
+      "resource_arn": "arn:aws:iam::123456789012:role/order-lambda-role",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "ListAttachedRolePolicies",
+      "outcome": "success",
+      "resource_arn": "arn:aws:iam::123456789012:role/order-lambda-role",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "ListRolePolicies",
+      "outcome": "success",
+      "resource_arn": "arn:aws:iam::123456789012:role/order-lambda-role",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "GetRolePolicy:too-broad",
+      "outcome": "success",
+      "resource_arn": "arn:aws:iam::123456789012:role/order-lambda-role",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "GetRole",
+      "outcome": "success",
+      "resource_arn": "arn:aws:iam::123456789012:role/orders-app-role",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "ListAttachedRolePolicies",
+      "outcome": "success",
+      "resource_arn": "arn:aws:iam::123456789012:role/orders-app-role",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "ListRolePolicies",
+      "outcome": "success",
+      "resource_arn": "arn:aws:iam::123456789012:role/orders-app-role",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "GetFunction",
+      "outcome": "success",
+      "resource_arn": "arn:aws:lambda:us-east-1:123456789012:function:order-processor",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeLogGroups",
+      "outcome": "success",
+      "resource_arn": "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "ListTagsLogGroup",
+      "outcome": "success",
+      "resource_arn": "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeDBInstances",
+      "outcome": "success",
+      "resource_arn": "arn:aws:rds:us-east-1:123456789012:db:orders-db",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "GetBucketAcl",
+      "outcome": "success",
+      "resource_arn": "arn:aws:s3:::orders-public-assets",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "NoSuchCORSConfiguration",
+      "operation": "GetBucketCors",
+      "outcome": "not_configured",
+      "resource_arn": "arn:aws:s3:::orders-public-assets",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "ServerSideEncryptionConfigurationNotFoundError",
+      "operation": "GetBucketEncryption",
+      "outcome": "not_configured",
+      "resource_arn": "arn:aws:s3:::orders-public-assets",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "NoSuchLifecycleConfiguration",
+      "operation": "GetBucketLifecycleConfiguration",
+      "outcome": "not_configured",
+      "resource_arn": "arn:aws:s3:::orders-public-assets",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "NoSuchBucketPolicy",
+      "operation": "GetBucketPolicy",
+      "outcome": "not_configured",
+      "resource_arn": "arn:aws:s3:::orders-public-assets",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "GetBucketTagging",
+      "outcome": "success",
+      "resource_arn": "arn:aws:s3:::orders-public-assets",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "GetBucketVersioning",
+      "outcome": "success",
+      "resource_arn": "arn:aws:s3:::orders-public-assets",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "NoSuchWebsiteConfiguration",
+      "operation": "GetBucketWebsite",
+      "outcome": "not_configured",
+      "resource_arn": "arn:aws:s3:::orders-public-assets",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeStateMachine",
+      "outcome": "success",
+      "resource_arn": "arn:aws:states:us-east-1:123456789012:stateMachine:order-flow",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "ListTagsForResource",
+      "outcome": "success",
+      "resource_arn": "arn:aws:states:us-east-1:123456789012:stateMachine:order-flow",
+      "status": "success",
+      "timestamp": "2026-10-14T16:28:57Z"
+    }
+  ],
+  "phases": [
+    {
+      "duration_seconds": 0.237781,
+      "ended_at": "2026-10-14T16:28:57.279975Z",
+      "name": "discovery",
+      "started_at": "2026-10-14T16:28:57.042194Z"
+    },
+    {
+      "duration_seconds": 0.068361,
+      "ended_at": "2026-10-14T16:28:57.348351Z",
+      "name": "collection",
+      "started_at": "2026-10-14T16:28:57.279988Z"
+    },
+    {
+      "duration_seconds": 0.015333,
+      "ended_at": "2026-10-14T16:28:57.364292Z",
+      "name": "output",
+      "started_at": "2026-10-14T16:28:57.348953Z"
+    }
+  ],
+  "regions": [
+    "us-east-1"
+  ],
+  "started_at": "2026-10-14T16:28:57.042194Z",
+  "time_savings": {
+    "automated_hours": 8.929861111111111e-05,
+    "hours_saved": 1.1665773680555556,
+    "manual_hours": 1.1666666666666667,
+    "percent_saved": 99.99234583333333
+  }
+}

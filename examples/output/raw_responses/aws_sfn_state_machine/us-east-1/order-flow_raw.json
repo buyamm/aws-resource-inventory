@@ -1,0 +1,40 @@
+{
+  "DescribeStateMachine": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Wed, 14 Oct 2026 23:28:57 GMT",
+        "server": "amazon.com",
+        "x-amzn-requestid": "rghTj3kU8CtiXsSfVc3L3rSyDOumntL8MOequs8U5Zksa7RMfqQt"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "rghTj3kU8CtiXsSfVc3L3rSyDOumntL8MOequs8U5Zksa7RMfqQt",
+      "RetryAttempts": 0
+    },
+    "creationDate": "2026-10-14T16:28:56.847000+00:00",
+    "definition": "{\"StartAt\": \"Process\", \"States\": {\"Process\": {\"Type\": \"Task\", \"Resource\": \"arn:aws:lambda:us-east-1:123456789012:function:order-processor\", \"End\": true}}}",
+    "name": "order-flow",
+    "roleArn": "arn:aws:iam::123456789012:role/order-lambda-role",
+    "stateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:order-flow",
+    "status": "ACTIVE"
+  },
+  "ListTagsForResource": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Wed, 14 Oct 2026 23:28:57 GMT",
+        "server": "amazon.com",
+        "x-amzn-requestid": "7wHlkcC8x5kBLAoGajg4jMgcmxummeS2LoxS98etarYSR6d768Ut"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "7wHlkcC8x5kBLAoGajg4jMgcmxummeS2LoxS98etarYSR6d768Ut",
+      "RetryAttempts": 0
+    },
+    "tags": [
+      {
+        "key": "team",
+        "value": "orders"
+      }
+    ]
+  }
+}

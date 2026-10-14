@@ -1,0 +1,63 @@
+{
+  "GetRole": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Wed, 14 Oct 2026 23:28:57 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "df37e965-9967-11e1-a4c3-270EXAMPLE04",
+      "RetryAttempts": 0
+    },
+    "Role": {
+      "Arn": "arn:aws:iam::123456789012:role/orders-app-role",
+      "AssumeRolePolicyDocument": {
+        "Statement": [
+          {
+            "Action": "sts:AssumeRole",
+            "Effect": "Allow",
+            "Principal": {
+              "Service": "ec2.amazonaws.com"
+            }
+          }
+        ],
+        "Version": "2012-10-17"
+      },
+      "CreateDate": "2026-10-14T16:28:56.764000+00:00",
+      "MaxSessionDuration": 3600,
+      "Path": "/",
+      "RoleId": "AROARZPUZDIKAHS2OASY6",
+      "RoleLastUsed": {},
+      "RoleName": "orders-app-role"
+    }
+  },
+  "ListAttachedRolePolicies": {
+    "AttachedPolicies": [],
+    "IsTruncated": false,
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Wed, 14 Oct 2026 23:28:57 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE",
+      "RetryAttempts": 0
+    }
+  },
+  "ListRolePolicies": {
+    "IsTruncated": false,
+    "PolicyNames": [],
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Wed, 14 Oct 2026 23:28:57 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "8c7e1816-99f0-11e1-a4c3-27EXAMPLE804",
+      "RetryAttempts": 0
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "GetFunction": {
+    "Code": {
+      "Location": "s3://awslambda-us-east-1-tasks.s3-us-east-1.amazonaws.com/order-processor-0ad290c2-c88e-4bb1-94a3-a514acb7e303",
+      "RepositoryType": "S3"
+    },
+    "Configuration": {
+      "Architectures": [
+        "x86_64"
+      ],
+      "CodeSha256": "BDtH4Huf9CMc3iLRdqn8DhDGsQxETljhj6P7Pox3VMw=",
+      "CodeSize": 164,
+      "Description": "",
+      "Environment": {
+        "Variables": {
+          "DB_PASSWORD": "[REDACTED]",
+          "TABLE_NAME": "orders"
+        }
+      },
+      "EphemeralStorage": {
+        "Size": 512
+      },
+      "FunctionArn": "arn:aws:lambda:us-east-1:123456789012:function:order-processor",
+      "FunctionName": "order-processor",
+      "Handler": "handler.handler",
+      "LastModified": "2026-10-14T16:28:56.804755000Z",
+      "LastUpdateStatus": "Successful",
+      "Layers": [],
+      "MemorySize": 256,
+      "PackageType": "Zip",
+      "Role": "arn:aws:iam::123456789012:role/order-lambda-role",
+      "Runtime": "python3.11",
+      "SnapStart": {
+        "ApplyOn": "None",
+        "OptimizationStatus": "Off"
+      },
+      "State": "Active",
+      "Timeout": 30,
+      "TracingConfig": {
+        "Mode": "PassThrough"
+      },
+      "Version": "$LATEST",
+      "VpcConfig": {
+        "SecurityGroupIds": [],
+        "SubnetIds": []
+      }
+    },
+    "ResponseMetadata": {
+      "HTTPHeaders": {},
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RetryAttempts": 0
+    },
+    "Tags": {
+      "team": "orders"
+    }
+  }
+}

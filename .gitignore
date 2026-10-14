@@ -132,7 +132,8 @@ Thumbs.db
 .aws/
 
 # Project specific
-output/
+/output/
+/demo-output/
 collected_specs/
 *.terraform/
 terraform.tfstate*

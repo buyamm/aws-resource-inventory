@@ -1,0 +1,38 @@
+{
+  "DescribeSecurityGroups": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Wed, 14 Oct 2026 23:28:57 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "59dbff89-35bd-4eac-99ed-be587EXAMPLE",
+      "RetryAttempts": 0
+    },
+    "SecurityGroups": [
+      {
+        "Description": "default VPC security group",
+        "GroupId": "sg-cc3138f31141d30f1",
+        "GroupName": "default",
+        "IpPermissions": [],
+        "IpPermissionsEgress": [
+          {
+            "IpProtocol": "-1",
+            "IpRanges": [
+              {
+                "CidrIp": "0.0.0.0/0"
+              }
+            ],
+            "Ipv6Ranges": [],
+            "PrefixListIds": [],
+            "UserIdGroupPairs": []
+          }
+        ],
+        "OwnerId": "123456789012",
+        "Tags": [],
+        "VpcId": "vpc-db407a2e"
+      }
+    ]
+  }
+}

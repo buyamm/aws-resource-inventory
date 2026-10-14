@@ -1,0 +1,90 @@
+{
+  "GetRole": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Wed, 14 Oct 2026 23:28:57 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "df37e965-9967-11e1-a4c3-270EXAMPLE04",
+      "RetryAttempts": 0
+    },
+    "Role": {
+      "Arn": "arn:aws:iam::123456789012:role/order-lambda-role",
+      "AssumeRolePolicyDocument": {
+        "Statement": [
+          {
+            "Action": "sts:AssumeRole",
+            "Effect": "Allow",
+            "Principal": {
+              "Service": "lambda.amazonaws.com"
+            }
+          }
+        ],
+        "Version": "2012-10-17"
+      },
+      "CreateDate": "2026-10-14T16:28:56.771000+00:00",
+      "Description": "Execution role for order-processor",
+      "MaxSessionDuration": 3600,
+      "Path": "/",
+      "RoleId": "AROARZPUZDIKEXHFBBBZI",
+      "RoleLastUsed": {},
+      "RoleName": "order-lambda-role"
+    }
+  },
+  "GetRolePolicy:too-broad": {
+    "PolicyDocument": {
+      "Statement": [
+        {
+          "Action": "*",
+          "Effect": "Allow",
+          "Resource": "*"
+        }
+      ],
+      "Version": "2012-10-17"
+    },
+    "PolicyName": "too-broad",
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Wed, 14 Oct 2026 23:28:57 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "7e7cd8bc-99ef-11e1-a4c3-27EXAMPLE804",
+      "RetryAttempts": 0
+    },
+    "RoleName": "order-lambda-role"
+  },
+  "ListAttachedRolePolicies": {
+    "AttachedPolicies": [],
+    "IsTruncated": false,
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Wed, 14 Oct 2026 23:28:57 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE",
+      "RetryAttempts": 0
+    }
+  },
+  "ListRolePolicies": {
+    "IsTruncated": false,
+    "PolicyNames": [
+      "too-broad"
+    ],
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Wed, 14 Oct 2026 23:28:57 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "8c7e1816-99f0-11e1-a4c3-27EXAMPLE804",
+      "RetryAttempts": 0
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:states:us-east-1:123456789012:stateMachine:order-flow",
+  "generated_at": "2026-10-14T16:28:57.348959Z",
+  "metadata": {
+    "api_version": "2016-11-23",
+    "checksum": "50b7ff5b4ac237d25335f3a05f7cb24db600d1d1c215033b6163a30643c96c50",
+    "collected_at": "2026-10-14T16:28:57Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_sfn_state_machine",
+  "specifications": {
+    "creationDate": "2026-10-14T16:28:56.847000+00:00",
+    "definition": "{\"StartAt\": \"Process\", \"States\": {\"Process\": {\"Type\": \"Task\", \"Resource\": \"arn:aws:lambda:us-east-1:123456789012:function:order-processor\", \"End\": true}}}",
+    "name": "order-flow",
+    "roleArn": "arn:aws:iam::123456789012:role/order-lambda-role",
+    "stateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:order-flow",
+    "status": "ACTIVE",
+    "tags": [
+      {
+        "key": "team",
+        "value": "orders"
+      }
+    ]
+  }
+}

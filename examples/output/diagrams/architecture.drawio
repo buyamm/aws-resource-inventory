@@ -1,0 +1,119 @@
+<mxfile host="aws-resource-inventory" type="device">
+  <diagram id="architecture" name="AWS Architecture">
+    <mxGraphModel grid="1" gridSize="10" page="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="region-9027cc5a2c13" value="global" style="text;html=1;fontSize=14;fontStyle=1;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="200" height="30" as="geometry" />
+        </mxCell>
+        <UserObject id="res-0aca2d9a4c24" label="&lt;b&gt;aws_s3_bucket&lt;/b&gt;&lt;br/&gt;orders-public-assets" tooltip="arn:aws:s3:::orders-public-assets" arn="arn:aws:s3:::orders-public-assets">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;fillColor=#7AA116;" vertex="1" parent="1">
+            <mxGeometry x="110" y="90" width="60" height="60" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="res-5a2dba3b9cbc" label="&lt;b&gt;aws_iam_role&lt;/b&gt;&lt;br/&gt;order-lambda-role" tooltip="arn:aws:iam::123456789012:role/order-lambda-role" arn="arn:aws:iam::123456789012:role/order-lambda-role">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.identity_and_access_management;fillColor=#DD344C;" vertex="1" parent="1">
+            <mxGeometry x="110" y="220" width="60" height="60" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="res-699cc6763f0c" label="&lt;b&gt;aws_iam_role&lt;/b&gt;&lt;br/&gt;orders-app-role" tooltip="arn:aws:iam::123456789012:role/orders-app-role" arn="arn:aws:iam::123456789012:role/orders-app-role">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.identity_and_access_management;fillColor=#DD344C;" vertex="1" parent="1">
+            <mxGeometry x="110" y="350" width="60" height="60" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="region-c6308e67dd87" value="us-east-1" style="text;html=1;fontSize=14;fontStyle=1;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="300" y="40" width="200" height="30" as="geometry" />
+        </mxCell>
+        <UserObject id="res-3db4c99dfffc" label="&lt;b&gt;aws_instance&lt;/b&gt;&lt;br/&gt;i-9f9c49245e711cdd9" tooltip="arn:aws:ec2:us-east-1:123456789012:instance/i-9f9c49245e711cdd9" arn="arn:aws:ec2:us-east-1:123456789012:instance/i-9f9c49245e711cdd9">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ec2;fillColor=#ED7100;" vertex="1" parent="1">
+            <mxGeometry x="370" y="90" width="60" height="60" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="res-9e4b7c79f3b8" label="&lt;b&gt;aws_vpc&lt;/b&gt;&lt;br/&gt;vpc-ce9c3403" tooltip="arn:aws:ec2:us-east-1:123456789012:vpc/vpc-ce9c3403" arn="arn:aws:ec2:us-east-1:123456789012:vpc/vpc-ce9c3403">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.vpc;fillColor=#8C4FFF;" vertex="1" parent="1">
+            <mxGeometry x="370" y="220" width="60" height="60" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="res-18cfbb7ffbf5" label="&lt;b&gt;aws_vpc&lt;/b&gt;&lt;br/&gt;vpc-db407a2e" tooltip="arn:aws:ec2:us-east-1:123456789012:vpc/vpc-db407a2e" arn="arn:aws:ec2:us-east-1:123456789012:vpc/vpc-db407a2e">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.vpc;fillColor=#8C4FFF;" vertex="1" parent="1">
+            <mxGeometry x="370" y="350" width="60" height="60" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="res-adc7ebeb9214" label="&lt;b&gt;aws_security_group&lt;/b&gt;&lt;br/&gt;sg-285ba61d10f344e74" tooltip="arn:aws:ec2:us-east-1:123456789012:security-group/sg-285ba61d10f344e74" arn="arn:aws:ec2:us-east-1:123456789012:security-group/sg-285ba61d10f344e74">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.network_firewall;fillColor=#DD344C;" vertex="1" parent="1">
+            <mxGeometry x="370" y="480" width="60" height="60" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="res-5bd9069b62db" label="&lt;b&gt;aws_security_group&lt;/b&gt;&lt;br/&gt;sg-7c880b8c4789c2216" tooltip="arn:aws:ec2:us-east-1:123456789012:security-group/sg-7c880b8c4789c2216" arn="arn:aws:ec2:us-east-1:123456789012:security-group/sg-7c880b8c4789c2216">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.network_firewall;fillColor=#DD344C;" vertex="1" parent="1">
+            <mxGeometry x="370" y="610" width="60" height="60" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="res-2ecb027db8b7" label="&lt;b&gt;aws_security_group&lt;/b&gt;&lt;br/&gt;sg-cc3138f31141d30f1" tooltip="arn:aws:ec2:us-east-1:123456789012:security-group/sg-cc3138f31141d30f1" arn="arn:aws:ec2:us-east-1:123456789012:security-group/sg-cc3138f31141d30f1">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.network_firewall;fillColor=#DD344C;" vertex="1" parent="1">
+            <mxGeometry x="370" y="740" width="60" height="60" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="res-63e7e6807e4b" label="&lt;b&gt;aws_lambda_function&lt;/b&gt;&lt;br/&gt;order-processor" tooltip="arn:aws:lambda:us-east-1:123456789012:function:order-processor" arn="arn:aws:lambda:us-east-1:123456789012:function:order-processor">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;fillColor=#ED7100;" vertex="1" parent="1">
+            <mxGeometry x="370" y="870" width="60" height="60" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="res-bf5733b5538a" label="&lt;b&gt;aws_db_instance&lt;/b&gt;&lt;br/&gt;orders-db" tooltip="arn:aws:rds:us-east-1:123456789012:db:orders-db" arn="arn:aws:rds:us-east-1:123456789012:db:orders-db">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.rds;fillColor=#C925D1;" vertex="1" parent="1">
+            <mxGeometry x="370" y="1000" width="60" height="60" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="res-cad8d13d0eeb" label="&lt;b&gt;aws_cloudwatch_log_group&lt;/b&gt;&lt;br/&gt;/aws/lambda/order-processor" tooltip="arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor" arn="arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch_2;fillColor=#E7157B;" vertex="1" parent="1">
+            <mxGeometry x="370" y="1130" width="60" height="60" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="res-9afe28976c1b" label="&lt;b&gt;aws_sfn_state_machine&lt;/b&gt;&lt;br/&gt;order-flow" tooltip="arn:aws:states:us-east-1:123456789012:stateMachine:order-flow" arn="arn:aws:states:us-east-1:123456789012:stateMachine:order-flow">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.step_functions;fillColor=#E7157B;" vertex="1" parent="1">
+            <mxGeometry x="370" y="1260" width="60" height="60" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="res-95c48e9d427a" label="&lt;b&gt;aws_dynamodb_table&lt;/b&gt;&lt;br/&gt;orders" tooltip="arn:aws:dynamodb:us-east-1:123456789012:table/orders" arn="arn:aws:dynamodb:us-east-1:123456789012:table/orders">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.dynamodb;fillColor=#C925D1;" vertex="1" parent="1">
+            <mxGeometry x="370" y="1390" width="60" height="60" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="edge-99dc50f7eece" value="security_group" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="res-3db4c99dfffc" target="res-5bd9069b62db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-fff888b2fa8a" value="vpc_connection" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="res-3db4c99dfffc" target="res-18cfbb7ffbf5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-c0d3df2d9e6f" value="iam_role_usage" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="res-3db4c99dfffc" target="res-699cc6763f0c">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-12ae0a5a5ce1" value="vpc_connection" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="res-adc7ebeb9214" target="res-9e4b7c79f3b8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-5a59c8c99624" value="vpc_connection" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="res-5bd9069b62db" target="res-18cfbb7ffbf5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-a2cd22d83bf7" value="vpc_connection" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="res-2ecb027db8b7" target="res-18cfbb7ffbf5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-93dfe1759493" value="dynamodb_access" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="res-63e7e6807e4b" target="res-95c48e9d427a">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-8cf207339fb6" value="iam_role_usage" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="res-63e7e6807e4b" target="res-5a2dba3b9cbc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-df8458715a83" value="log_group" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="res-63e7e6807e4b" target="res-cad8d13d0eeb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-4ec7c186b4ae" value="security_group" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="res-bf5733b5538a" target="res-5bd9069b62db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-0b943957aa7b" value="iam_role_usage" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="res-9afe28976c1b" target="res-5a2dba3b9cbc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

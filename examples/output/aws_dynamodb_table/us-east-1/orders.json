@@ -1,0 +1,49 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:dynamodb:us-east-1:123456789012:table/orders",
+  "generated_at": "2026-10-14T16:28:57.348959Z",
+  "metadata": {
+    "api_version": "2012-08-10",
+    "checksum": "00bfd6d2f6784aa4b5893e2f36c1220abc7047b3c7b754084dc03323d0e45e2d",
+    "collected_at": "2026-10-14T16:28:57Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_dynamodb_table",
+  "specifications": {
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "order_id",
+        "AttributeType": "S"
+      }
+    ],
+    "BillingModeSummary": {
+      "BillingMode": "PAY_PER_REQUEST"
+    },
+    "CreationDateTime": "2026-10-14T23:28:56.796319+07:00",
+    "GlobalSecondaryIndexes": [],
+    "ItemCount": 0,
+    "KeySchema": [
+      {
+        "AttributeName": "order_id",
+        "KeyType": "HASH"
+      }
+    ],
+    "LocalSecondaryIndexes": [],
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0,
+      "ReadCapacityUnits": 0,
+      "WriteCapacityUnits": 0
+    },
+    "TableArn": "arn:aws:dynamodb:us-east-1:123456789012:table/orders",
+    "TableName": "orders",
+    "TableSizeBytes": 0,
+    "TableStatus": "ACTIVE",
+    "Tags": [
+      {
+        "Key": "team",
+        "Value": "orders"
+      }
+    ]
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:iam::123456789012:role/order-lambda-role",
+  "generated_at": "2026-10-14T16:28:57.348959Z",
+  "metadata": {
+    "api_version": "2010-05-08",
+    "checksum": "3fc73fabd37bd6c3def4408cced96d9a70151ca87b5aad6bfaeec024248ba642",
+    "collected_at": "2026-10-14T16:28:57Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "global",
+  "resource_type": "aws_iam_role",
+  "specifications": {
+    "Arn": "arn:aws:iam::123456789012:role/order-lambda-role",
+    "AssumeRolePolicyDocument": {
+      "Statement": [
+        {
+          "Action": "sts:AssumeRole",
+          "Effect": "Allow",
+          "Principal": {
+            "Service": "lambda.amazonaws.com"
+          }
+        }
+      ],
+      "Version": "2012-10-17"
+    },
+    "AttachedPolicies": [],
+    "CreateDate": "2026-10-14T16:28:56.771000+00:00",
+    "Description": "Execution role for order-processor",
+    "InlinePolicies": {
+      "too-broad": {
+        "Statement": [
+          {
+            "Action": "*",
+            "Effect": "Allow",
+            "Resource": "*"
+          }
+        ],
+        "Version": "2012-10-17"
+      }
+    },
+    "MaxSessionDuration": 3600,
+    "Path": "/",
+    "RoleId": "AROARZPUZDIKEXHFBBBZI",
+    "RoleLastUsed": {},
+    "RoleName": "order-lambda-role"
+  }
+}
