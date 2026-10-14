@@ -314,19 +314,19 @@ Tasks 1–13 were implemented against the first draft of the design. Tasks 14–
     - Improve confidence score algorithms
     - _Requirements: 6.5_
 
-- [ ] 14. Foundations alignment: resource registry and sanitizer
-  - [ ] 14.1 Write tests for the resource type registry (RED)
+- [x] 14. Foundations alignment: resource registry and sanitizer
+  - [x] 14.1 Write tests for the resource type registry (RED)
     - `tests/unit/test_resource_types.py`: `test_registry_has_ten_supported_types_req_1_3`, `test_canonical_type_resolves_aliases`, `test_resource_id_per_type_req_3_2`, `test_file_id_replaces_unsafe_characters_req_3_2`, `test_spec_relpath_layout_req_3_2`
     - _Requirements: 1.3, 3.2_
-  - [ ] 14.2 Implement `src/resource_types.py` (GREEN)
+  - [x] 14.2 Implement `src/resource_types.py` (GREEN)
     - `ResourceTypeInfo`, `REGISTRY`, `canonical_type()`, `resource_id()`, `file_id()`, `spec_relpath()`, draw.io style per type
     - _Requirements: 1.3, 3.2_
-  - [ ] 14.3 Write sanitizer tests for the revised rules (RED)
+  - [x] 14.3 Write sanitizer tests for the revised rules (RED)
     - `test_sanitizer_does_not_redact_keyname_kmskeyid_keytype_req_9_5`, `test_sanitizer_redacts_pem_private_key_req_9_5`, `test_sanitizer_does_not_redact_role_unique_ids_req_9_5`, `test_property_sanitizer_idempotent_req_9_6`
     - _Requirements: 9.5, 9.6_
-  - [ ] 14.4 Update `src/sanitizer.py` (GREEN): remove the generic `key` rule and non-credential ID prefixes, add the PEM rule and `[REDACTED_PRIVATE_KEY]`
+  - [x] 14.4 Update `src/sanitizer.py` (GREEN): remove the generic `key` rule and non-credential ID prefixes, add the PEM rule and `[REDACTED_PRIVATE_KEY]`
     - _Requirements: 9.5, 9.6_
-  - [ ] 14.5 Use the registry everywhere a type name, id or file name is derived (`output_generator`, `iac_generator`, `diagram_generator`, `analysis_engine`, `discovery`) (REFACTOR)
+  - [x] 14.5 Use the registry everywhere a type name, id or file name is derived (`output_generator`, `iac_generator`, `diagram_generator`, `analysis_engine`, `discovery`) (REFACTOR)
     - _Requirements: 3.2, 7.7_
   - Commit: `feat(core): add resource type registry and align sanitizer rules (Task 14)`
 

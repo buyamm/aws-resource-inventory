@@ -166,7 +166,7 @@ class TestIaCGeneratorUnitTests:
         self, sample_specs: list[ResourceSpec]
     ) -> None:
         """Requirement 7.7: Traceability comments linking back to original specification files."""
-        generator = IaCGenerator(spec_base_path="output/specs")
+        generator = IaCGenerator()
         for spec in sample_specs:
             block = generator.generate_resource_block(spec)
             assert "# Source specification:" in block or "# Specification source:" in block

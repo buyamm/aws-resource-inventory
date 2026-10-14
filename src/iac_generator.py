@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any
 
 from src.parser import ResourceSpec
+from src.resource_types import canonical_type, spec_relpath
 
 
 class IaCGenerator:
@@ -33,38 +34,14 @@ class IaCGenerator:
     import shell scripts, and plan verification workflows.
     """
 
-    # Mapping from inventory resource type names to official Terraform resource types
-    TYPE_MAP: dict[str, str] = {
-        "aws_s3_bucket": "aws_s3_bucket",
-        "aws_ec2_instance": "aws_instance",
-        "aws_instance": "aws_instance",
-        "aws_lambda_function": "aws_lambda_function",
-        "aws_vpc": "aws_vpc",
-        "aws_security_group": "aws_security_group",
-        "aws_iam_role": "aws_iam_role",
-        "aws_dynamodb_table": "aws_dynamodb_table",
-        "aws_rds_instance": "aws_db_instance",
-        "aws_db_instance": "aws_db_instance",
-        "aws_cloudwatch_log_group": "aws_cloudwatch_log_group",
-        "aws_step_function": "aws_sfn_state_machine",
-        "aws_sfn_state_machine": "aws_sfn_state_machine",
-    }
-
-    def __init__(
-        self,
-        output_dir: str | Path | None = None,
-        spec_base_path: str = "output",
-    ) -> None:
+    def __init__(self, output_dir: str | Path | None = None) -> None:
         """
         Initialize IaCGenerator.
 
         Args:
             output_dir: Optional default directory to write generated .tf files.
-            spec_base_path: Relative or absolute path prefix to specification files
-                used in traceability comments (Requirement 7.7).
         """
         self.output_dir = Path(output_dir).resolve() if output_dir else None
-        self.spec_base_path = spec_base_path
 
     # ========================================================================
     # Helpers
@@ -72,10 +49,11 @@ class IaCGenerator:
 
     def _tf_resource_type(self, resource_type: str) -> str:
         """Map internal/AWS resource type to Terraform aws_* resource type."""
+        known = canonical_type(resource_type)
+        if known:
+            return known
         normalized = resource_type.lower().strip()
-        return self.TYPE_MAP.get(
-            normalized, normalized if normalized.startswith("aws_") else f"aws_{normalized}"
-        )
+        return normalized if normalized.startswith("aws_") else f"aws_{normalized}"
 
     def _resource_name(self, spec: ResourceSpec) -> str:
         """Extract a valid Terraform resource identifier name."""
@@ -172,7 +150,7 @@ class IaCGenerator:
         res_name = self._resource_name(spec)
         region = spec.region if spec.region else "global"
 
-        spec_file = f"{self.spec_base_path}/{spec.resource_type}/{region}/{res_name}.json"
+        spec_file = spec_relpath(spec)
 
         lines: list[str] = [
             f"# Resource: {tf_type}.{res_name}",

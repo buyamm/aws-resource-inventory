@@ -466,3 +466,80 @@ class TestDataSanitizerAdditionalPatterns:
         assert isinstance(sanitized, dict)
         logs = sanitizer.get_redaction_logs()
         assert len(logs) > 0, "Expected redaction entries for nested passwords"
+
+
+# ============================================================================
+# Revised rules (Task 14.3): precise key rules, PEM keys, idempotence
+# ============================================================================
+
+_JSONISH = st.recursive(
+    st.one_of(st.text(max_size=40), st.integers(), st.booleans(), st.none()),
+    lambda children: st.one_of(
+        st.lists(children, max_size=4),
+        st.dictionaries(st.text(min_size=1, max_size=20), children, max_size=4),
+    ),
+    max_leaves=20,
+)
+
+
+def get_full_structure(data):
+    """Structure including list lengths: dict keys, list lengths, leaf markers."""
+    if isinstance(data, dict):
+        return {k: get_full_structure(v) for k, v in data.items()}
+    if isinstance(data, list):
+        return [get_full_structure(v) for v in data]
+    return None
+
+
+class TestDataSanitizerRevisedRules:
+    """Req 9.5 / 9.6 as revised in requirements.md."""
+
+    def test_sanitizer_does_not_redact_keyname_kmskeyid_keytype_req_9_5(self):
+        data = {
+            "KeyName": "prod-keypair",
+            "KmsKeyId": "arn:aws:kms:us-east-1:123456789012:key/abcd",
+            "KeySchema": [{"AttributeName": "pk", "KeyType": "HASH"}],
+            "SSEDescription": {"KMSMasterKeyArn": "arn:aws:kms:us-east-1:123456789012:key/abcd"},
+            "hash_key": "pk",
+        }
+        sanitized = DataSanitizer().sanitize(data)
+        assert sanitized == data
+
+    def test_sanitizer_redacts_pem_private_key_req_9_5(self):
+        pem = "-----BEGIN RSA PRIVATE KEY-----\nMIIEow\n-----END RSA PRIVATE KEY-----"
+        sanitizer = DataSanitizer()
+        sanitized = sanitizer.sanitize({"Environment": {"Variables": {"TLS_CERT_BUNDLE": pem}}})
+        assert sanitized["Environment"]["Variables"]["TLS_CERT_BUNDLE"] == "[REDACTED_PRIVATE_KEY]"
+        logs = sanitizer.get_redaction_logs()
+        assert any("TLS_CERT_BUNDLE" in log and "[REDACTED_PRIVATE_KEY]" in log for log in logs)
+        assert all("MIIEow" not in log for log in logs)
+
+    def test_sanitizer_does_not_redact_role_unique_ids_req_9_5(self):
+        data = {"RoleId": "AROAEXAMPLEROLEID1234", "UserId": "AIDAEXAMPLEUSERID1234"}
+        assert DataSanitizer().sanitize(data) == data
+
+    def test_sanitizer_redacts_session_key_ids_req_9_5(self):
+        sanitized = DataSanitizer().sanitize({"note": "temp creds ASIAIOSFODNN7EXAMPLE"})
+        assert sanitized["note"] == "[REDACTED_AWS_KEY]"
+
+    def test_sanitizer_redacts_access_key_id_key_name_req_9_5(self):
+        sanitized = DataSanitizer().sanitize({"aws_access_key_id": "not-a-real-format"})
+        assert sanitized["aws_access_key_id"] == "[REDACTED_AWS_KEY]"
+
+    def test_sanitizer_key_rule_applies_only_to_strings_req_9_5(self):
+        data = {"Credentials": {"Expiration": "2026-01-01", "Count": 3}, "TokenCount": 5}
+        sanitized = DataSanitizer().sanitize(data)
+        assert sanitized["Credentials"]["Count"] == 3
+        assert sanitized["TokenCount"] == 5
+        assert sanitized["Credentials"]["Expiration"] == "2026-01-01"
+
+    @given(_JSONISH)
+    def test_property_sanitizer_preserves_full_structure_req_9_5(self, data):
+        sanitized = DataSanitizer().sanitize(data)
+        assert get_full_structure(sanitized) == get_full_structure(data)
+
+    @given(_JSONISH)
+    def test_property_sanitizer_idempotent_req_9_6(self, data):
+        once = DataSanitizer().sanitize(data)
+        twice = DataSanitizer().sanitize(once)
+        assert twice == once

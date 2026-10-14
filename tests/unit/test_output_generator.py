@@ -54,7 +54,7 @@ def sample_s3_spec() -> ResourceSpec:
 def sample_ec2_spec() -> ResourceSpec:
     """Provide a sample EC2 ResourceSpec object."""
     return ResourceSpec(
-        resource_type="aws_ec2_instance",
+        resource_type="aws_instance",
         arn="arn:aws:ec2:us-west-2:123456789012:instance/i-0123456789abcdef0",
         region="us-west-2",
         account_id="123456789012",
@@ -151,9 +151,9 @@ class TestOutputGeneratorOrganization:
 
         # Expected paths:
         # tmp_path / "aws_s3_bucket" / "us-east-1"
-        # tmp_path / "aws_ec2_instance" / "us-west-2"
+        # tmp_path / "aws_instance" / "us-west-2"
         s3_dir = tmp_path / "aws_s3_bucket" / "us-east-1"
-        ec2_dir = tmp_path / "aws_ec2_instance" / "us-west-2"
+        ec2_dir = tmp_path / "aws_instance" / "us-west-2"
 
         assert s3_dir.exists() and s3_dir.is_dir(), f"Expected directory {s3_dir} to exist"
         assert ec2_dir.exists() and ec2_dir.is_dir(), f"Expected directory {ec2_dir} to exist"

@@ -22,12 +22,12 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from src.parser import ResourceSpec
+from src.resource_types import GLOBAL_REGION, file_id, resource_id, type_dir
 from src.sanitizer import DataSanitizer
 
 
@@ -59,39 +59,8 @@ class OutputGenerator:
     # ========================================================================
 
     def _safe_filename(self, spec: ResourceSpec) -> str:
-        """
-        Derive a safe filesystem-friendly base filename from a ResourceSpec.
-
-        Args:
-            spec: The ResourceSpec to extract filename from.
-
-        Returns:
-            A sanitized string safe for file names.
-        """
-        # Attempt to use resource-specific ID/Name from specifications
-        specs_dict = spec.specifications or {}
-        candidate = (
-            specs_dict.get("instance_id")
-            or specs_dict.get("bucket_name")
-            or specs_dict.get("function_name")
-            or specs_dict.get("name")
-            or specs_dict.get("id")
-        )
-
-        if not candidate:
-            # Fall back to ARN fragment
-            arn_part = spec.arn.split(":")[-1]
-            if "/" in arn_part:
-                candidate = arn_part.split("/")[-1]
-            else:
-                candidate = arn_part
-
-        if not candidate:
-            candidate = spec.arn
-
-        # Sanitize for filesystem safety
-        safe_name = re.sub(r"[^a-zA-Z0-9_.-]", "_", str(candidate))
-        return safe_name.strip("_") or "resource"
+        """Filesystem-safe base filename of a spec (registry file id, Requirement 3.2)."""
+        return file_id(resource_id(spec))
 
     def _resource_dir(self, spec: ResourceSpec) -> Path:
         """
@@ -99,9 +68,8 @@ class OutputGenerator:
 
         (Requirement 3.2: organize output files by resource type and region)
         """
-        region = spec.region if spec.region else "global"
-        res_type = spec.resource_type if spec.resource_type else "unknown"
-        target_dir = self.output_dir / res_type / region
+        region = spec.region if spec.region else GLOBAL_REGION
+        target_dir = self.output_dir / type_dir(spec.resource_type) / region
         target_dir.mkdir(parents=True, exist_ok=True)
         return target_dir
 
@@ -304,7 +272,7 @@ class OutputGenerator:
         region_counts: dict[str, int] = {}
         for spec in specs:
             type_counts[spec.resource_type] = type_counts.get(spec.resource_type, 0) + 1
-            r = spec.region or "global"
+            r = spec.region or GLOBAL_REGION
             region_counts[r] = region_counts.get(r, 0) + 1
 
         summary_rows = [[res_type, str(count)] for res_type, count in sorted(type_counts.items())]
@@ -326,7 +294,7 @@ class OutputGenerator:
                 [
                     spec.resource_type,
                     name,
-                    spec.region or "global",
+                    spec.region or GLOBAL_REGION,
                     spec.arn,
                 ]
             )
@@ -369,9 +337,8 @@ class OutputGenerator:
             if spec.raw_response is None:
                 continue
 
-            region = spec.region if spec.region else "global"
-            res_type = spec.resource_type if spec.resource_type else "unknown"
-            dest_dir = raw_dir / res_type / region
+            region = spec.region if spec.region else GLOBAL_REGION
+            dest_dir = raw_dir / type_dir(spec.resource_type) / region
             dest_dir.mkdir(parents=True, exist_ok=True)
 
             filename = f"{self._safe_filename(spec)}_raw.json"
