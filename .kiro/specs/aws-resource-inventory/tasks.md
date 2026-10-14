@@ -357,11 +357,11 @@ Tasks 1–13 were implemented against the first draft of the design. Tasks 14–
   - [x] 17.2 Implement rules, citations, `AnalysisReport.to_dict()`, stencil styles and region layout (GREEN)
   - Commit: `feat(analysis): align relationship rules, citations and diagram styles with design (Task 17)`
 
-- [ ] 18. Terraform mapping alignment
-  - [ ] 18.1 Write tests (RED): per-type mapping tests `test_iac_<type>_maps_arguments_req_7_3` (10 types), `test_iac_generated_files_parse_as_hcl_req_7_2` (python-hcl2), `test_iac_import_ids_per_type_req_7_4`, `test_iac_companion_resources_s3_iam_req_7_4`, `test_iac_redacted_values_ignored_req_7_5`, `test_iac_verify_plan_uses_exit_code_only_req_7_5`, `test_iac_provider_alias_per_region_req_7_2`; keep Property 3
+- [x] 18. Terraform mapping alignment
+  - [x] 18.1 Write tests (RED): per-type mapping tests `test_iac_<type>_maps_arguments_req_7_3` (10 types), `test_iac_generated_files_parse_as_hcl_req_7_2` (python-hcl2), `test_iac_import_ids_per_type_req_7_4`, `test_iac_companion_resources_s3_iam_req_7_4`, `test_iac_redacted_values_ignored_req_7_5`, `test_iac_verify_plan_uses_exit_code_only_req_7_5`, `test_iac_provider_alias_per_region_req_7_2` (module per region); keep Property 3
     - _Requirements: 7.2–7.7_
-  - [ ] 18.2 Implement the mapping table, companion resources, provider aliases and exit-code-only plan verification (GREEN)
-  - [ ] 18.3 Add live test `test_live_iac_terraform_plan_zero_changes_req_7_5` (`@pytest.mark.aws`, skipped by default)
+  - [x] 18.2 Implement the mapping table, companion resources, provider aliases and exit-code-only plan verification (GREEN)
+  - [x] 18.3 Add live test `test_live_iac_terraform_plan_zero_changes_req_7_5` (`@pytest.mark.aws`, skipped by default)
   - Commit: `feat(iac): map specifications to Terraform arguments per resource type (Task 18)`
 
 - [ ] 19. MCP Server - TDD Implementation

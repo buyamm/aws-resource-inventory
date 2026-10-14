@@ -312,11 +312,13 @@ Mapping from Specifications to Terraform arguments (AWS provider ~> 5.0). Values
 | `aws_s3_bucket` | `bucket`, `tags`←bucket-tagging.TagSet | `aws_s3_bucket_versioning` (when Status present), `aws_s3_bucket_policy` (when Policy present), `aws_s3_bucket_server_side_encryption_configuration` (when rules present) | bucket name (all) | – |
 | `aws_iam_role` | `name`, `path`, `assume_role_policy` (jsonencode), `description`, `max_session_duration`, `tags` | `aws_iam_role_policy_attachment` per AttachedPolicies (id `<role>/<policy_arn>`), `aws_iam_role_policy` per InlinePolicies (id `<role>:<policy>`) | RoleName | – |
 
-Unknown types fall back to emitting every top-level key as an argument (debug aid only). Terraform resource names are `file_id` with `.`/`-` → `_`, prefixed with `r_` when starting with a digit, and de-duplicated with `_2`, `_3`, ...
+Unknown types fall back to emitting every identifier-like top-level key as an argument (debug aid only). Terraform resource names are `file_id` with `.` → `_` (hyphens are valid in Terraform names), prefixed with `r_` when not starting with a letter or `_`, and de-duplicated per (region, type) with `_2`, `_3`, ... Companion resources reuse the bucket name (S3) or use `<role name>_<policy name>` (IAM).
 
-`providers.tf` declares `provider "aws"` (region `us-east-1`, used for global types) and one aliased provider per other region (`alias = "<region with - replaced by _>"`); regional blocks set `provider = aws.<alias>`.
+Above each block the generator writes `# Resource`, `# Source specification` (spec path relative to Output_Dir), `# ARN`, `# Region`, `# mapped: ...` and one `# unmapped: <key>` per unconsumed key. Strings are emitted as JSON-escaped HCL literals with `${`/`%{` escaped; policy and state machine documents as `<<-EOT` heredocs of pretty JSON.
 
-`verify_terraform_plan(tf_dir) -> (bool, str)` runs `terraform plan -detailed-exitcode -no-color -input=false` and decides **only by exit code** (0 = ok, 2 = changes, else error).
+Terraform only loads `.tf` files of the root directory, so each region directory is a module: root `main.tf` declares `module "<region_with_underscores>" { source = "./<region>"; providers = { aws = aws.<alias> } }` (`global` uses the default provider), root `providers.tf` holds the `terraform {}` requirements, the default `us-east-1` provider and one aliased provider per region; each region directory has a `versions.tf` with `required_providers`. Import addresses are therefore `module.<module>.<type>.<name>`. The generated project passes `terraform validate` (checked against the sample account).
+
+`verify_terraform_plan(tf_dir) -> (bool, str)` runs `terraform plan -detailed-exitcode -no-color -input=false` and decides **only by exit code** (0 = ok, 2 = changes, else error; missing `terraform` binary = error).
 
 Known limitations (documented in README): resource types outside the registry are not generated; S3 lifecycle/CORS/website/ACL and DynamoDB TTL/PITR are not mapped (left unmanaged, so they do not cause plan diffs); security group rules with differing per-range descriptions are emitted without descriptions.
 
