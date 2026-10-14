@@ -1,36 +1,26 @@
-# Development and Testing Dependencies for AWS Resource Inventory
-
-# Include production dependencies
+# Development and Testing Dependencies for AWS Resource Inventory (Python 3.11+)
 -r requirements.txt
 
-# Testing Framework
-pytest>=7.4.0
+# Testing
+pytest>=8.0.0
 pytest-cov>=4.1.0
 pytest-mock>=3.11.1
-pytest-asyncio>=0.21.0
-
-# Property-Based Testing
+pytest-asyncio>=0.23.0
 hypothesis>=6.82.0
 
-# AWS Service Mocking
-moto[all]>=4.1.0,<5.0.0
-
-# Time Mocking
+# AWS mocking (tests use the moto 4.x per-service decorators: mock_s3, mock_ec2, ...)
+moto[all]>=4.2.0,<5.0.0
 freezegun>=1.2.2
-
-# HTTP Mocking
 responses>=0.23.0
 
-# Code Quality
-black>=23.7.0
-mypy>=0.991
-ruff>=0.0.280
+# HCL parsing, used by tests to validate generated Terraform syntax
+python-hcl2>=4.3.0
+
+# Code quality
+black>=24.0.0
+mypy>=1.8.0
+ruff>=0.4.0
 bandit>=1.7.5
 
-# Type Stubs
-boto3-stubs[essential]>=1.28.0,<1.43.0
-types-requests>=2.31.0
-
-# Documentation
-sphinx>=5.3.0
-sphinx-rtd-theme>=1.2.0
+# Type stubs
+boto3-stubs[essential]>=1.34.0

@@ -7,13 +7,16 @@ and test configuration used across unit, integration, and E2E tests.
 
 import os
 
-# Clean up AWS_PROFILE and set test AWS credentials before moto/boto3 initialization
-os.environ.pop("AWS_PROFILE", None)
-os.environ.setdefault("AWS_ACCESS_KEY_ID", "testing")
-os.environ.setdefault("AWS_SECRET_ACCESS_KEY", "testing")
-os.environ.setdefault("AWS_SECURITY_TOKEN", "testing")
-os.environ.setdefault("AWS_SESSION_TOKEN", "testing")
-os.environ.setdefault("AWS_DEFAULT_REGION", "us-east-1")
+# Clean up AWS_PROFILE and set fake AWS credentials before moto/boto3 initialization,
+# so no test can reach a real account. Live tests (AWS_INVENTORY_LIVE_TESTS=1) keep
+# the caller's real credential chain.
+if os.environ.get("AWS_INVENTORY_LIVE_TESTS") != "1":
+    os.environ.pop("AWS_PROFILE", None)
+    os.environ["AWS_ACCESS_KEY_ID"] = "testing"
+    os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
+    os.environ["AWS_SECURITY_TOKEN"] = "testing"
+    os.environ["AWS_SESSION_TOKEN"] = "testing"
+    os.environ.setdefault("AWS_DEFAULT_REGION", "us-east-1")
 
 import json
 import pytest
@@ -23,6 +26,21 @@ from typing import Dict, Any, List
 from unittest.mock import Mock, MagicMock
 import boto3
 from moto import mock_s3, mock_ec2, mock_lambda, mock_iam, mock_dynamodb
+from hypothesis import settings as hypothesis_settings
+
+# Property tests must run at least 100 examples (design.md, "Test Coverage Requirements").
+hypothesis_settings.register_profile("default", max_examples=100, deadline=None)
+hypothesis_settings.load_profile(os.environ.get("HYPOTHESIS_PROFILE", "default"))
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip live-AWS tests (@pytest.mark.aws) unless explicitly enabled."""
+    if os.environ.get("AWS_INVENTORY_LIVE_TESTS") == "1":
+        return
+    skip_live = pytest.mark.skip(reason="live AWS test; set AWS_INVENTORY_LIVE_TESTS=1 to run")
+    for item in items:
+        if "aws" in item.keywords:
+            item.add_marker(skip_live)
 
 
 # ============================================================================

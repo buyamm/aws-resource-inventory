@@ -21,54 +21,37 @@ classifiers = [
 ]
 
 dependencies = [
-    "boto3>=1.28.0",
+    "boto3>=1.34.0",
     "click>=8.1.0",
+    "mcp>=1.2.0,<2.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.4.0",
+    "pytest>=8.0.0",
     "pytest-cov>=4.1.0",
     "pytest-mock>=3.11.1",
+    "pytest-asyncio>=0.23.0",
     "hypothesis>=6.82.0",
-    "moto>=4.1.0",
+    "moto[all]>=4.2.0,<5.0.0",
     "freezegun>=1.2.2",
     "responses>=0.23.0",
-    "black>=23.7.0",
-    "mypy>=1.4.1",
-    "ruff>=0.0.280",
-    "boto3-stubs[essential]>=1.28.0",
+    "python-hcl2>=4.3.0",
+    "black>=24.0.0",
+    "mypy>=1.8.0",
+    "ruff>=0.4.0",
+    "bandit>=1.7.5",
+    "boto3-stubs[essential]>=1.34.0",
 ]
 
 [project.scripts]
-aws-inventory = "aws_resource_inventory.cli:main"
+aws-inventory = "src.cli:main"
 
 [tool.setuptools]
-package-dir = {"" = "src"}
+# Modules are imported as `src.<module>` throughout code and tests.
+packages = ["src"]
 
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = "test_*.py"
-python_classes = "Test*"
-python_functions = "test_*"
-addopts = [
-    "-v",
-    "--strict-markers",
-    "--cov=src",
-    "--cov-report=term-missing",
-    "--cov-report=html",
-    "--cov-report=xml",
-]
-markers = [
-    "unit: Unit tests",
-    "integration: Integration tests",
-    "e2e: End-to-end tests",
-    "property: Property-based tests",
-    "slow: Slow running tests",
-]
+# pytest is configured in pytest.ini
 
 [tool.coverage.run]
 source = ["src"]
@@ -107,6 +90,8 @@ ignore_missing_imports = true
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+
+[tool.ruff.lint]
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
@@ -120,7 +105,7 @@ ignore = [
     "E501",  # line too long (handled by black)
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 
 [tool.black]
