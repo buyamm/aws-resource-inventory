@@ -28,6 +28,7 @@ from typing import Any
 
 from src import __version__
 from src.integrity import seal_specs
+from src.metrics import MANUAL_MINUTES_PER_RESOURCE, time_savings
 from src.parser import ResourceSpec
 from src.resource_types import GLOBAL_REGION, REGISTRY, file_id, resource_id, type_dir
 from src.sanitizer import DataSanitizer
@@ -442,18 +443,23 @@ class OutputGenerator:
     # Performance & Summary Report (Requirements 10.3, 10.4, 10.5)
     # ========================================================================
 
-    def generate_summary_report(self, specs: list[ResourceSpec], duration_seconds: float) -> str:
+    def generate_summary_report(
+        self,
+        specs: list[ResourceSpec],
+        duration_seconds: float,
+        resources_discovered: int | None = None,
+    ) -> str:
         """
         Generate summary report comparing estimated manual effort versus automated time.
 
-        Baseline: 5 minutes per resource for manual documentation (Requirement 10.4).
+        Baseline: 5 minutes per resource for manual documentation (Requirement 10.4);
+        ``resources_discovered`` defaults to the number of specs.
         """
-        total_resources = len(specs)
-        manual_minutes = total_resources * 5
-        manual_hours = manual_minutes / 60.0
-        automated_hours = duration_seconds / 3600.0
-        hours_saved = max(0.0, manual_hours - automated_hours)
-        percent_saved = (hours_saved / manual_hours * 100.0) if manual_hours > 0 else 0.0
+        total_resources = len(specs) if resources_discovered is None else resources_discovered
+        manual_minutes = total_resources * MANUAL_MINUTES_PER_RESOURCE
+        savings = time_savings(total_resources, duration_seconds)
+        manual_hours, automated_hours = savings.manual_hours, savings.automated_hours
+        hours_saved, percent_saved = savings.hours_saved, savings.percent_saved
 
         headers = ["Metric", "Manual Effort (Baseline)", "Automated Collection", "Savings"]
         rows = [
@@ -497,10 +503,10 @@ class OutputGenerator:
         reset = "\033[0m"
 
         total_resources = len(specs)
-        manual_minutes = total_resources * 5
-        manual_hours = manual_minutes / 60.0
-        hours_saved = max(0.0, manual_hours - (duration_seconds / 3600.0))
-        percent_saved = (hours_saved / manual_hours * 100.0) if manual_hours > 0 else 0.0
+        manual_minutes = total_resources * MANUAL_MINUTES_PER_RESOURCE
+        savings = time_savings(total_resources, duration_seconds)
+        manual_hours, hours_saved = savings.manual_hours, savings.hours_saved
+        percent_saved = savings.percent_saved
 
         lines = [
             f"{bold}{cyan}=== AWS Resource Inventory Summary ==={reset}",

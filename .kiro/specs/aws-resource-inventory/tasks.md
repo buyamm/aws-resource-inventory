@@ -380,15 +380,15 @@ Tasks 1–13 were implemented against the first draft of the design. Tasks 14–
 - [x] 20. Checkpoint - Foundations, collector, analysis, IaC and MCP tests passing
   - Run the full suite; fix regressions before continuing.
 
-- [ ] 21. CLI Tool - TDD Implementation
-  - [ ] 21.1 Write tests (RED) in `tests/unit/test_cli.py` and `tests/unit/test_metrics.py`
+- [x] 21. CLI Tool - TDD Implementation
+  - [x] 21.1 Write tests (RED) in `tests/unit/test_cli.py` and `tests/unit/test_metrics.py`
     - `test_cli_never_logs_credentials_req_9_2`, `test_cli_uses_aws_credential_chain_req_9_1`, `test_cli_supports_assume_role_req_9_3`, `test_cli_exits_nonzero_on_errors_req_12_5`, `test_cli_exits_2_without_credentials_req_12_5`, `test_cli_collect_prints_time_savings_req_10_5`, `test_cli_collection_report_lists_operations_req_12_4`, `test_metrics_time_savings_formula_req_10_4`, `test_metrics_phase_timings_req_10_1`, `test_cli_only_read_only_api_calls_req_9_4`
     - _Requirements: 9.1–9.4, 10.1–10.5, 12.4, 12.5_
-  - [ ] 21.2 Implement `src/cli.py` commands `discover`, `collect`, `analyze`, `generate-iac`, `generate-docs`, `verify`, `mcp-serve` with exit codes and `SanitizingFilter` (GREEN)
-  - [ ] 21.3 Implement `src/metrics.py` and `collection_report.json` / `summary_report.md` (GREEN)
+  - [x] 21.2 Implement `src/cli.py` commands `discover`, `collect`, `analyze`, `generate-iac`, `generate-docs`, `verify`, `mcp-serve` with exit codes and `SanitizingFilter` (GREEN)
+  - [x] 21.3 Implement `src/metrics.py` and `collection_report.json` / `summary_report.md` (GREEN)
   - [x] 21.4 Implement `src/documentation.py` (`docs/infrastructure.md`, every statement cited) (GREEN) — done in Task 19 (needed by `generate-documentation`; tests in `tests/unit/test_documentation.py`); the CLI only has to write its output
     - _Requirements: 6.3, 8.1_
-  - [ ] 21.5 Refactor: progress output on stderr, `--no-color`, help texts with examples (REFACTOR)
+  - [x] 21.5 Refactor: progress output on stderr, `--no-color`, help texts with examples (REFACTOR)
   - Commit: `feat(cli): add aws-inventory CLI with metrics, reports and verification (Task 21)`
 
 - [ ] 22. End-to-End Testing (CliRunner + moto)

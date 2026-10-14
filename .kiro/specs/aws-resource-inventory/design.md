@@ -380,7 +380,22 @@ Logging: root handler to stderr with `SanitizingFilter`, which runs `DataSanitiz
 
 ## Metrics (`src/metrics.py`)
 
-`PhaseTimer` records `{name, started_at, ended_at, duration_seconds}`. `RunMetrics` holds the Req 10.2 counters. `time_savings(resources, duration_seconds)` implements the Req 10.4 formulas; `OutputGenerator.generate_summary_report` and the CLI summary both use it.
+`PhaseTimer` records `{name, started_at, ended_at, duration_seconds}`. `RunMetrics` holds the Req 10.2 counters. `time_savings(resources, duration_seconds)` implements the Req 10.4 formulas; `OutputGenerator.generate_summary_report` and the CLI summary both use it. `files_size(paths)` sums the sizes of the files a run wrote (`data_volume_bytes`).
+
+`collection_report.json` (written by `collect`, sanitized):
+
+```json
+{"account_id": "...", "regions": [...], "started_at": "...Z", "finished_at": "...Z",
+ "phases": [{"name": "discovery|collection|output", "started_at", "ended_at", "duration_seconds"}],
+ "metrics": {"resources_discovered", "specs_collected", "specs_failed", "api_calls", "data_volume_bytes"},
+ "time_savings": {"manual_hours", "automated_hours", "hours_saved", "percent_saved"},
+ "operations": [{"resource_arn", "operation", "status": "success|failed", "outcome": "success|not_configured|denied|failed",
+                 "attempts", "error_type", "detail", "timestamp"}],
+ "discovery_errors": [{"region", "resource_type", "message"}],
+ "collection_errors": [{"resource_arn", "operation", "error_type", "error_message", "timestamp", "retry_count"}]}
+```
+
+`specs_failed = resources_discovered − specs_collected`; `api_calls` = STS calls (GetCallerIdentity, AssumeRole) + discovery list calls + every collector attempt. `summary_report.md` holds the metrics table, phase durations and the time-savings table. Progress lines go to stderr, results to stdout; all CLI output passes through the same `SanitizingFilter.scrub`.
 
 ## Error Handling
 
