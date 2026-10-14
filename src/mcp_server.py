@@ -1,298 +1,294 @@
 """
 MCP Server Module
 
-Provides a safe, controlled interface for AI Agents to query AWS resource
-specifications from local cache — no direct AWS API calls are ever made.
+Safe, read-only interface for AI Agents over the spec files of an Output_Dir
+(``<cache_dir>/<canonical_type>/<region>/<file_id>.json``). No AWS API is ever
+called and this module must not import boto3/botocore.
+
+Processing order of ``handle_request``: whitelist → parameter validation →
+rate limit → dispatch → sanitize the whole response (single exit point).
 
 Requirements Coverage:
-- Requirement 5.1: Expose operations: list-resources, get-resource-spec,
-                   analyze-activity-flow, generate-documentation
-- Requirement 5.2: Never expose AWS credentials in responses
-- Requirement 5.3: Retrieve cached local data only; error if cache missing
-- Requirement 5.5: Validate requests against a whitelist of permitted operations
-- Requirement 5.6: Log unauthorized attempts and return error responses
-- Requirement 5.7: Rate-limit requests to a maximum of 10 per second
+- Requirement 5.1: Tools list-resources, get-resource-spec, analyze-activity-flow,
+                   generate-documentation with the parameters of design.md
+- Requirement 5.2: Every response passes through the Data_Sanitizer
+- Requirement 5.3 / 5.4: Cached spec files only; cache misses are errors
+- Requirement 5.5 / 5.6: Whitelist and parameter validation with a security log
+- Requirement 5.7: At most 10 accepted requests in any sliding 1-second window
+- Requirement 8.6: Unknown ARNs are rejected
 """
 
 from __future__ import annotations
 
 import json
 import logging
-import os
 import time
-from typing import Any, Dict, List, Optional
+from collections import deque
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any, TypedDict
 
+from src.analysis_engine import AnalysisEngine
+from src.documentation import document_citations, generate_infrastructure_doc
+from src.parser import ResourceSpec
+from src.resource_types import REGISTRY, canonical_type, resource_id
 from src.sanitizer import DataSanitizer
 
 logger = logging.getLogger(__name__)
 
-# Operations that AI Agents are permitted to call.
-WHITELISTED_OPERATIONS: List[str] = [
-    "list-resources",
-    "get-resource-spec",
-    "analyze-activity-flow",
-    "generate-documentation",
-]
+# Tool name → {parameter: (type, required)} (design.md §"MCP Server").
+TOOL_PARAMETERS: dict[str, dict[str, tuple[type, bool]]] = {
+    "list-resources": {"region": (str, False), "resource_type": (str, False)},
+    "get-resource-spec": {"arn": (str, True)},
+    "analyze-activity-flow": {"arn": (str, False)},
+    "generate-documentation": {},
+}
+WHITELISTED_OPERATIONS: list[str] = list(TOOL_PARAMETERS)
 
-# Maximum requests allowed within a one-second window.
-RATE_LIMIT_MAX_PER_SECOND: int = 10
+RATE_LIMIT_MAX_PER_SECOND = 10
+RATE_LIMIT_WINDOW_SECONDS = 1.0
+RATE_LIMIT_MESSAGE = "Rate limit exceeded: max 10 requests per second"
+SECURITY_LOG_MAX_ENTRIES = 1000
+
+EMPTY_CACHE_MESSAGE = (
+    "The cache directory has no spec files, so the requested data is not in the "
+    "collected data. Run `aws-inventory collect` first."
+)
+
+
+class SecurityLogEntry(TypedDict):
+    timestamp: str
+    operation: str
+    reason: str
+
+
+@dataclass(frozen=True)
+class CachedSpec:
+    """One per-resource spec file of the cache."""
+
+    spec_file: str  # relative to cache_dir, posix separators
+    document: dict[str, Any]  # sanitized file content
+    spec: ResourceSpec
+
+
+class _InvalidParameters(Exception):
+    pass
+
+
+def _not_collected(arn: str) -> str:
+    return (
+        f"Resource '{arn}' not found: it is not in the collected data. "
+        "Run `aws-inventory collect` to collect it first."
+    )
 
 
 class MCPServer:
     """
-    MCP Server that exposes safe read-only operations over locally cached
-    AWS resource specifications.
+    Request handler behind the MCP stdio transport.
 
     Parameters
     ----------
     cache_dir:
-        Path to the root of the local spec cache.  Files are expected to be
-        organised as ``<cache_dir>/<region>/<resource_type>/<name>.json``.
+        Output_Dir written by ``aws-inventory collect``.
+    clock:
+        Monotonic clock in seconds, used only for rate limiting.
     """
 
-    def __init__(self, cache_dir: str) -> None:
-        self.cache_dir = cache_dir
+    def __init__(self, cache_dir: str, clock: Callable[[], float] = time.monotonic) -> None:
+        self.cache_dir = Path(cache_dir)
+        self._clock = clock
         self._sanitizer = DataSanitizer()
-
-        # Rate-limiting state: list of monotonic timestamps for each request
-        # in the current one-second window.
-        self._request_timestamps: List[float] = []
+        self._accepted: deque[float] = deque()
+        self._security_log: deque[SecurityLogEntry] = deque(maxlen=SECURITY_LOG_MAX_ENTRIES)
 
     # ------------------------------------------------------------------
-    # Public entry point
+    # Public API
     # ------------------------------------------------------------------
 
-    def handle_request(
-        self,
-        operation: str,
-        params: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+    def handle_request(self, operation: str, params: Any = None) -> dict[str, Any]:
         """
-        Dispatch an AI Agent request.
-
-        Returns a dict with at minimum a ``status`` key, one of:
-        - ``"ok"``           — success; ``data`` contains the result
-        - ``"error"``        — permanent failure; ``message`` explains why
-        - ``"rate_limited"`` — request rejected because the rate limit was hit
+        Handle one tool request. Returns ``{"status": "ok", "data": ...}``,
+        ``{"status": "error", "message": ...}`` or ``{"status": "rate_limited", ...}``.
         """
-        if params is None:
-            params = {}
+        if operation not in TOOL_PARAMETERS:
+            reason = f"Unauthorized operation: '{operation}'"
+            self._reject(operation, reason)
+            return self._respond({"status": "error", "message": reason})
 
-        # 1. Whitelist check
-        if operation not in WHITELISTED_OPERATIONS:
-            logger.warning(
-                "Unauthorized operation attempted: '%s'", operation
-            )
-            return {
-                "status": "error",
-                "message": f"Unauthorized operation: '{operation}'",
-            }
-
-        # 2. Rate-limit check
-        if self._is_rate_limited():
-            return {
-                "status": "rate_limited",
-                "message": "Rate limit exceeded: max 10 requests per second",
-            }
-
-        # 3. Dispatch to the appropriate handler
         try:
-            return self._dispatch(operation, params)
-        except Exception as exc:  # noqa: BLE001
-            logger.error("Error handling operation '%s': %s", operation, exc)
-            return {"status": "error", "message": str(exc)}
+            clean_params = self._validate(operation, params)
+        except _InvalidParameters as exc:
+            reason = f"Invalid parameters for '{operation}': {exc}"
+            self._reject(operation, reason)
+            return self._respond({"status": "error", "message": reason})
+
+        if not self._admit():
+            return self._respond({"status": "rate_limited", "message": RATE_LIMIT_MESSAGE})
+
+        try:
+            response = self._dispatch(operation, clean_params)
+        except Exception as exc:  # noqa: BLE001 - every failure becomes an error response
+            logger.error("Error handling operation '%s': %s", operation, type(exc).__name__)
+            response = {"status": "error", "message": f"{type(exc).__name__}: {exc}"}
+        return self._respond(response)
+
+    def get_security_logs(self) -> list[SecurityLogEntry]:
+        """Rejected requests, oldest first (Req 5.6)."""
+        return [SecurityLogEntry(**entry) for entry in self._security_log]
 
     # ------------------------------------------------------------------
-    # Rate limiting
-    # ------------------------------------------------------------------
-
-    def _is_rate_limited(self) -> bool:
-        """
-        Return True if the caller has exceeded the rate limit.
-
-        Maintains a sliding one-second window: any timestamp older than
-        one second is discarded before checking the count.
-        """
-        now = time.monotonic()
-        # Remove timestamps outside the current 1-second window
-        self._request_timestamps = [
-            ts for ts in self._request_timestamps if now - ts < 1.0
-        ]
-
-        if len(self._request_timestamps) >= RATE_LIMIT_MAX_PER_SECOND:
-            return True
-
-        # Record this request
-        self._request_timestamps.append(now)
-        return False
-
-    # ------------------------------------------------------------------
-    # Operation dispatch
-    # ------------------------------------------------------------------
-
-    def _dispatch(
-        self, operation: str, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        if operation == "list-resources":
-            return self._list_resources(params)
-        if operation == "get-resource-spec":
-            return self._get_resource_spec(params)
-        if operation == "analyze-activity-flow":
-            return self._analyze_activity_flow(params)
-        if operation == "generate-documentation":
-            return self._generate_documentation(params)
-        # Should never be reached after the whitelist check, but kept for safety
-        return {"status": "error", "message": f"Unknown operation: '{operation}'"}
-
-    # ------------------------------------------------------------------
-    # Operation handlers
-    # ------------------------------------------------------------------
-
-    def _list_resources(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Return all cached resources for a given region + resource_type.
-
-        Params
-        ------
-        region : str  (optional)
-        resource_type : str  (optional)
-
-        The cache directory structure is:
-            <cache_dir>/<region>/<resource_type>/<name>.json
-
-        If region/resource_type are supplied the search is scoped; otherwise
-        all cached resources are returned.
-        """
-        region = params.get("region")
-        resource_type_param = params.get("resource_type")
-
-        # Normalise resource_type: "lambda_function" → "lambda"
-        resource_type_dir = self._resource_type_to_dir(resource_type_param)
-
-        resources: List[Dict[str, Any]] = []
-        errors: List[str] = []
-
-        # Build the search root
-        search_root = self.cache_dir
-        if region:
-            search_root = os.path.join(search_root, region)
-            if resource_type_dir:
-                search_root = os.path.join(search_root, resource_type_dir)
-
-        if not os.path.isdir(search_root):
-            # Cache directory does not exist → collection has not been run
-            return {
-                "status": "error",
-                "message": (
-                    "No cached data found. Run collection first to populate "
-                    "the cache before querying."
-                ),
-            }
-
-        for dirpath, _dirnames, filenames in os.walk(search_root):
-            for filename in filenames:
-                if not filename.endswith(".json"):
-                    continue
-                filepath = os.path.join(dirpath, filename)
-                try:
-                    with open(filepath, encoding="utf-8") as fh:
-                        data = json.load(fh)
-                    # Sanitize to ensure no credentials leak
-                    data = self._sanitizer.sanitize(data)
-                    resources.append(data)
-                except (OSError, json.JSONDecodeError) as exc:
-                    errors.append(f"{filepath}: {exc}")
-
-        if not resources and not errors:
-            return {
-                "status": "error",
-                "message": (
-                    "No cached data found. Run collection first to populate "
-                    "the cache before querying."
-                ),
-            }
-
-        return {"status": "ok", "data": resources}
-
-    def _get_resource_spec(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Return the spec for a single resource identified by ARN.
-
-        Params
-        ------
-        arn : str  (required)
-        """
-        arn = params.get("arn", "")
-        if not arn:
-            return {"status": "error", "message": "Parameter 'arn' is required"}
-
-        # Walk the entire cache tree looking for a file whose content has a
-        # matching ARN.  This is O(n) but acceptable for a local cache.
-        for dirpath, _dirnames, filenames in os.walk(self.cache_dir):
-            for filename in filenames:
-                if not filename.endswith(".json"):
-                    continue
-                filepath = os.path.join(dirpath, filename)
-                try:
-                    with open(filepath, encoding="utf-8") as fh:
-                        data = json.load(fh)
-                    if data.get("arn") == arn:
-                        clean = self._sanitizer.sanitize(data)
-                        return {"status": "ok", "data": clean}
-                except (OSError, json.JSONDecodeError):
-                    continue
-
-        return {
-            "status": "error",
-            "message": (
-                f"Resource '{arn}' not found in cache. "
-                "Run collection first to populate the cache."
-            ),
-        }
-
-    def _analyze_activity_flow(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Placeholder for activity-flow analysis.
-
-        The actual analysis would delegate to the AnalysisEngine; for now
-        returns an empty analysis so that whitelisted callers get a valid
-        response rather than an error.
-        """
-        return {
-            "status": "ok",
-            "data": {
-                "analysis": "Activity flow analysis is not yet implemented.",
-                "relationships": [],
-            },
-        }
-
-    def _generate_documentation(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Placeholder for documentation generation.
-
-        Returns a valid response so that whitelisted callers are not blocked.
-        """
-        return {
-            "status": "ok",
-            "data": {
-                "documentation": "Documentation generation is not yet implemented.",
-            },
-        }
-
-    # ------------------------------------------------------------------
-    # Helpers
+    # Validation, security log, rate limit, response exit point
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _resource_type_to_dir(resource_type: Optional[str]) -> Optional[str]:
-        """
-        Map a resource_type parameter to a cache sub-directory name.
+    def _validate(operation: str, params: Any) -> dict[str, Any]:
+        if params is None:
+            params = {}
+        if not isinstance(params, dict):
+            raise _InvalidParameters("parameters must be an object")
+        schema = TOOL_PARAMETERS[operation]
+        unknown = sorted(str(name) for name in params if name not in schema)
+        if unknown:
+            raise _InvalidParameters(f"unknown parameter(s) {', '.join(map(repr, unknown))}")
+        clean: dict[str, Any] = {}
+        for name, (expected, required) in schema.items():
+            value = params.get(name)
+            if value is None:
+                if required:
+                    raise _InvalidParameters(f"missing required parameter '{name}'")
+                continue
+            if not isinstance(value, expected):
+                raise _InvalidParameters(f"parameter '{name}' must be a {expected.__name__}")
+            clean[name] = value
+        if "resource_type" in clean:
+            resolved = canonical_type(clean["resource_type"])
+            if resolved is None:
+                raise _InvalidParameters(
+                    f"unknown resource_type '{clean['resource_type']}' "
+                    f"(supported: {', '.join(sorted(REGISTRY))})"
+                )
+            clean["resource_type"] = resolved
+        return clean
 
-        The cache uses short service names ("lambda", "ec2", …) while callers
-        may pass the longer snake-case form ("lambda_function", "ec2_instance").
+    def _reject(self, operation: str, reason: str) -> None:
+        entry = SecurityLogEntry(
+            timestamp=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            operation=self._sanitizer.sanitize(str(operation)),
+            reason=self._sanitizer.sanitize(reason),
+        )
+        self._security_log.append(entry)
+        logger.warning("Rejected MCP request '%s': %s", entry["operation"], entry["reason"])
+
+    def _admit(self) -> bool:
+        """Sliding-window limiter; only accepted requests are recorded (Req 5.7)."""
+        now = self._clock()
+        while self._accepted and now - self._accepted[0] >= RATE_LIMIT_WINDOW_SECONDS:
+            self._accepted.popleft()
+        if len(self._accepted) >= RATE_LIMIT_MAX_PER_SECOND:
+            return False
+        self._accepted.append(now)
+        return True
+
+    def _respond(self, response: dict[str, Any]) -> dict[str, Any]:
+        """Single exit point: every response is sanitized (Req 5.2)."""
+        sanitized: dict[str, Any] = self._sanitizer.sanitize(response)
+        return sanitized
+
+    # ------------------------------------------------------------------
+    # Cache
+    # ------------------------------------------------------------------
+
+    def load_cache(self) -> list[CachedSpec]:
         """
-        if not resource_type:
-            return None
-        # Simple mapping: take the first component before the first underscore
-        # so "lambda_function" → "lambda", "ec2_instance" → "ec2".
-        return resource_type.split("_")[0]
+        Read ``<type>/<region>/*.json`` for the registry's types only, so other
+        output directories are never mistaken for specs. Sorted by spec_file.
+        """
+        entries: list[CachedSpec] = []
+        for type_id in sorted(REGISTRY):
+            for path in sorted((self.cache_dir / type_id).glob("*/*.json")):
+                rel = path.relative_to(self.cache_dir).as_posix()
+                try:
+                    data = json.loads(path.read_text(encoding="utf-8"))
+                    if not isinstance(data, dict) or not isinstance(data.get("arn"), str):
+                        raise ValueError("not a resource spec document")
+                except (OSError, ValueError) as exc:
+                    logger.warning("Skipping unreadable spec file %s: %s", rel, exc)
+                    continue
+                document = self._sanitizer.sanitize(data)
+                entries.append(CachedSpec(rel, document, ResourceSpec.from_dict(document)))
+        return entries
+
+    # ------------------------------------------------------------------
+    # Tools
+    # ------------------------------------------------------------------
+
+    def _dispatch(self, operation: str, params: dict[str, Any]) -> dict[str, Any]:
+        cache = self.load_cache()
+        if not cache:
+            return {"status": "error", "message": EMPTY_CACHE_MESSAGE}
+        arn = params.get("arn")
+        if arn is not None and not any(entry.spec.arn == arn for entry in cache):
+            return {"status": "error", "message": _not_collected(arn)}
+
+        handlers: dict[str, Callable[[list[CachedSpec], dict[str, Any]], Any]] = {
+            "list-resources": self._list_resources,
+            "get-resource-spec": self._get_resource_spec,
+            "analyze-activity-flow": self._analyze_activity_flow,
+            "generate-documentation": self._generate_documentation,
+        }
+        return {"status": "ok", "data": handlers[operation](cache, params)}
+
+    @staticmethod
+    def _list_resources(cache: list[CachedSpec], params: dict[str, Any]) -> list[dict[str, Any]]:
+        region = params.get("region")
+        wanted_type = params.get("resource_type")
+        result = []
+        for entry in cache:
+            spec = entry.spec
+            kind = canonical_type(spec.resource_type) or spec.resource_type
+            if region is not None and spec.region != region:
+                continue
+            if wanted_type is not None and kind != wanted_type:
+                continue
+            result.append(
+                {
+                    "arn": spec.arn,
+                    "resource_type": kind,
+                    "region": spec.region,
+                    "account_id": spec.account_id,
+                    "resource_id": resource_id(spec),
+                    "spec_file": entry.spec_file,
+                    "checksum": spec.metadata.checksum,
+                }
+            )
+        return result
+
+    @staticmethod
+    def _get_resource_spec(cache: list[CachedSpec], params: dict[str, Any]) -> dict[str, Any]:
+        entry = next(e for e in cache if e.spec.arn == params["arn"])
+        return {**entry.document, "spec_file": entry.spec_file}
+
+    @staticmethod
+    def _analyze_activity_flow(cache: list[CachedSpec], params: dict[str, Any]) -> dict[str, Any]:
+        data = AnalysisEngine().analyze([entry.spec for entry in cache]).to_dict()
+        arn = params.get("arn")
+        if arn is not None:
+            data["relationships"] = [
+                r for r in data["relationships"] if arn in (r["from_arn"], r["to_arn"])
+            ]
+            data["patterns"] = [p for p in data["patterns"] if arn in p["participating_resources"]]
+            data["security_findings"] = [
+                f for f in data["security_findings"] if f["resource_arn"] == arn
+            ]
+        return data
+
+    @staticmethod
+    def _generate_documentation(cache: list[CachedSpec], params: dict[str, Any]) -> dict[str, Any]:
+        specs = [entry.spec for entry in cache]
+        report = AnalysisEngine().analyze(specs)
+        return {
+            "markdown": generate_infrastructure_doc(report, specs),
+            "citations": document_citations(report, specs),
+        }

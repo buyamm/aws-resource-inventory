@@ -364,17 +364,17 @@ Tasks 1–13 were implemented against the first draft of the design. Tasks 14–
   - [x] 18.3 Add live test `test_live_iac_terraform_plan_zero_changes_req_7_5` (`@pytest.mark.aws`, skipped by default)
   - Commit: `feat(iac): map specifications to Terraform arguments per resource type (Task 18)`
 
-- [ ] 19. MCP Server - TDD Implementation
+- [x] 19. MCP Server - TDD Implementation
   - [x] 19.1 Write integration tests for MCP server core (RED) — formerly 14.1, done
     - `test_mcp_server_list_resources_returns_cached_data_req_5_3`, `test_mcp_server_blocks_unauthorized_operations_req_5_6`, `test_mcp_server_enforces_rate_limit_req_5_7`, `test_mcp_server_no_aws_credentials_in_responses_req_5_2`
-  - [ ] 19.2 Extend tests to the revised contract (RED)
+  - [x] 19.2 Extend tests to the revised contract (RED)
     - Cache fixtures use the Output_Dir layout and canonical types
     - `test_mcp_server_list_resources_filters_by_alias_req_5_1`, `test_mcp_server_rejects_unknown_params_req_5_5`, `test_mcp_server_security_log_entries_req_5_6`, `test_mcp_server_rate_limited_requests_not_counted_req_5_7`, `test_mcp_server_analyze_activity_flow_uses_cache_req_5_1`, `test_mcp_server_generate_documentation_cited_req_8_1`, `test_mcp_server_unknown_arn_rejected_req_8_6`, `test_mcp_server_module_does_not_import_boto3_req_5_2`, `test_property_mcp_server_no_credentials_req_5_2`
     - `tests/integration/test_mcp_stdio.py`: `test_mcp_stdio_lists_four_tools_req_5_1`, `test_mcp_stdio_tool_call_roundtrip_req_5_1`, `test_sandbox_environment_removes_aws_vars_req_9_7`
     - _Requirements: 5.1–5.7, 8.6, 9.7_
-  - [ ] 19.3 Implement `MCPServer` revisions: parameter schemas, security log, registry-based cache loading, analysis/documentation operations (GREEN)
-  - [ ] 19.4 Implement `src/mcp_stdio.py` (FastMCP tools + `sandbox_environment`) (GREEN)
-  - [ ] 19.5 Refactor for security: sanitize every response at a single exit point, no boto3 import (REFACTOR)
+  - [x] 19.3 Implement `MCPServer` revisions: parameter schemas, security log, registry-based cache loading, analysis/documentation operations (GREEN)
+  - [x] 19.4 Implement `src/mcp_stdio.py` (FastMCP tools + `sandbox_environment`) (GREEN)
+  - [x] 19.5 Refactor for security: sanitize every response at a single exit point, no boto3 import (REFACTOR)
   - Commit: `feat(mcp): MCP stdio server over cached specs with whitelist, validation and rate limit (Task 19)`
 
 - [ ] 20. Checkpoint - Foundations, collector, analysis, IaC and MCP tests passing
@@ -386,7 +386,7 @@ Tasks 1–13 were implemented against the first draft of the design. Tasks 14–
     - _Requirements: 9.1–9.4, 10.1–10.5, 12.4, 12.5_
   - [ ] 21.2 Implement `src/cli.py` commands `discover`, `collect`, `analyze`, `generate-iac`, `generate-docs`, `verify`, `mcp-serve` with exit codes and `SanitizingFilter` (GREEN)
   - [ ] 21.3 Implement `src/metrics.py` and `collection_report.json` / `summary_report.md` (GREEN)
-  - [ ] 21.4 Implement `src/documentation.py` (`docs/infrastructure.md`, every statement cited) (GREEN)
+  - [x] 21.4 Implement `src/documentation.py` (`docs/infrastructure.md`, every statement cited) (GREEN) — done in Task 19 (needed by `generate-documentation`; tests in `tests/unit/test_documentation.py`); the CLI only has to write its output
     - _Requirements: 6.3, 8.1_
   - [ ] 21.5 Refactor: progress output on stderr, `--no-color`, help texts with examples (REFACTOR)
   - Commit: `feat(cli): add aws-inventory CLI with metrics, reports and verification (Task 21)`

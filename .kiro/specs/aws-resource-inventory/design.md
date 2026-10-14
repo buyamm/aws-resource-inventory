@@ -324,7 +324,7 @@ Known limitations (documented in README): resource types outside the registry ar
 
 ## Documentation Generator (`src/documentation.py`)
 
-`generate_infrastructure_doc(report: AnalysisReport, specs) -> str` produces `docs/infrastructure.md`: inventory counts, one section per pattern ("what interacts with what"), one bullet per relationship, security findings, each followed by `[cite: <spec_file>#<property_path> sha256:<first 12 chars>]` markers. No sentence is emitted without at least one citation marker except headings and counts derived from `resources.json`.
+`generate_infrastructure_doc(report: AnalysisReport, specs) -> str` (and `document_citations(report, specs) -> list[dict]`, the distinct citations it uses) produces `docs/infrastructure.md`: inventory counts, one section per pattern ("what interacts with what"), one bullet per relationship, security findings, each followed by `[cite: <spec_file>#<property_path> sha256:<first 12 chars>]` markers. No sentence is emitted without at least one citation marker except headings and counts derived from `resources.json`.
 
 ## MCP Server
 
@@ -336,6 +336,8 @@ class MCPServer:
     def handle_request(self, operation: str, params: dict | None = None) -> dict: ...
     def get_security_logs(self) -> list[SecurityLogEntry]: ...   # {timestamp, operation, reason}
 ```
+
+Each request re-reads the cache with `load_cache()`: only `<canonical_type>/<region>/*.json` (registry types), each file sanitized on load; unreadable files are skipped with a WARNING. Parameters whose value is `null` count as absent. Only accepted requests are recorded by the rate limiter; whitelist/parameter rejections and rate-limited requests are not. The security log keeps the last 1000 entries (timestamp = UTC ISO-8601 with `Z`).
 
 Processing order: (1) whitelist check → `Unauthorized operation` + security log; (2) parameter validation against the schema below → `Invalid parameters` + security log; (3) rate limit (sliding 1 s window, max 10 accepted) → `rate_limited`; (4) dispatch; (5) sanitize the whole response. Exceptions inside handlers become `{"status": "error", "message": <type>: <msg>}`. The module must not import `boto3`/`botocore` (enforced by a test that imports it in a fresh interpreter and inspects `sys.modules`).
 
@@ -350,7 +352,7 @@ Unknown `resource_type` values are invalid parameters. An ARN not in the cache �
 
 ### Transport (`src/mcp_stdio.py`)
 
-`build_server(cache_dir) -> FastMCP` registers the four tools with the hyphenated names above; each tool calls `MCPServer.handle_request` and returns its dict (JSON). `sandbox_environment(environ)` deletes every `AWS_*` variable and sets `AWS_SHARED_CREDENTIALS_FILE` / `AWS_CONFIG_FILE` to `/nonexistent/aws-resource-inventory` (Req 9.7). `aws-inventory mcp-serve --cache-dir DIR` = `sandbox_environment(os.environ)` + `build_server(DIR).run("stdio")`.
+`build_server(cache_dir) -> FastMCP` registers the four tools with the hyphenated names above; each tool calls `MCPServer.handle_request` and returns its dict (JSON). `sandbox_environment(environ)` deletes every `AWS_*` variable and sets `AWS_SHARED_CREDENTIALS_FILE` / `AWS_CONFIG_FILE` to `/nonexistent/aws-resource-inventory` (Req 9.7). `aws-inventory mcp-serve --cache-dir DIR` = `sandbox_environment(os.environ)` + `build_server(DIR).run("stdio")`. `python -m src.mcp_stdio --cache-dir DIR` does the same (used by the stdio integration tests).
 
 Client configuration example (Claude Desktop / Claude Code `.mcp.json`):
 
