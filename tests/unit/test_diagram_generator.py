@@ -22,7 +22,9 @@ from src.parser import ResourceSpec, SpecMetadata
 
 resource_types = [
     "aws_s3_bucket",
+    "aws_instance",
     "aws_ec2_instance",
+    "not_a_registered_type",
     "aws_lambda_function",
     "aws_vpc",
     "aws_security_group",
@@ -62,13 +64,14 @@ def is_valid_drawio_xml(xml_content: str) -> bool:
         return False
 
 
-def resource_appears_in_diagram(xml_content: str, arn_or_name: str) -> bool:
-    """Check if a resource identifier appears in an mxCell vertex in the diagram."""
+def resource_appears_in_diagram(xml_content: str, arn: str) -> bool:
+    """A resource appears as a UserObject vertex whose arn/tooltip attributes are the ARN."""
     root = ET.fromstring(xml_content)
-    for cell in root.iter("mxCell"):
-        value = cell.get("value", "")
-        if arn_or_name in value:
-            return True
+    for obj in root.iter("UserObject"):
+        cell = obj.find("mxCell")
+        if obj.get("arn") == arn and obj.get("tooltip") == arn and cell is not None:
+            if cell.get("vertex") == "1":
+                return True
     return False
 
 
@@ -119,18 +122,18 @@ class TestDiagramGeneratorUnitTests:
             arn="arn:aws:ec2:us-east-1:123456789012:vpc/vpc-12345678",
             region="us-east-1",
             account_id="123456789012",
-            specifications={"vpc_id": "vpc-12345678", "cidr_block": "10.0.0.0/16"},
+            specifications={"VpcId": "vpc-12345678", "CidrBlock": "10.0.0.0/16"},
             metadata=spec_metadata,
         )
         ec2 = ResourceSpec(
-            resource_type="aws_ec2_instance",
+            resource_type="aws_instance",
             arn="arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0",
             region="us-east-1",
             account_id="123456789012",
             specifications={
-                "instance_id": "i-1234567890abcdef0",
-                "vpc_id": "vpc-12345678",
-                "instance_type": "t3.micro",
+                "InstanceId": "i-1234567890abcdef0",
+                "VpcId": "vpc-12345678",
+                "InstanceType": "t3.micro",
             },
             metadata=spec_metadata,
         )
@@ -144,7 +147,10 @@ class TestDiagramGeneratorUnitTests:
             arn="arn:aws:iam::123456789012:role/OrderProcessorRole",
             region="global",
             account_id="123456789012",
-            specifications={"role_name": "OrderProcessorRole"},
+            specifications={
+                "RoleName": "OrderProcessorRole",
+                "Arn": "arn:aws:iam::123456789012:role/OrderProcessorRole",
+            },
             metadata=spec_metadata,
         )
         dynamo = ResourceSpec(
@@ -152,7 +158,7 @@ class TestDiagramGeneratorUnitTests:
             arn="arn:aws:dynamodb:us-east-1:123456789012:table/Orders",
             region="us-east-1",
             account_id="123456789012",
-            specifications={"table_name": "Orders"},
+            specifications={"TableName": "Orders"},
             metadata=spec_metadata,
         )
         lambda_fn = ResourceSpec(
@@ -161,9 +167,9 @@ class TestDiagramGeneratorUnitTests:
             region="us-east-1",
             account_id="123456789012",
             specifications={
-                "function_name": "OrderProcessor",
-                "role": "arn:aws:iam::123456789012:role/OrderProcessorRole",
-                "environment_variables": {"ORDERS_TABLE": "Orders"},
+                "FunctionName": "OrderProcessor",
+                "Role": "arn:aws:iam::123456789012:role/OrderProcessorRole",
+                "Environment": {"Variables": {"ORDERS_TABLE": "Orders"}},
             },
             metadata=spec_metadata,
         )
@@ -215,3 +221,65 @@ class TestDiagramGeneratorUnitTests:
         generator = DiagramGenerator()
         xml_output = generator.generate_diagram([])
         assert is_valid_drawio_xml(xml_output)
+
+
+# ============================================================================
+# Task 17: stencils, edges, determinism, drawio-ai validation
+# ============================================================================
+
+
+def _vertex_styles(xml_content: str) -> dict[str, str]:
+    root = ET.fromstring(xml_content)
+    return {obj.get("arn"): obj.find("mxCell").get("style") for obj in root.iter("UserObject")}
+
+
+class TestDiagramGeneratorStyles:
+    vpc_and_ec2_specs = TestDiagramGeneratorUnitTests.vpc_and_ec2_specs
+    serverless_specs = TestDiagramGeneratorUnitTests.serverless_specs
+
+    def test_diagram_uses_aws4_stencils_req_6_4(self, vpc_and_ec2_specs):
+        styles = _vertex_styles(DiagramGenerator().generate_diagram(vpc_and_ec2_specs))
+        assert "resIcon=mxgraph.aws4.vpc" in styles[vpc_and_ec2_specs[0].arn]
+        assert "resIcon=mxgraph.aws4.ec2" in styles[vpc_and_ec2_specs[1].arn]
+
+    def test_diagram_edges_connect_vertices_req_6_4(self, serverless_specs):
+        xml_output = DiagramGenerator().generate_diagram(serverless_specs)
+        root = ET.fromstring(xml_output)
+        ids = {obj.get("id"): obj.get("arn") for obj in root.iter("UserObject")}
+        edges = [c for c in root.iter("mxCell") if c.get("edge") == "1"]
+        assert {e.get("value") for e in edges} == {"iam_role_usage", "dynamodb_access"}
+        for edge in edges:
+            assert edge.get("source") in ids and edge.get("target") in ids
+        all_ids = [e.get("id") for e in root.iter() if e.get("id")]
+        assert len(all_ids) == len(set(all_ids)), "cell ids must be unique"
+
+    def test_diagram_is_deterministic_req_6_4(self, serverless_specs):
+        generator = DiagramGenerator()
+        assert generator.generate_diagram(serverless_specs) == generator.generate_diagram(
+            list(reversed(serverless_specs))
+        )
+
+    def test_diagram_validate_with_drawio_ai_skipped_when_missing_req_6_4(
+        self, tmp_path, monkeypatch
+    ):
+        from src import diagram_generator as module
+
+        monkeypatch.setattr(module.shutil, "which", lambda name: None)
+        ok, message = module.validate_with_drawio_ai(tmp_path / "x.drawio")
+        assert ok is None and "skipped" in message
+
+    def test_diagram_validate_with_drawio_ai_runs_cli_req_6_4(self, tmp_path, monkeypatch):
+        from unittest.mock import Mock
+
+        from src import diagram_generator as module
+
+        monkeypatch.setattr(module.shutil, "which", lambda name: "/usr/local/bin/drawio-ai")
+        run = Mock(return_value=Mock(returncode=0, stdout="valid", stderr=""))
+        monkeypatch.setattr(module.subprocess, "run", run)
+        ok, message = module.validate_with_drawio_ai(tmp_path / "x.drawio")
+        assert ok is True and "valid" in message
+        assert run.call_args.args[0] == [
+            "/usr/local/bin/drawio-ai",
+            "validate",
+            str(tmp_path / "x.drawio"),
+        ]

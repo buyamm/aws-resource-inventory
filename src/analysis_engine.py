@@ -1,41 +1,88 @@
 """
 Analysis Engine Module
 
-This module provides the AnalysisEngine class for analyzing collected AWS resource
-specifications to infer activity flows, identify relationships, detect architecture
-patterns, flag suspicious/insecure configurations, and generate evidence citations.
+Rule-based analysis of collected Specifications (AWS field names): relationships,
+architecture patterns and security findings. Every statement carries Citations
+that resolve against the cited spec file, so ``aws-inventory verify`` can check it.
 
 Requirements Coverage:
-- Requirement 6.1: Identify relationships between resources
-- Requirement 6.2: Detect common patterns (API Gateway + Lambda + DynamoDB, EC2 + VPC, etc.)
-- Requirement 6.5: Include confidence scores and cite specific resource specifications as evidence
-- Requirement 6.6: Flag suspicious patterns (overly permissive IAM, public S3 buckets, unrestricted security groups)
-- Requirement 8.1: Direct citations to specific resource specifications
-- Requirement 8.2: Checksum references linking analysis statements to source data files
+- Requirement 6.1: Relationships (vpc_connection, iam_role_usage, security_group,
+  dynamodb_access, log_group)
+- Requirement 6.2: Serverless Application and Compute in VPC patterns; patterns of
+  unsupported services are listed as undetectable
+- Requirement 6.5: Rule-defined confidence scores and citations
+- Requirement 6.6: Overly permissive IAM, public S3 buckets, unrestricted security groups
+- Requirement 8.1 / 8.2 / 8.5: Citations with spec file and Spec_Checksum
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import json
+from collections.abc import Iterable
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
 from typing import Any
 
-from src.diagram_generator import DiagramGenerator, ResourceRelationship
+from src.integrity import resolve_property_path, spec_checksum
 from src.parser import ResourceSpec
+from src.resource_types import canonical_type, resource_id, spec_relpath
+
+ADMIN_POLICY_ARN = "arn:aws:iam::aws:policy/AdministratorAccess"
+PUBLIC_GRANTEE_GROUPS = ("AllUsers", "AuthenticatedUsers")
+OPEN_CIDRS = {"CidrIp": "0.0.0.0/0", "CidrIpv6": "::/0"}
+
+CONFIDENCE = {
+    "vpc_connection": 1.0,
+    "iam_role_usage": 0.95,
+    "security_group": 0.9,
+    "dynamodb_access_exact": 1.0,
+    "dynamodb_access_substring": 0.85,
+    "log_group": 1.0,
+}
+
+UNDETECTABLE_PATTERNS = [
+    ("API Gateway + Lambda + DynamoDB", "API Gateway"),
+    ("EC2 + Load Balancer", "Elastic Load Balancing"),
+    ("S3 + CloudFront", "CloudFront"),
+]
+
+
+# ============================================================================
+# Data model
+# ============================================================================
 
 
 @dataclass
 class Citation:
-    """Citation linking analysis findings to specific source resource specifications."""
+    """Reference from an analysis statement to a value in a spec file (Req 8.2)."""
 
     resource_arn: str
+    spec_file: str
     property_path: str
     source_checksum: str
     evidence_value: Any
 
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class ResourceRelationship:
+    """Directed relationship between two collected resources (Req 6.1)."""
+
+    from_arn: str
+    to_arn: str
+    relationship_type: str
+    confidence: float = 1.0
+    citations: list[Citation] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
 
 @dataclass
 class ArchitecturePattern:
-    """Detected architecture pattern with confidence and citations."""
+    """Detected pattern; confidence = min of the supporting relationships (Req 6.5)."""
 
     pattern_name: str
     description: str
@@ -43,369 +90,605 @@ class ArchitecturePattern:
     confidence: float
     citations: list[Citation] = field(default_factory=list)
 
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
 
 @dataclass
 class SecurityFinding:
-    """Detected security issue or suspicious configuration pattern."""
+    """Suspicious configuration (Req 6.6)."""
 
-    severity: str  # "CRITICAL", "HIGH", "MEDIUM", "LOW"
+    severity: str  # "CRITICAL" | "HIGH" | "MEDIUM" | "LOW"
     finding_type: str
     resource_arn: str
     description: str
     evidence: str
     citation: Citation
 
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
 
 @dataclass
 class AnalysisReport:
-    """Complete infrastructure activity flow and security analysis report."""
-
     relationships: list[ResourceRelationship]
     patterns: list[ArchitecturePattern]
     security_findings: list[SecurityFinding]
     summary_markdown: str
+    undetectable_patterns: list[dict[str, str]] = field(default_factory=list)
+    resource_count: int = 0
+    generated_at: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        """Content of ``analysis/analysis.json``."""
+        return {
+            "generated_at": self.generated_at,
+            "resource_count": self.resource_count,
+            "relationships": [r.to_dict() for r in self.relationships],
+            "patterns": [p.to_dict() for p in self.patterns],
+            "security_findings": [f.to_dict() for f in self.security_findings],
+            "undetectable_patterns": list(self.undetectable_patterns),
+        }
+
+
+# ============================================================================
+# Helpers
+# ============================================================================
+
+
+def _addressable(key: str) -> bool:
+    return bool(key) and not any(ch in key for ch in ".[]")
+
+
+def cite(spec: ResourceSpec, property_path: str) -> Citation:
+    """Citation of ``property_path`` in ``spec``; the evidence is resolved from the spec."""
+    document = {"specifications": spec.specifications}
+    return Citation(
+        resource_arn=spec.arn,
+        spec_file=spec_relpath(spec),
+        property_path=property_path,
+        source_checksum=spec.metadata.checksum or spec_checksum(spec.specifications),
+        evidence_value=resolve_property_path(document, property_path),
+    )
+
+
+def _type(spec: ResourceSpec) -> str:
+    return canonical_type(spec.resource_type) or spec.resource_type
+
+
+def _as_list(value: Any) -> list[Any]:
+    if value is None:
+        return []
+    return value if isinstance(value, list) else [value]
+
+
+def _get(mapping: Any, *keys: str) -> Any:
+    current = mapping
+    for key in keys:
+        if not isinstance(current, dict):
+            return None
+        current = current.get(key)
+    return current
+
+
+def _short(arn: str) -> str:
+    tail = arn.split(":")[-1]
+    return tail.split("/")[-1] if "/" in tail else tail
+
+
+class _Index:
+    """Lookup tables from ids/names/ARNs to collected specs."""
+
+    def __init__(self, specs: Iterable[ResourceSpec]) -> None:
+        self.vpcs: dict[str, ResourceSpec] = {}
+        self.security_groups: dict[str, ResourceSpec] = {}
+        self.roles: dict[str, ResourceSpec] = {}
+        self.tables: dict[str, ResourceSpec] = {}
+        self.table_names: list[tuple[str, ResourceSpec]] = []
+        self.log_groups: dict[str, ResourceSpec] = {}
+        for spec in specs:
+            s = spec.specifications or {}
+            kind = _type(spec)
+            if kind == "aws_vpc" and isinstance(s.get("VpcId"), str):
+                self.vpcs[s["VpcId"]] = spec
+            elif kind == "aws_security_group" and isinstance(s.get("GroupId"), str):
+                self.security_groups[s["GroupId"]] = spec
+            elif kind == "aws_iam_role":
+                self.roles[spec.arn] = spec
+                self.roles[resource_id(spec)] = spec
+            elif kind == "aws_dynamodb_table":
+                name = resource_id(spec)
+                self.tables[name] = spec
+                self.tables[spec.arn] = spec
+                if isinstance(s.get("TableArn"), str):
+                    self.tables[s["TableArn"]] = spec
+                self.table_names.append((name, spec))
+            elif kind == "aws_cloudwatch_log_group":
+                self.log_groups[resource_id(spec)] = spec
+
+
+# ============================================================================
+# Engine
+# ============================================================================
 
 
 class AnalysisEngine:
-    """
-    Infers architecture patterns, resource connections, security vulnerabilities,
-    and verifiable citations from collected AWS specifications.
-    """
+    """Infers relationships, patterns and security findings with citations."""
 
-    def __init__(self) -> None:
-        """Initialize AnalysisEngine."""
-        self.diagram_generator = DiagramGenerator()
-
-    # ========================================================================
-    # Relationship Identification (Requirement 6.1)
-    # ========================================================================
+    # ------------------------------------------------------------------
+    # Relationships (Requirement 6.1)
+    # ------------------------------------------------------------------
 
     def identify_relationships(self, specs: list[ResourceSpec]) -> list[ResourceRelationship]:
-        """
-        Identify inter-resource relationships (Requirement 6.1).
-        Delegates to DiagramGenerator relationship discovery.
-        """
-        return self.diagram_generator.identify_relationships(specs)
+        index = _Index(specs)
+        found: dict[tuple[str, str, str], ResourceRelationship] = {}
 
-    # ========================================================================
-    # Architecture Pattern Detection (Requirements 6.2, 6.5, 8.1, 8.2)
-    # ========================================================================
+        def add(
+            source: ResourceSpec,
+            target: ResourceSpec,
+            kind: str,
+            confidence: float,
+            citations: list[Citation],
+        ) -> None:
+            if target.arn == source.arn:
+                return
+            key = (source.arn, target.arn, kind)
+            if key not in found:
+                found[key] = ResourceRelationship(
+                    source.arn, target.arn, kind, confidence, citations
+                )
 
-    def detect_patterns(self, specs: list[ResourceSpec]) -> list[ArchitecturePattern]:
-        """
-        Detect common architectural patterns:
-        - Serverless Application (Lambda + DynamoDB + IAM)
-        - Compute in VPC (EC2 + VPC + Security Groups)
-        - Web & Storage (S3 + CloudFront)
+        for spec in sorted(specs, key=lambda s: s.arn):
+            s = spec.specifications or {}
+            kind = _type(spec)
 
-        Requirements: 6.2, 6.5, 8.1, 8.2
-        """
+            # vpc_connection
+            vpc_paths = {
+                "aws_instance": ("VpcId",),
+                "aws_security_group": ("VpcId",),
+                "aws_lambda_function": ("VpcConfig", "VpcId"),
+                "aws_db_instance": ("DBSubnetGroup", "VpcId"),
+            }.get(kind)
+            if vpc_paths:
+                vpc_id = _get(s, *vpc_paths)
+                if isinstance(vpc_id, str) and vpc_id in index.vpcs:
+                    target = index.vpcs[vpc_id]
+                    add(
+                        spec,
+                        target,
+                        "vpc_connection",
+                        CONFIDENCE["vpc_connection"],
+                        [
+                            cite(spec, "specifications." + ".".join(vpc_paths)),
+                            cite(target, "specifications.VpcId"),
+                        ],
+                    )
+
+            # iam_role_usage
+            role_ref, role_path = None, ""
+            if kind == "aws_lambda_function" and isinstance(s.get("Role"), str):
+                role_ref, role_path = s["Role"], "specifications.Role"
+            elif kind == "aws_sfn_state_machine" and isinstance(s.get("roleArn"), str):
+                role_ref, role_path = s["roleArn"], "specifications.roleArn"
+            elif kind == "aws_instance" and isinstance(_get(s, "IamInstanceProfile", "Arn"), str):
+                # Instance profile name == role name (the convention used by the console)
+                role_ref = _short(s["IamInstanceProfile"]["Arn"])
+                role_path = "specifications.IamInstanceProfile.Arn"
+            if role_ref:
+                role_target = index.roles.get(role_ref) or index.roles.get(_short(role_ref))
+                if role_target is not None:
+                    add(
+                        spec,
+                        role_target,
+                        "iam_role_usage",
+                        CONFIDENCE["iam_role_usage"],
+                        [cite(spec, role_path)],
+                    )
+
+            # security_group
+            sg_refs: list[tuple[Any, str]] = []
+            if kind == "aws_instance":
+                sg_refs = [
+                    (g.get("GroupId"), f"specifications.SecurityGroups[{i}].GroupId")
+                    for i, g in enumerate(_as_list(s.get("SecurityGroups")))
+                    if isinstance(g, dict)
+                ]
+            elif kind == "aws_lambda_function":
+                sg_refs = [
+                    (g, f"specifications.VpcConfig.SecurityGroupIds[{i}]")
+                    for i, g in enumerate(_as_list(_get(s, "VpcConfig", "SecurityGroupIds")))
+                ]
+            elif kind == "aws_db_instance":
+                sg_refs = [
+                    (
+                        g.get("VpcSecurityGroupId"),
+                        f"specifications.VpcSecurityGroups[{i}].VpcSecurityGroupId",
+                    )
+                    for i, g in enumerate(_as_list(s.get("VpcSecurityGroups")))
+                    if isinstance(g, dict)
+                ]
+            for group_id, path in sg_refs:
+                if isinstance(group_id, str) and group_id in index.security_groups:
+                    add(
+                        spec,
+                        index.security_groups[group_id],
+                        "security_group",
+                        CONFIDENCE["security_group"],
+                        [cite(spec, path)],
+                    )
+
+            if kind == "aws_lambda_function":
+                self._lambda_relationships(spec, index, add)
+
+        return list(found.values())
+
+    @staticmethod
+    def _lambda_relationships(spec: ResourceSpec, index: _Index, add: Any) -> None:
+        s = spec.specifications or {}
+        variables = _get(s, "Environment", "Variables")
+        if isinstance(variables, dict):
+            for name, value in sorted(variables.items()):
+                if not isinstance(value, str) or not value:
+                    continue
+                path = (
+                    f"specifications.Environment.Variables.{name}"
+                    if _addressable(name)
+                    else "specifications.Environment.Variables"
+                )
+                if value in index.tables:
+                    add(
+                        spec,
+                        index.tables[value],
+                        "dynamodb_access",
+                        CONFIDENCE["dynamodb_access_exact"],
+                        [cite(spec, path)],
+                    )
+                    continue
+                for table_name, table in index.table_names:
+                    if len(table_name) > 3 and table_name in value:
+                        add(
+                            spec,
+                            table,
+                            "dynamodb_access",
+                            CONFIDENCE["dynamodb_access_substring"],
+                            [cite(spec, path)],
+                        )
+        function_name = s.get("FunctionName")
+        if isinstance(function_name, str):
+            log_group = index.log_groups.get(f"/aws/lambda/{function_name}")
+            if log_group is not None:
+                add(
+                    spec,
+                    log_group,
+                    "log_group",
+                    CONFIDENCE["log_group"],
+                    [
+                        cite(spec, "specifications.FunctionName"),
+                        cite(log_group, "specifications.logGroupName"),
+                    ],
+                )
+
+    # ------------------------------------------------------------------
+    # Patterns (Requirements 6.2, 6.5)
+    # ------------------------------------------------------------------
+
+    def detect_patterns(
+        self,
+        specs: list[ResourceSpec],
+        relationships: list[ResourceRelationship] | None = None,
+    ) -> list[ArchitecturePattern]:
+        rels = relationships if relationships is not None else self.identify_relationships(specs)
+        by_arn = {spec.arn: spec for spec in specs}
         patterns: list[ArchitecturePattern] = []
 
-        # 1. Pattern: Serverless Architecture (Lambda + DynamoDB + IAM)
-        lambdas = [s for s in specs if "lambda" in s.resource_type.lower()]
-        dynamodb_tables = [s for s in specs if "dynamodb" in s.resource_type.lower()]
-        roles = [
-            s
-            for s in specs
-            if "iam" in s.resource_type.lower() or "role" in s.resource_type.lower()
-        ]
-
-        for lambda_fn in lambdas:
-            citations: list[Citation] = []
-            participating: list[str] = [lambda_fn.arn]
-            specs_dict = lambda_fn.specifications or {}
-
-            # Check for linked DynamoDB tables
-            linked_tables = []
-            for table in dynamodb_tables:
-                env_vars = specs_dict.get("environment_variables") or {}
-                table_name = table.specifications.get("table_name", "")
-                for env_k, env_v in env_vars.items():
-                    if table_name and table_name in str(env_v):
-                        linked_tables.append(table)
-                        citations.append(
-                            Citation(
-                                resource_arn=lambda_fn.arn,
-                                property_path=f"specifications.environment_variables.{env_k}",
-                                source_checksum=lambda_fn.metadata.checksum,
-                                evidence_value=env_v,
-                            )
-                        )
-                        break
-
-            # Check for execution role
-            linked_roles = []
-            role_ref = specs_dict.get("role") or specs_dict.get("Role")
-            if role_ref:
-                for role in roles:
-                    if role.arn == role_ref or role.arn.endswith(str(role_ref).split("/")[-1]):
-                        linked_roles.append(role)
-                        citations.append(
-                            Citation(
-                                resource_arn=lambda_fn.arn,
-                                property_path="specifications.role",
-                                source_checksum=lambda_fn.metadata.checksum,
-                                evidence_value=role_ref,
-                            )
-                        )
-                        break
-
-            if linked_tables or linked_roles:
-                for t in linked_tables:
-                    participating.append(t.arn)
-                for r in linked_roles:
-                    participating.append(r.arn)
-
-                confidence = 0.90 if (linked_tables and linked_roles) else 0.75
-                patterns.append(
-                    ArchitecturePattern(
-                        pattern_name="Serverless Application (Lambda + DynamoDB + IAM)",
-                        description=(
-                            f"Lambda function '{lambda_fn.arn.split(':')[-1]}' utilizes "
-                            f"{len(linked_roles)} IAM execution role(s) and connects to "
-                            f"{len(linked_tables)} DynamoDB table(s) for event-driven processing."
-                        ),
-                        participating_resources=participating,
-                        confidence=confidence,
-                        citations=citations,
-                    )
-                )
-
-        # 2. Pattern: Compute in VPC (EC2 + VPC + Security Groups)
-        vpcs = [s for s in specs if "vpc" in s.resource_type.lower()]
-        ec2s = [
-            s
-            for s in specs
-            if "ec2" in s.resource_type.lower() or "instance" in s.resource_type.lower()
-        ]
-
-        for ec2 in ec2s:
-            specs_dict = ec2.specifications or {}
-            vpc_id = specs_dict.get("vpc_id")
-            if vpc_id:
-                matching_vpc = next(
-                    (v for v in vpcs if v.specifications.get("vpc_id") == vpc_id), None
-                )
-                participating = [ec2.arn]
-                citations = [
-                    Citation(
-                        resource_arn=ec2.arn,
-                        property_path="specifications.vpc_id",
-                        source_checksum=ec2.metadata.checksum,
-                        evidence_value=vpc_id,
-                    )
+        for spec in sorted(specs, key=lambda s: s.arn):
+            kind = _type(spec)
+            outgoing = [r for r in rels if r.from_arn == spec.arn]
+            if kind == "aws_lambda_function":
+                support = [
+                    r
+                    for r in outgoing
+                    if r.relationship_type in ("iam_role_usage", "dynamodb_access")
                 ]
-                if matching_vpc:
-                    participating.append(matching_vpc.arn)
-
-                patterns.append(
-                    ArchitecturePattern(
-                        pattern_name="Compute in Virtual Private Cloud (EC2 in VPC)",
-                        description=f"EC2 Instance '{ec2.arn.split('/')[-1]}' is securely hosted within VPC '{vpc_id}'.",
-                        participating_resources=participating,
-                        confidence=0.95,
-                        citations=citations,
+                if support:
+                    roles = [
+                        _short(r.to_arn) for r in support if r.relationship_type == "iam_role_usage"
+                    ]
+                    tables = [
+                        _short(r.to_arn)
+                        for r in support
+                        if r.relationship_type == "dynamodb_access"
+                    ]
+                    parts = []
+                    if roles:
+                        parts.append(f"runs with IAM role {', '.join(repr(x) for x in roles)}")
+                    if tables:
+                        parts.append(
+                            "references DynamoDB table(s) "
+                            f"{', '.join(repr(x) for x in tables)} in its environment variables"
+                        )
+                    patterns.append(
+                        self._pattern(
+                            "Serverless Application",
+                            f"Lambda function '{resource_id(spec)}' " + " and ".join(parts) + ".",
+                            spec,
+                            support,
+                        )
                     )
-                )
-
+            elif kind == "aws_instance":
+                support = [r for r in outgoing if r.relationship_type == "vpc_connection"]
+                if support:
+                    vpc = by_arn.get(support[0].to_arn)
+                    vpc_name = resource_id(vpc) if vpc else _short(support[0].to_arn)
+                    patterns.append(
+                        self._pattern(
+                            "Compute in VPC",
+                            f"EC2 instance '{resource_id(spec)}' runs in VPC '{vpc_name}'.",
+                            spec,
+                            support,
+                        )
+                    )
         return patterns
 
-    # ========================================================================
-    # Suspicious Pattern & Security Risk Detection (Requirement 6.6)
-    # ========================================================================
+    @staticmethod
+    def _pattern(
+        name: str, description: str, spec: ResourceSpec, support: list[ResourceRelationship]
+    ) -> ArchitecturePattern:
+        participants = [spec.arn]
+        for rel in support:
+            if rel.to_arn not in participants:
+                participants.append(rel.to_arn)
+        citations: list[Citation] = []
+        for rel in support:
+            citations.extend(rel.citations)
+        return ArchitecturePattern(
+            pattern_name=name,
+            description=description,
+            participating_resources=participants,
+            confidence=min(r.confidence for r in support),
+            citations=citations,
+        )
+
+    # ------------------------------------------------------------------
+    # Security findings (Requirement 6.6)
+    # ------------------------------------------------------------------
 
     def flag_suspicious_patterns(self, specs: list[ResourceSpec]) -> list[SecurityFinding]:
-        """
-        Flag suspicious patterns (Requirement 6.6):
-        - Overly permissive IAM policies (* action / resource)
-        - Public S3 buckets (ACL grants or public policy)
-        - Unrestricted Security Groups (0.0.0.0/0 on sensitive ports)
-        """
         findings: list[SecurityFinding] = []
+        for spec in sorted(specs, key=lambda s: s.arn):
+            kind = _type(spec)
+            if kind == "aws_iam_role":
+                findings.extend(self._iam_findings(spec))
+            elif kind == "aws_s3_bucket":
+                findings.extend(self._s3_findings(spec))
+            elif kind == "aws_security_group":
+                findings.extend(self._security_group_findings(spec))
+        return findings
 
-        for spec in specs:
-            specs_dict = spec.specifications or {}
-
-            # 1. Overly permissive IAM Policies
-            if (
-                "role" in spec.resource_type.lower()
-                or "iam" in spec.resource_type.lower()
-                or "policy" in spec.resource_type.lower()
-            ):
-                policy = specs_dict.get("policy") or specs_dict.get("policy_document") or {}
-                statements = policy.get("Statement") or []
-                for idx, stmt in enumerate(statements):
-                    effect = stmt.get("Effect", "")
-                    actions = stmt.get("Action", [])
-                    resources = stmt.get("Resource", [])
-
-                    actions_list = [actions] if isinstance(actions, str) else actions
-                    resources_list = [resources] if isinstance(resources, str) else resources
-
-                    if effect == "Allow" and "*" in actions_list and "*" in resources_list:
-                        citation = Citation(
-                            resource_arn=spec.arn,
-                            property_path=f"specifications.policy.Statement[{idx}]",
-                            source_checksum=spec.metadata.checksum,
-                            evidence_value=stmt,
-                        )
+    @staticmethod
+    def _iam_findings(spec: ResourceSpec) -> list[SecurityFinding]:
+        s = spec.specifications or {}
+        name = resource_id(spec)
+        findings: list[SecurityFinding] = []
+        policies = s.get("InlinePolicies")
+        if isinstance(policies, dict):
+            for policy_name, document in sorted(policies.items()):
+                statements = _get(document, "Statement")
+                base = (
+                    f"specifications.InlinePolicies.{policy_name}.Statement"
+                    if _addressable(policy_name)
+                    else "specifications.InlinePolicies"
+                )
+                as_list = isinstance(statements, list)
+                for i, statement in enumerate(_as_list(statements)):
+                    if not isinstance(statement, dict) or statement.get("Effect") != "Allow":
+                        continue
+                    if "*" in _as_list(statement.get("Action")) and "*" in _as_list(
+                        statement.get("Resource")
+                    ):
+                        path = f"{base}[{i}]" if as_list and _addressable(policy_name) else base
                         findings.append(
                             SecurityFinding(
                                 severity="CRITICAL",
                                 finding_type="OVERLY_PERMISSIVE_IAM_POLICY",
                                 resource_arn=spec.arn,
                                 description=(
-                                    f"IAM Role '{spec.arn}' grants administrator-level access "
-                                    f"with wildcard Action '*' and Resource '*'."
+                                    f"IAM role '{name}' inline policy '{policy_name}' allows "
+                                    "Action '*' on Resource '*'."
                                 ),
-                                evidence="Statement allows Action: '*' on Resource: '*'",
-                                citation=citation,
+                                evidence="Statement: Effect=Allow, Action=*, Resource=*",
+                                citation=cite(spec, path),
                             )
                         )
-
-            # 2. Public S3 Buckets
-            if "s3" in spec.resource_type.lower() or "bucket" in spec.resource_type.lower():
-                acl = specs_dict.get("acl") or specs_dict.get("bucket-acl") or {}
-                grants = acl.get("Grants") or []
-                is_public = False
-                public_grant = None
-
-                for g_idx, grant in enumerate(grants):
-                    grantee = grant.get("Grantee") or {}
-                    uri = grantee.get("URI", "")
-                    if "allusers" in uri.lower() or "authenticatedusers" in uri.lower():
-                        is_public = True
-                        public_grant = (g_idx, grant)
-                        break
-
-                if is_public and public_grant:
-                    g_idx, g_val = public_grant
-                    citation = Citation(
+        for i, attached in enumerate(_as_list(s.get("AttachedPolicies"))):
+            if isinstance(attached, dict) and attached.get("PolicyArn") == ADMIN_POLICY_ARN:
+                findings.append(
+                    SecurityFinding(
+                        severity="CRITICAL",
+                        finding_type="OVERLY_PERMISSIVE_IAM_POLICY",
                         resource_arn=spec.arn,
-                        property_path=f"specifications.acl.Grants[{g_idx}]",
-                        source_checksum=spec.metadata.checksum,
-                        evidence_value=g_val,
+                        description=f"IAM role '{name}' has the AWS managed policy AdministratorAccess attached.",
+                        evidence=f"PolicyArn: {ADMIN_POLICY_ARN}",
+                        citation=cite(spec, f"specifications.AttachedPolicies[{i}]"),
                     )
+                )
+        return findings
+
+    @staticmethod
+    def _s3_findings(spec: ResourceSpec) -> list[SecurityFinding]:
+        s = spec.specifications or {}
+        name = resource_id(spec)
+        findings: list[SecurityFinding] = []
+        for i, grant in enumerate(_as_list(_get(s, "bucket-acl", "Grants"))):
+            uri = _get(grant, "Grantee", "URI")
+            if isinstance(uri, str) and uri.rsplit("/", 1)[-1] in PUBLIC_GRANTEE_GROUPS:
+                findings.append(
+                    SecurityFinding(
+                        severity="HIGH",
+                        finding_type="PUBLIC_S3_BUCKET",
+                        resource_arn=spec.arn,
+                        description=(
+                            f"S3 bucket '{name}' ACL grants {grant.get('Permission')} "
+                            f"to the {uri.rsplit('/', 1)[-1]} group."
+                        ),
+                        evidence=f"Grantee URI: {uri}",
+                        citation=cite(spec, f"specifications.bucket-acl.Grants[{i}]"),
+                    )
+                )
+                break
+        policy_text = _get(s, "bucket-policy", "Policy")
+        if isinstance(policy_text, str):
+            try:
+                policy = json.loads(policy_text)
+            except json.JSONDecodeError:
+                policy = {}
+            for statement in _as_list(_get(policy, "Statement")):
+                if not isinstance(statement, dict) or statement.get("Effect") != "Allow":
+                    continue
+                principal = statement.get("Principal")
+                aws_principal = (
+                    _as_list(principal.get("AWS")) if isinstance(principal, dict) else []
+                )
+                if principal == "*" or "*" in aws_principal:
                     findings.append(
                         SecurityFinding(
                             severity="HIGH",
                             finding_type="PUBLIC_S3_BUCKET",
                             resource_arn=spec.arn,
-                            description=(
-                                f"S3 Bucket '{spec.arn}' has public ACL grants configured, "
-                                f"allowing unrestricted public access."
-                            ),
-                            evidence=f"Grantee URI: {g_val.get('Grantee', {}).get('URI')}",
-                            citation=citation,
+                            description=f"S3 bucket '{name}' policy allows any principal ('*').",
+                            evidence=f"Principal: {json.dumps(principal)}",
+                            citation=cite(spec, "specifications.bucket-policy.Policy"),
                         )
                     )
-
-            # 3. Unrestricted Security Groups
-            if "security_group" in spec.resource_type.lower():
-                permissions = (
-                    specs_dict.get("ip_permissions") or specs_dict.get("IpPermissions") or []
-                )
-                for p_idx, perm in enumerate(permissions):
-                    ip_ranges = perm.get("ip_ranges") or perm.get("IpRanges") or []
-                    from_port = perm.get("from_port") or perm.get("FromPort")
-                    to_port = perm.get("to_port") or perm.get("ToPort")
-
-                    for r_idx, ip_range in enumerate(ip_ranges):
-                        cidr = ip_range.get("cidr_ip") or ip_range.get("CidrIp")
-                        if cidr == "0.0.0.0/0":
-                            port_desc = f"ports {from_port}-{to_port}" if from_port else "all ports"
-                            citation = Citation(
-                                resource_arn=spec.arn,
-                                property_path=f"specifications.ip_permissions[{p_idx}].ip_ranges[{r_idx}]",
-                                source_checksum=spec.metadata.checksum,
-                                evidence_value=ip_range,
-                            )
-                            findings.append(
-                                SecurityFinding(
-                                    severity="HIGH",
-                                    finding_type="UNRESTRICTED_SECURITY_GROUP_ACCESS",
-                                    resource_arn=spec.arn,
-                                    description=(
-                                        f"Security Group '{spec.arn}' permits unrestricted ingress "
-                                        f"from 0.0.0.0/0 on {port_desc}."
-                                    ),
-                                    evidence=f"Inbound 0.0.0.0/0 allowed on {port_desc}",
-                                    citation=citation,
-                                )
-                            )
-
+                    break
         return findings
 
-    # ========================================================================
-    # Full Infrastructure Analysis (Requirements 6.1-6.6, 8.1, 8.2)
-    # ========================================================================
+    @staticmethod
+    def _security_group_findings(spec: ResourceSpec) -> list[SecurityFinding]:
+        s = spec.specifications or {}
+        name = resource_id(spec)
+        findings: list[SecurityFinding] = []
+        for p, permission in enumerate(_as_list(s.get("IpPermissions"))):
+            if not isinstance(permission, dict):
+                continue
+            protocol = permission.get("IpProtocol")
+            if protocol == "-1":
+                ports = "all traffic"
+            elif permission.get("FromPort") == permission.get("ToPort"):
+                ports = f"{protocol} port {permission.get('FromPort')}"
+            else:
+                ports = f"{protocol} ports {permission.get('FromPort')}-{permission.get('ToPort')}"
+            for range_key, cidr_key in (("IpRanges", "CidrIp"), ("Ipv6Ranges", "CidrIpv6")):
+                for r, ip_range in enumerate(_as_list(permission.get(range_key))):
+                    cidr = _get(ip_range, cidr_key)
+                    if cidr == OPEN_CIDRS[cidr_key]:
+                        findings.append(
+                            SecurityFinding(
+                                severity="HIGH",
+                                finding_type="UNRESTRICTED_SECURITY_GROUP_ACCESS",
+                                resource_arn=spec.arn,
+                                description=f"Security group '{name}' allows ingress from {cidr} on {ports}.",
+                                evidence=f"Ingress {cidr} on {ports}",
+                                citation=cite(
+                                    spec, f"specifications.IpPermissions[{p}].{range_key}[{r}]"
+                                ),
+                            )
+                        )
+        return findings
+
+    # ------------------------------------------------------------------
+    # Full report
+    # ------------------------------------------------------------------
 
     def analyze(self, specs: list[ResourceSpec]) -> AnalysisReport:
-        """
-        Execute full activity flow analysis, architecture pattern detection,
-        and security auditing with evidence citations.
-        """
         relationships = self.identify_relationships(specs)
-        patterns = self.detect_patterns(specs)
-        security_findings = self.flag_suspicious_patterns(specs)
-
-        # Build Markdown summary report
-        md_lines: list[str] = [
-            "# Activity Flow & Architecture Analysis",
-            "",
-            f"**Total Discovered Resources:** {len(specs)}  ",
-            f"**Relationships Identified:** {len(relationships)}  ",
-            f"**Architectural Patterns:** {len(patterns)}  ",
-            f"**Security Warnings:** {len(security_findings)}  ",
-            "",
-            "## Architecture Patterns Detected",
-            "",
+        patterns = self.detect_patterns(specs, relationships)
+        findings = self.flag_suspicious_patterns(specs)
+        undetectable = [
+            {
+                "pattern": pattern,
+                "reason": f"{service} is not a Supported_Resource_Type; the pattern cannot be "
+                "detected from collected data.",
+            }
+            for pattern, service in UNDETECTABLE_PATTERNS
         ]
-
-        if patterns:
-            for p in patterns:
-                md_lines.append(f"### {p.pattern_name} (Confidence: {int(p.confidence * 100)}%)")
-                md_lines.append(f"{p.description}\n")
-                md_lines.append("**Participating Resources:**")
-                for r in p.participating_resources:
-                    md_lines.append(f"- `{r}`")
-                md_lines.append("")
-        else:
-            md_lines.append("No specific high-level architecture patterns detected.\n")
-
-        md_lines.append("## Security Findings & Suspicious Configurations\n")
-        if security_findings:
-            for f in security_findings:
-                md_lines.append(f"### [{f.severity}] {f.finding_type}")
-                md_lines.append(f"**Resource:** `{f.resource_arn}`  ")
-                md_lines.append(f"**Description:** {f.description}  ")
-                md_lines.append(f"**Evidence:** `{f.evidence}`\n")
-        else:
-            md_lines.append("✅ No high-risk security misconfigurations detected.\n")
-
-        md_lines.append("## Evidence Citations\n")
-        all_citations: list[Citation] = []
-        for p in patterns:
-            all_citations.extend(p.citations)
-        for sf in security_findings:
-            all_citations.append(sf.citation)
-
-        if all_citations:
-            md_lines.append("| Resource ARN | Property Path | Source Checksum | Evidence |")
-            md_lines.append("| :--- | :--- | :--- | :--- |")
-            for c in all_citations:
-                ev_str = str(c.evidence_value).replace("|", "\\|")
-                md_lines.append(
-                    f"| `{c.resource_arn}` | `{c.property_path}` | `{c.source_checksum}` | `{ev_str}` |"
-                )
-            md_lines.append("")
-
-        summary_markdown = "\n".join(md_lines)
-
-        return AnalysisReport(
+        report = AnalysisReport(
             relationships=relationships,
             patterns=patterns,
-            security_findings=security_findings,
-            summary_markdown=summary_markdown,
+            security_findings=findings,
+            summary_markdown="",
+            undetectable_patterns=undetectable,
+            resource_count=len(specs),
+            generated_at=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         )
+        report.summary_markdown = render_summary_markdown(report)
+        return report
+
+
+def _cite_marker(citation: Citation) -> str:
+    return f"[cite: {citation.spec_file}#{citation.property_path} sha256:{citation.source_checksum[:12]}]"
+
+
+def render_summary_markdown(report: AnalysisReport) -> str:
+    """Markdown for ``analysis/analysis.md``; each statement ends with its citation markers."""
+    lines = [
+        "# Activity Flow & Architecture Analysis",
+        "",
+        f"**Resources analyzed:** {report.resource_count}  ",
+        f"**Relationships identified:** {len(report.relationships)}  ",
+        f"**Architecture patterns:** {len(report.patterns)}  ",
+        f"**Security findings:** {len(report.security_findings)}",
+        "",
+        "## Architecture Patterns",
+        "",
+    ]
+    if report.patterns:
+        for pattern in report.patterns:
+            lines.append(f"### {pattern.pattern_name} (confidence {pattern.confidence:.2f})")
+            lines.append(
+                f"{pattern.description} " + " ".join(_cite_marker(c) for c in pattern.citations)
+            )
+            lines.append("")
+    else:
+        lines.append("No supported pattern was detected in the collected data.")
+        lines.append("")
+    lines += ["## Relationships", ""]
+    for rel in report.relationships:
+        lines.append(
+            f"- `{rel.from_arn}` → `{rel.to_arn}` ({rel.relationship_type}, confidence "
+            f"{rel.confidence:.2f}) " + " ".join(_cite_marker(c) for c in rel.citations)
+        )
+    if not report.relationships:
+        lines.append("No relationships between collected resources were found.")
+    lines += ["", "## Security Findings", ""]
+    for finding in report.security_findings:
+        lines.append(f"### [{finding.severity}] {finding.finding_type}")
+        lines.append(f"{finding.description} {_cite_marker(finding.citation)}")
+        lines.append("")
+    if not report.security_findings:
+        lines.append("No finding matched the rules of Requirement 6.6.")
+        lines.append("")
+    lines += ["## Patterns Not Detectable", ""]
+    for item in report.undetectable_patterns:
+        lines.append(f"- {item['pattern']}: {item['reason']}")
+    lines += [
+        "",
+        "## Evidence Citations",
+        "",
+        "| Resource ARN | Spec File | Property Path | Source Checksum | Evidence |",
+        "| :--- | :--- | :--- | :--- | :--- |",
+    ]
+    citations = [c for r in report.relationships for c in r.citations]
+    citations += [c for p in report.patterns for c in p.citations]
+    citations += [f.citation for f in report.security_findings]
+    seen: set[tuple[str, str]] = set()
+    for c in citations:
+        if (c.spec_file, c.property_path) in seen:
+            continue
+        seen.add((c.spec_file, c.property_path))
+        evidence = json.dumps(c.evidence_value, sort_keys=True).replace("|", "\\|")
+        lines.append(
+            f"| `{c.resource_arn}` | `{c.spec_file}` | `{c.property_path}` | "
+            f"`{c.source_checksum[:12]}` | `{evidence}` |"
+        )
+    return "\n".join(lines) + "\n"

@@ -48,8 +48,8 @@ Binding scope decisions are listed in requirements.md §"Scope decisions". In sh
 | `src/inventory.py` | `InventoryCollector`: turns `DiscoveredResource`s into `ResourceSpec`s (one SpecCollector per service+region), `CollectionError`, `CollectionResult`. |
 | `src/integrity.py` | Canonical JSON, Spec_Checksum, `seal_specs()`, citation path resolution, `verify_output_dir()`. |
 | `src/output_generator.py` | JSON/Markdown/raw/checksum/summary files, `load_specs()` from Output_Dir. |
-| `src/analysis_engine.py` | Relationships, patterns, security findings, citations, `AnalysisReport` (+ JSON serialization). |
-| `src/diagram_generator.py` | Relationship detection + `.drawio` generation. |
+| `src/analysis_engine.py` | Relationship rules (single source), patterns, security findings, citations, `AnalysisReport` (+ JSON serialization, `analysis.md`). |
+| `src/diagram_generator.py` | `.drawio` generation from specs + relationships; optional `drawio-ai validate`. |
 | `src/iac_generator.py` | Terraform generation per type mapping, `import.sh`, `verify_state.sh`, `verify_terraform_plan()`. |
 | `src/documentation.py` | `docs/infrastructure.md` from an `AnalysisReport` (every statement cited). |
 | `src/metrics.py` | Phase timer, run metrics, time-savings computation, `collection_report.json`. |
@@ -146,7 +146,7 @@ class CollectionResult:
     operations: list[OperationRecord]; api_calls: int
 
 @dataclass
-class ResourceRelationship:          # src/diagram_generator.py
+class ResourceRelationship:          # src/analysis_engine.py (re-exported by diagram_generator)
     from_arn: str; to_arn: str; relationship_type: str; confidence: float
     citations: list[Citation]
 
@@ -281,14 +281,16 @@ Rules operate on the AWS-field-name schema. Every rule records Citations whose `
 Patterns (confidence = min of supporting relationship confidences):
 - **Serverless Application**: Lambda with ≥1 `iam_role_usage` or `dynamodb_access`.
 - **Compute in VPC**: EC2 instance with a `vpc_connection`.
-- **API Gateway + Lambda + DynamoDB**, **S3 + CloudFront**: reported in `undetectable_patterns` with reason "service not in Supported_Resource_Types" (no statement is made about them).
+- **API Gateway + Lambda + DynamoDB**, **EC2 + Load Balancer**, **S3 + CloudFront**: reported in `undetectable_patterns` with reason "<service> is not a Supported_Resource_Type ..." (no statement is made about them).
+
+Citations are built by `cite(spec, property_path)`, which resolves `evidence_value` from the spec itself, so every citation resolves by construction (Property 5). `source_checksum` is `metadata.checksum`, or the computed Spec_Checksum when the spec is not sealed. Environment variable or policy names containing `.`, `[` or `]` are cited at their parent object.
 
 Security findings: exactly the three rules of Req 6.6 (citation to the offending statement/grant/permission). `AnalysisReport.to_dict()` is what `analysis/analysis.json` stores: `{generated_at, resource_count, relationships, patterns, security_findings, undetectable_patterns}`; `summary_markdown` goes to `analysis/analysis.md`.
 
 ## Diagram Generator (`src/diagram_generator.py`)
 
 - Output: uncompressed mxGraph XML, root `<mxfile host="aws-resource-inventory">` → `<diagram>` → `<mxGraphModel>` → `<root>` with cells `0` and `1`.
-- One vertex per spec: `id` = `res-` + sha1(arn)[:12], `value` = HTML label (type, id), `tooltip` = ARN, style = registry `drawio_style` (`shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.<service>` with the official category fill color) — unknown types get a plain rounded rectangle.
+- One vertex per spec (duplicates by ARN dropped): `<UserObject id="res-<sha1(arn)[:12]>" label="<type><br/><resource id>" tooltip=ARN arn=ARN>` wrapping an `mxCell vertex="1"`, style = registry `drawio_style` (`shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.<service>` with the official category fill color) — unknown types get a plain rounded rectangle.
 - One edge per relationship, `value` = relationship type.
 - Layout: one column per region (`global` first), resources grouped by type in rows; deterministic for identical input.
 - `aws-inventory analyze --validate-diagram` runs `drawio-ai validate <file>` when the `drawio-ai` CLI is on PATH; otherwise prints that validation was skipped. XML well-formedness is always checked with `xml.etree.ElementTree`.

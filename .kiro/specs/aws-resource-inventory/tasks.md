@@ -351,10 +351,10 @@ Tasks 1–13 were implemented against the first draft of the design. Tasks 14–
   - [x] 16.2 Implement `src/integrity.py` and update `src/output_generator.py` (GREEN)
   - Commit: `feat(integrity): add spec checksums, sealing and output verification (Task 16)`
 
-- [ ] 17. Analysis and diagram alignment
-  - [ ] 17.1 Rewrite analysis/diagram test fixtures to the AWS-field-name schema; add `test_analysis_engine_citations_include_spec_file_req_8_2`, `test_analysis_engine_log_group_relationship_req_6_1`, `test_analysis_engine_flags_admin_managed_policy_req_6_6`, `test_analysis_engine_flags_public_bucket_policy_req_6_6`, `test_analysis_engine_flags_ipv6_open_ingress_req_6_6`, `test_analysis_engine_reports_undetectable_patterns_req_6_2`, `test_property_citations_resolve_req_8_5`, `test_diagram_uses_aws4_stencils_req_6_4` (RED)
+- [x] 17. Analysis and diagram alignment
+  - [x] 17.1 Rewrite analysis/diagram test fixtures to the AWS-field-name schema; add `test_analysis_engine_citations_include_spec_file_req_8_2`, `test_analysis_engine_log_group_relationship_req_6_1`, `test_analysis_engine_flags_admin_managed_policy_req_6_6`, `test_analysis_engine_flags_public_bucket_policy_req_6_6`, `test_analysis_engine_flags_ipv6_open_ingress_req_6_6`, `test_analysis_engine_reports_undetectable_patterns_req_6_2`, `test_property_citations_resolve_req_8_5`, `test_diagram_uses_aws4_stencils_req_6_4` (RED)
     - _Requirements: 6.1, 6.2, 6.4, 6.5, 6.6, 8.1, 8.2, 8.5_
-  - [ ] 17.2 Implement rules, citations, `AnalysisReport.to_dict()`, stencil styles and region layout (GREEN)
+  - [x] 17.2 Implement rules, citations, `AnalysisReport.to_dict()`, stencil styles and region layout (GREEN)
   - Commit: `feat(analysis): align relationship rules, citations and diagram styles with design (Task 17)`
 
 - [ ] 18. Terraform mapping alignment
