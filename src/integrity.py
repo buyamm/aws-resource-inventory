@@ -105,6 +105,39 @@ def resolve_property_path(document: Any, path: str) -> Any:
     return current
 
 
+_PATTERN_SEGMENT = re.compile(r"^([^\[\]]+)((?:\[\])*)$")
+
+
+def _walk(value: Any, segments: list[str], path: str) -> Iterator[tuple[str, Any]]:
+    if not segments:
+        yield path, value
+        return
+    match = _PATTERN_SEGMENT.match(segments[0])
+    if match is None or not isinstance(value, dict) or match.group(1) not in value:
+        return
+    key, lists = match.group(1), match.group(2).count("[]")
+    items: list[tuple[str, Any]] = [(f"{path}.{key}", value[key])]
+    for _ in range(lists):
+        items = [
+            (f"{p}[{i}]", element)
+            for p, v in items
+            if isinstance(v, list)
+            for i, element in enumerate(v)
+        ]
+    for item_path, item in items:
+        yield from _walk(item, segments[1:], item_path)
+
+
+def iter_property_paths(specifications: Any, pattern: str) -> Iterator[tuple[str, Any]]:
+    """``(property path, value)`` for every match of ``pattern`` in ``specifications``.
+
+    ``pattern`` is a dotted key path where ``key[]`` walks every element of a list,
+    e.g. ``Routes[].GatewayId``; yielded paths are concrete citation paths such as
+    ``specifications.Routes[1].GatewayId``. Missing keys yield nothing.
+    """
+    yield from _walk(specifications or {}, pattern.split("."), "specifications")
+
+
 def _child_path(parent: str, key: str | int) -> str:
     if isinstance(key, int):
         return f"{parent}[{key}]"

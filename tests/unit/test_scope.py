@@ -21,6 +21,7 @@ from src.resource_types import build_arn, parse_arn
 from src.scope import (
     TagScopedDiscovery,
     exclude_defaults,
+    extract_references,
     parse_project_tags,
     seed_regions,
 )
@@ -79,7 +80,11 @@ def _tag_project(session, ids) -> None:
         ("arn:aws:s3:::bucket-1", ("aws_s3_bucket", "bucket-1", "global")),
         (f"arn:aws:iam::{ACCOUNT}:role/app/svc-role", ("aws_iam_role", "svc-role", "global")),
         ("arn:aws:s3:::bucket-1/key", None),
-        (f"arn:aws:ec2:us-east-1:{ACCOUNT}:subnet/subnet-1", None),
+        (
+            f"arn:aws:ec2:us-east-1:{ACCOUNT}:subnet/subnet-1",
+            ("aws_subnet", "subnet-1", "us-east-1"),
+        ),
+        (f"arn:aws:ec2:us-east-1:{ACCOUNT}:network-acl/acl-1", None),
         ("not-an-arn", None),
     ],
 )
@@ -277,6 +282,7 @@ def test_scope_closure_pulls_referenced_resources_req_13_3(sample_account):
             build_arn("aws_security_group", ids.security_group_id, "us-east-1", ACCOUNT),
         ),
         ("aws_vpc", build_arn("aws_vpc", ids.vpc_id, "us-east-1", ACCOUNT)),
+        ("aws_subnet", build_arn("aws_subnet", ids.subnet_id, "us-east-1", ACCOUNT)),
     }
     referenced = {r.arn: r for r in result.referenced}
     assert set(referenced) == {arn for _, arn in collected} - {seeds[0].arn, seeds[1].arn}
@@ -334,6 +340,219 @@ def test_scope_closure_follows_state_machine_role_and_log_group_req_13_3():
     ]
 
 
+def _spec_of(resource_type: str, resource_id: str, specifications: dict, region="us-east-1"):
+    from src.parser import ResourceSpec, SpecMetadata
+
+    return ResourceSpec(
+        resource_type=resource_type,
+        arn=build_arn(resource_type, resource_id, region, ACCOUNT),
+        region=region,
+        account_id=ACCOUNT,
+        specifications=specifications,
+        metadata=SpecMetadata("", "", "", ""),
+    )
+
+
+def _refs(spec) -> dict[tuple[str, str], list[str]]:
+    return {
+        (r.resource_type, r.resource_id): r.referenced_by for r in extract_references(spec, ACCOUNT)
+    }
+
+
+def test_scope_reference_rules_subnets_req_13_3():
+    """Instances, Lambda functions and RDS instances pull in their subnets."""
+    instance = _spec_of("aws_instance", "i-1", {"SubnetId": "subnet-a", "VpcId": "vpc-1"})
+    assert ("aws_subnet", "subnet-a") in _refs(instance)
+    function = _spec_of(
+        "aws_lambda_function", "fn", {"VpcConfig": {"SubnetIds": ["subnet-a", "subnet-b"]}}
+    )
+    assert _refs(function)[("aws_subnet", "subnet-b")] == [
+        f"{function.arn}#specifications.VpcConfig.SubnetIds[1]"
+    ]
+    db = _spec_of(
+        "aws_db_instance",
+        "db1",
+        {"DBSubnetGroup": {"VpcId": "vpc-1", "Subnets": [{"SubnetIdentifier": "subnet-c"}]}},
+    )
+    assert _refs(db)[("aws_subnet", "subnet-c")] == [
+        f"{db.arn}#specifications.DBSubnetGroup.Subnets[0].SubnetIdentifier"
+    ]
+
+
+def test_scope_reference_rules_network_types_req_13_3():
+    route_table = _spec_of(
+        "aws_route_table",
+        "rtb-1",
+        {
+            "VpcId": "vpc-1",
+            "Routes": [
+                {"DestinationCidrBlock": "10.0.0.0/16", "GatewayId": "local"},
+                {"DestinationCidrBlock": "0.0.0.0/0", "GatewayId": "igw-1"},
+                {"DestinationPrefixListId": "pl-1", "GatewayId": "vpce-1"},
+                {"DestinationCidrBlock": "10.9.0.0/16", "NatGatewayId": "nat-1"},
+            ],
+            "Associations": [{"Main": True}, {"Main": False, "SubnetId": "subnet-a"}],
+        },
+    )
+    assert set(_refs(route_table)) == {
+        ("aws_vpc", "vpc-1"),
+        ("aws_internet_gateway", "igw-1"),
+        ("aws_vpc_endpoint", "vpce-1"),
+        ("aws_nat_gateway", "nat-1"),
+        ("aws_subnet", "subnet-a"),
+    }
+    nat = _spec_of("aws_nat_gateway", "nat-1", {"SubnetId": "subnet-a", "VpcId": "vpc-1"})
+    assert set(_refs(nat)) == {("aws_subnet", "subnet-a"), ("aws_vpc", "vpc-1")}
+    igw = _spec_of("aws_internet_gateway", "igw-1", {"Attachments": [{"VpcId": "vpc-1"}]})
+    assert set(_refs(igw)) == {("aws_vpc", "vpc-1")}
+    endpoint = _spec_of(
+        "aws_vpc_endpoint",
+        "vpce-1",
+        {
+            "VpcId": "vpc-1",
+            "RouteTableIds": ["rtb-1"],
+            "SubnetIds": ["subnet-a"],
+            "Groups": [{"GroupId": "sg-1"}],
+        },
+    )
+    assert set(_refs(endpoint)) == {
+        ("aws_vpc", "vpc-1"),
+        ("aws_route_table", "rtb-1"),
+        ("aws_subnet", "subnet-a"),
+        ("aws_security_group", "sg-1"),
+    }
+
+
+def test_scope_reference_rules_load_balancer_and_edge_req_13_3():
+    lb_arn = f"arn:aws:elasticloadbalancing:us-east-1:{ACCOUNT}:loadbalancer/app/web/abc"
+    listener_arn = f"arn:aws:elasticloadbalancing:us-east-1:{ACCOUNT}:listener/app/web/abc/def"
+    tg_arn = f"arn:aws:elasticloadbalancing:us-east-1:{ACCOUNT}:targetgroup/web-tg/123"
+    cert_arn = f"arn:aws:acm:us-east-1:{ACCOUNT}:certificate/uuid-1"
+    waf_arn = f"arn:aws:wafv2:us-east-1:{ACCOUNT}:global/webacl/web-acl/uuid-2"
+
+    lb = _spec_of(
+        "aws_lb",
+        "app/web/abc",
+        {
+            "LoadBalancerArn": lb_arn,
+            "VpcId": "vpc-1",
+            "AvailabilityZones": [{"SubnetId": "subnet-a"}, {"SubnetId": "subnet-b"}],
+            "SecurityGroups": ["sg-1"],
+            "Listeners": [{"ListenerArn": listener_arn}],
+        },
+    )
+    assert set(_refs(lb)) == {
+        ("aws_vpc", "vpc-1"),
+        ("aws_subnet", "subnet-a"),
+        ("aws_subnet", "subnet-b"),
+        ("aws_security_group", "sg-1"),
+        ("aws_lb_listener", "app/web/abc/def"),
+    }
+    listener = _spec_of(
+        "aws_lb_listener",
+        "app/web/abc/def",
+        {
+            "LoadBalancerArn": lb_arn,
+            "Certificates": [{"CertificateArn": cert_arn}],
+            "DefaultActions": [
+                {"Type": "forward", "TargetGroupArn": tg_arn},
+                {
+                    "Type": "forward",
+                    "ForwardConfig": {"TargetGroups": [{"TargetGroupArn": tg_arn}]},
+                },
+            ],
+        },
+    )
+    refs = _refs(listener)
+    assert set(refs) == {
+        ("aws_lb", "app/web/abc"),
+        ("aws_acm_certificate", "uuid-1"),
+        ("aws_lb_target_group", "web-tg/123"),
+    }
+    assert refs[("aws_lb_target_group", "web-tg/123")] == [
+        f"{listener.arn}#specifications.DefaultActions[0].TargetGroupArn",
+        f"{listener.arn}#specifications.DefaultActions[1].ForwardConfig.TargetGroups[0]"
+        ".TargetGroupArn",
+    ]
+    target_group = _spec_of(
+        "aws_lb_target_group", "web-tg/123", {"VpcId": "vpc-1", "LoadBalancerArns": [lb_arn]}
+    )
+    assert set(_refs(target_group)) == {("aws_vpc", "vpc-1"), ("aws_lb", "app/web/abc")}
+
+    distribution = _spec_of(
+        "aws_cloudfront_distribution",
+        "E1",
+        {
+            "Id": "E1",
+            "DistributionConfig": {
+                "Origins": {
+                    "Items": [
+                        {"Id": "s3", "DomainName": "static-site.s3.us-east-1.amazonaws.com"},
+                        {"Id": "alb", "DomainName": "web-1.us-east-1.elb.amazonaws.com"},
+                        {"Id": "api", "DomainName": "api.example.com"},
+                    ]
+                },
+                "WebACLId": waf_arn,
+                "ViewerCertificate": {"ACMCertificateArn": cert_arn},
+            },
+        },
+        region="global",
+    )
+    refs = _refs(distribution)
+    assert set(refs) == {
+        ("aws_s3_bucket", "static-site"),
+        ("aws_wafv2_web_acl", "web-acl/uuid-2"),
+        ("aws_acm_certificate", "uuid-1"),
+    }
+    assert refs[("aws_s3_bucket", "static-site")] == [
+        f"{distribution.arn}#specifications.DistributionConfig.Origins.Items[0].DomainName"
+    ]
+    targets = {r.resource_type: r for r in extract_references(distribution, ACCOUNT)}
+    assert targets["aws_acm_certificate"].region == "us-east-1"
+    assert targets["aws_wafv2_web_acl"].region == "global"
+    assert targets["aws_wafv2_web_acl"].arn == waf_arn
+
+
+def test_scope_closure_follows_load_balancer_and_cloudfront_req_13_3(sample_account):
+    session, ids = sample_account
+    alb = DiscoveredResource(
+        resource_type="aws_lb",
+        resource_id=ids.alb_arn.split(":loadbalancer/")[1],
+        arn=ids.alb_arn,
+        region="us-east-1",
+    )
+    seeds = [alb, _seed("aws_cloudfront_distribution", ids.distribution_id, region="global")]
+    result = InventoryCollector(InventorySession(session), ACCOUNT).collect_all(seeds)
+
+    assert result.errors == []
+    collected = {(s.resource_type, s.arn) for s in result.specs}
+    assert {
+        ("aws_lb_listener", ids.listener_arn),
+        ("aws_lb_target_group", ids.target_group_arn),
+        ("aws_acm_certificate", ids.certificate_arn),
+        ("aws_wafv2_web_acl", ids.web_acl_arn),
+        ("aws_s3_bucket", f"arn:aws:s3:::{ids.static_bucket_name}"),
+        (
+            "aws_security_group",
+            build_arn("aws_security_group", ids.alb_security_group_id, "us-east-1", ACCOUNT),
+        ),
+        ("aws_vpc", build_arn("aws_vpc", ids.vpc_id, "us-east-1", ACCOUNT)),
+    } <= collected
+    subnets = {arn for kind, arn in collected if kind == "aws_subnet"}
+    assert subnets == {
+        build_arn("aws_subnet", s, "us-east-1", ACCOUNT) for s in ids.public_subnet_ids
+    }
+    referenced = {r.arn: r for r in result.referenced}
+    assert referenced[ids.listener_arn].referenced_by == [
+        f"{ids.alb_arn}#specifications.Listeners[0].ListenerArn"
+    ]
+    # The S3 origin bucket is named by the origin domain of the distribution.
+    bucket = referenced[f"arn:aws:s3:::{ids.static_bucket_name}"]
+    assert bucket.referenced_by[0].endswith(
+        "#specifications.DistributionConfig.Origins.Items[0].DomainName"
+    )
+
+
 # ============================================================================
 # Default exclusion (Requirement 13.4)
 # ============================================================================
@@ -367,10 +586,24 @@ def test_scope_excludes_default_vpc_and_service_linked_roles_req_13_4(sample_acc
         if r.resource_type == "aws_security_group"
         and r.attributes.get("VpcId") == default_vpc.resource_id
     )
+    default_subnets = {
+        r.resource_id
+        for r in resources
+        if r.resource_type == "aws_subnet" and r.attributes.get("VpcId") == default_vpc.resource_id
+    }
+    default_route_tables = {
+        r.resource_id
+        for r in resources
+        if r.resource_type == "aws_route_table"
+        and r.attributes.get("VpcId") == default_vpc.resource_id
+    }
+    assert default_subnets and default_route_tables
     assert excluded_ids == {
         ("aws_vpc", default_vpc.resource_id),
         ("aws_security_group", default_sg),
         ("aws_iam_role", "AWSServiceRoleForECS"),
+        *(("aws_subnet", s) for s in default_subnets),
+        *(("aws_route_table", r) for r in default_route_tables),
     }
     kept_ids = {r.resource_id for r in kept}
     assert {ids.vpc_id, ids.security_group_id, "orders-app-role"} <= kept_ids
@@ -405,7 +638,10 @@ def test_scope_excluded_default_kept_when_referenced_req_13_4(sample_account):
     result = InventoryCollector(InventorySession(session), ACCOUNT).collect_all(kept)
 
     pulled_back = {r.arn for r in result.referenced}
-    default_network = {r.arn for r in excluded if r.resource_type != "aws_iam_role"}
+    instance = ec2.describe_instances(InstanceIds=[instance_id])["Reservations"][0]["Instances"][0]
+    default_network = {
+        r.arn for r in excluded if r.resource_type in ("aws_vpc", "aws_security_group")
+    } | {build_arn("aws_subnet", instance["SubnetId"], "us-east-1", ACCOUNT)}
     assert default_network <= pulled_back
     assert {s.arn for s in result.specs} >= default_network
     assert all(
@@ -416,6 +652,49 @@ def test_scope_excluded_default_kept_when_referenced_req_13_4(sample_account):
     )
     service_role = next(r for r in excluded if r.resource_type == "aws_iam_role")
     assert service_role.arn not in {s.arn for s in result.specs}
+    # Default subnets nothing references stay excluded.
+    unused = {r.arn for r in excluded if r.resource_type == "aws_subnet"} - default_network
+    assert unused and not unused & {s.arn for s in result.specs}
+
+
+def test_scope_excludes_default_vpc_network_req_13_4():
+    def res(kind, rid, **attributes):
+        return DiscoveredResource(
+            kind,
+            rid,
+            build_arn(kind, rid, "us-east-1", ACCOUNT),
+            "us-east-1",
+            attributes=attributes,
+        )
+
+    resources = [
+        res("aws_vpc", "vpc-default", IsDefault=True),
+        res("aws_vpc", "vpc-app", IsDefault=False),
+        res("aws_subnet", "subnet-d1", VpcId="vpc-default", DefaultForAz=True),
+        res("aws_subnet", "subnet-d2", VpcId="vpc-default", DefaultForAz=False),
+        res("aws_subnet", "subnet-app", VpcId="vpc-app", DefaultForAz=False),
+        res("aws_route_table", "rtb-default", VpcId="vpc-default"),
+        res("aws_route_table", "rtb-app", VpcId="vpc-app"),
+        res("aws_internet_gateway", "igw-default", VpcIds=["vpc-default"]),
+        res("aws_internet_gateway", "igw-app", VpcIds=["vpc-app"]),
+        res("aws_internet_gateway", "igw-detached", VpcIds=[]),
+    ]
+    kept, excluded = exclude_defaults(resources)
+    assert {r.resource_id for r in excluded} == {
+        "vpc-default",
+        "subnet-d1",
+        "rtb-default",
+        "igw-default",
+    }
+    # A subnet the user added to the default VPC is not an account default.
+    assert {r.resource_id for r in kept} == {
+        "vpc-app",
+        "subnet-d2",
+        "subnet-app",
+        "rtb-app",
+        "igw-app",
+        "igw-detached",
+    }
 
 
 def test_scope_include_defaults_keeps_everything_req_13_4(sample_account):

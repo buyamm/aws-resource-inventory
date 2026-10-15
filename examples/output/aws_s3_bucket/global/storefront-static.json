@@ -1,0 +1,40 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:s3:::storefront-static",
+  "generated_at": "2026-10-15T16:01:58.115386Z",
+  "metadata": {
+    "api_version": "2006-03-01",
+    "checksum": "85655120f74e553eb992973253560092398c99c682efb6ddb26c49431b095d5a",
+    "collected_at": "2026-10-15T16:01:58Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "global",
+  "resource_type": "aws_s3_bucket",
+  "specifications": {
+    "Name": "storefront-static",
+    "bucket-acl": {
+      "Grants": [
+        {
+          "Grantee": {
+            "ID": "75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a",
+            "Type": "CanonicalUser"
+          },
+          "Permission": "FULL_CONTROL"
+        }
+      ],
+      "Owner": {
+        "DisplayName": "webfile",
+        "ID": "75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a"
+      }
+    },
+    "bucket-tagging": {
+      "TagSet": [
+        {
+          "Key": "service",
+          "Value": "storefront"
+        }
+      ]
+    },
+    "bucket-versioning": {}
+  }
+}

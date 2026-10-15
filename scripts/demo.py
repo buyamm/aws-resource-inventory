@@ -25,6 +25,7 @@ import contextlib
 import os
 import shutil
 import sys
+import warnings
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -58,6 +59,11 @@ MOCKED_SERVICES = (
     "mock_rds",
     "mock_dynamodb",
     "mock_sts",
+    "mock_elbv2",
+    "mock_cloudfront",
+    "mock_route53",
+    "mock_acm",
+    "mock_wafv2",
 )
 
 
@@ -117,8 +123,11 @@ def moto_account() -> Iterator[None]:
     for mock in mocks:
         mock.start()
     try:
-        build_sample_account(boto3.Session(region_name=SAMPLE_REGION))
-        yield
+        with warnings.catch_warnings():
+            # moto 4.x's ACM mock uses deprecated cryptography datetime properties.
+            warnings.filterwarnings("ignore", category=UserWarning, module=r"moto\.acm")
+            build_sample_account(boto3.Session(region_name=SAMPLE_REGION))
+            yield
     finally:
         for mock in reversed(mocks):
             mock.stop()

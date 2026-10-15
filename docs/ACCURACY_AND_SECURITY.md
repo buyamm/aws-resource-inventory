@@ -111,16 +111,16 @@ The sanitizer runs on per-resource JSON and Markdown, aggregates, raw responses,
 
 ## Performance benchmark
 
-Measured with `scripts/benchmark.py` on 2026-10-14 (Apple M1, 8 cores, Python 3.11.9, moto 4.x, default 10 workers). The script creates **1000 resources in 17 regions** in moto (per region: default VPC and security group, 9 instances, 9 security groups, 9 log groups, 9 DynamoDB tables, 4 Lambda functions, 4 state machines, 3 RDS instances; plus 24 IAM roles and 24 S3 buckets), adds a fixed delay to every AWS API call the CLI makes (a botocore `before-call` hook on each client of `InventorySession`), runs `aws-inventory collect` in-process and reads the phase timings from `collection_report.json`.
+Measured with `scripts/benchmark.py` on 2026-10-15 after the network/edge types were added (Apple M1, 8 cores, Python 3.11.9, moto 4.x, default 10 workers). The script creates **1000 resources in 17 regions** in moto (per region: moto's default VPC, security group, subnets and main route table, 9 instances, 9 security groups, 9 log groups, 9 DynamoDB tables, 5 Lambda functions, 4 state machines, 4 RDS instances; plus 30 IAM roles and 31 S3 buckets), adds a fixed delay to every AWS API call the CLI makes (a botocore `before-call` hook on each client of `InventorySession`), runs `aws-inventory collect` in-process and reads the phase timings from `collection_report.json`.
 
 | Phase | 100 ms per API call | 0 ms (moto overhead only) | Target |
 |---|---|---|---|
-| Discovery (17 regions) | 4.48 s | 5.08 s | < 5 minutes (Requirement 1.5) |
-| Collection (1000 specs) | 24.06 s = 41.6 resources/s | 2.77 s = 361.6 resources/s | ≥ 10 resources/s |
-| Output (1000 spec files + reports) | 2.54 s | 1.97 s | - |
-| `generate-iac` on the 1000 specs | - | 0.87 s (whole command) | < 10 s |
+| Discovery (17 regions) | 8.66 s | 4.74 s | < 5 minutes (Requirement 1.5) |
+| Collection (1000 specs) | 19.80 s = 50.5 resources/s | 2.33 s = 429.6 resources/s | ≥ 10 resources/s |
+| Output (1000 spec files + reports) | 1.91 s | 1.86 s | - |
+| `generate-iac` on the 1000 specs | - | 0.87 s (whole command, 2026-10-14 run) | < 10 s |
 
-Both runs made 1876 API calls (every one delayed in the first run), collected 1000/1000 specs and had no failures. Discovery time is dominated by moto building each region's backend, not by the simulated latency: regions are scanned concurrently and each region needs only about one list call per resource type. Collection with 100 ms latency is bounded by `calls per resource × latency / workers` (1876 × 0.1 s / 10 ≈ 19 s plus moto time).
+Both runs made 1980 API calls (every one delayed in the first run), collected 1000/1000 specs and had no failures. Discovery time is dominated by moto building each region's backend, not by the simulated latency: regions are scanned concurrently and each region needs about one list call per resource type (17 regional list calls per region since the network/edge types). Collection with 100 ms latency is bounded by `calls per resource × latency / workers` (≈ 1700 collection calls × 0.1 s / 10 ≈ 17 s plus moto time).
 
 Reproduce:
 

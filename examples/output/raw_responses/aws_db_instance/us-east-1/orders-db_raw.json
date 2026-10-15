@@ -29,7 +29,7 @@
         "Engine": "postgres",
         "EngineVersion": "9.3.3",
         "IAMDatabaseAuthenticationEnabled": false,
-        "InstanceCreateTime": "2026-10-14T16:28:56.860000+00:00",
+        "InstanceCreateTime": "2026-10-15T16:01:57.045000+00:00",
         "LicenseModel": "None",
         "MasterUsername": "orders_admin",
         "MultiAZ": false,
@@ -55,14 +55,14 @@
         "VpcSecurityGroups": [
           {
             "Status": "active",
-            "VpcSecurityGroupId": "sg-7c880b8c4789c2216"
+            "VpcSecurityGroupId": "sg-ceb6d3dc119d60702"
           }
         ]
       }
     ],
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Wed, 14 Oct 2026 23:28:57 GMT",
+        "date": "Thu, 15 Oct 2026 23:01:57 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,

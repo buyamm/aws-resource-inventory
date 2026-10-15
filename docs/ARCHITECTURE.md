@@ -116,7 +116,7 @@ Every command that writes files regenerates `checksums.sha256` at the end, so `v
 | `src/discovery.py` | Concurrent per-region listing with pagination |
 | `src/inventory.py` | Groups resources by (service, region) and drives one `SpecCollector` per group |
 | `src/collector.py` | Per-type spec collection, retry/backoff, error classification, operation log |
-| `src/resource_types.py` | Registry of the 10 supported types: ids, aliases, file names, draw.io styles |
+| `src/resource_types.py` | Registry of the 22 supported types: ids, aliases, ARN layout, file names, draw.io styles |
 | `src/parser.py` | `ResourceSpec`, `Result`, JSON parse/print |
 | `src/sanitizer.py` | Structure-preserving redaction |
 | `src/integrity.py` | Canonical JSON, Spec_Checksum, sealing, citation resolution, `verify_output_dir` |
@@ -148,7 +148,7 @@ Every command that writes files regenerates `checksums.sha256` at the end, so `v
 └── checksums.sha256  checksums.json    refreshed by every command that writes
 ```
 
-`<type>` is the canonical type id (the Terraform type name). S3 buckets and IAM roles use the region `global`. Only `<type>/<region>/*.json` files whose `<type>` is a registered type are read as specs; other directories are never mistaken for specs. A complete example is in [examples/output/](../examples/output/).
+`<type>` is the canonical type id (the Terraform type name). S3 buckets, IAM roles, CloudFront distributions, Route 53 zones and CloudFront-scope WAF web ACLs use the region `global`. Only `<type>/<region>/*.json` files whose `<type>` is a registered type are read as specs; other directories are never mistaken for specs. A complete example is in [examples/output/](../examples/output/).
 
 ## Concurrency
 

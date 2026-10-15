@@ -1,6 +1,6 @@
 {
   "account_id": "123456789012",
-  "api_calls": 10,
+  "api_calls": 23,
   "errors": [],
   "regions": [
     "global",
@@ -8,53 +8,69 @@
   ],
   "resources": [
     {
-      "arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-9f9c49245e711cdd9",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-96ebec6d01233d3d7",
+      "attributes": {},
+      "referenced_by": [],
       "region": "us-east-1",
-      "resource_id": "i-9f9c49245e711cdd9",
+      "resource_id": "i-96ebec6d01233d3d7",
       "resource_type": "aws_instance",
       "tags": {
         "Name": "orders-web-1"
       }
     },
     {
-      "arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-ce9c3403",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-1561eea5",
+      "attributes": {
+        "IsDefault": false
+      },
+      "referenced_by": [],
       "region": "us-east-1",
-      "resource_id": "vpc-ce9c3403",
-      "resource_type": "aws_vpc",
-      "tags": {}
-    },
-    {
-      "arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-db407a2e",
-      "region": "us-east-1",
-      "resource_id": "vpc-db407a2e",
+      "resource_id": "vpc-1561eea5",
       "resource_type": "aws_vpc",
       "tags": {
         "Name": "orders-vpc"
       }
     },
     {
-      "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-285ba61d10f344e74",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-57d34a1b59fbd9d55",
+      "attributes": {
+        "GroupName": "default",
+        "VpcId": "vpc-1561eea5"
+      },
+      "referenced_by": [],
       "region": "us-east-1",
-      "resource_id": "sg-285ba61d10f344e74",
+      "resource_id": "sg-57d34a1b59fbd9d55",
       "resource_type": "aws_security_group",
       "tags": {}
     },
     {
-      "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-cc3138f31141d30f1",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-ceb6d3dc119d60702",
+      "attributes": {
+        "GroupName": "orders-web-sg",
+        "VpcId": "vpc-1561eea5"
+      },
+      "referenced_by": [],
       "region": "us-east-1",
-      "resource_id": "sg-cc3138f31141d30f1",
+      "resource_id": "sg-ceb6d3dc119d60702",
       "resource_type": "aws_security_group",
       "tags": {}
     },
     {
-      "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-7c880b8c4789c2216",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-347a556c97894d9e4",
+      "attributes": {
+        "GroupName": "storefront-alb-sg",
+        "VpcId": "vpc-1561eea5"
+      },
+      "referenced_by": [],
       "region": "us-east-1",
-      "resource_id": "sg-7c880b8c4789c2216",
+      "resource_id": "sg-347a556c97894d9e4",
       "resource_type": "aws_security_group",
       "tags": {}
     },
     {
       "arn": "arn:aws:lambda:us-east-1:123456789012:function:order-processor",
+      "attributes": {},
+      "referenced_by": [],
       "region": "us-east-1",
       "resource_id": "order-processor",
       "resource_type": "aws_lambda_function",
@@ -62,6 +78,8 @@
     },
     {
       "arn": "arn:aws:rds:us-east-1:123456789012:db:orders-db",
+      "attributes": {},
+      "referenced_by": [],
       "region": "us-east-1",
       "resource_id": "orders-db",
       "resource_type": "aws_db_instance",
@@ -69,6 +87,8 @@
     },
     {
       "arn": "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor",
+      "attributes": {},
+      "referenced_by": [],
       "region": "us-east-1",
       "resource_id": "/aws/lambda/order-processor",
       "resource_type": "aws_cloudwatch_log_group",
@@ -76,6 +96,8 @@
     },
     {
       "arn": "arn:aws:states:us-east-1:123456789012:stateMachine:order-flow",
+      "attributes": {},
+      "referenced_by": [],
       "region": "us-east-1",
       "resource_id": "order-flow",
       "resource_type": "aws_sfn_state_machine",
@@ -83,31 +105,259 @@
     },
     {
       "arn": "arn:aws:dynamodb:us-east-1:123456789012:table/orders",
+      "attributes": {},
+      "referenced_by": [],
       "region": "us-east-1",
       "resource_id": "orders",
       "resource_type": "aws_dynamodb_table",
       "tags": {}
     },
     {
+      "arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-86551e9d",
+      "attributes": {
+        "DefaultForAz": false,
+        "VpcId": "vpc-1561eea5"
+      },
+      "referenced_by": [],
+      "region": "us-east-1",
+      "resource_id": "subnet-86551e9d",
+      "resource_type": "aws_subnet",
+      "tags": {
+        "Name": "orders-private-a"
+      }
+    },
+    {
+      "arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-dc94c752",
+      "attributes": {
+        "DefaultForAz": false,
+        "VpcId": "vpc-1561eea5"
+      },
+      "referenced_by": [],
+      "region": "us-east-1",
+      "resource_id": "subnet-dc94c752",
+      "resource_type": "aws_subnet",
+      "tags": {
+        "Name": "storefront-public-a",
+        "service": "storefront"
+      }
+    },
+    {
+      "arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-ee0601cc",
+      "attributes": {
+        "DefaultForAz": false,
+        "VpcId": "vpc-1561eea5"
+      },
+      "referenced_by": [],
+      "region": "us-east-1",
+      "resource_id": "subnet-ee0601cc",
+      "resource_type": "aws_subnet",
+      "tags": {
+        "Name": "storefront-public-b",
+        "service": "storefront"
+      }
+    },
+    {
+      "arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-57076453",
+      "attributes": {
+        "VpcId": "vpc-1561eea5"
+      },
+      "referenced_by": [],
+      "region": "us-east-1",
+      "resource_id": "rtb-57076453",
+      "resource_type": "aws_route_table",
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-395e2831",
+      "attributes": {
+        "VpcId": "vpc-1561eea5"
+      },
+      "referenced_by": [],
+      "region": "us-east-1",
+      "resource_id": "rtb-395e2831",
+      "resource_type": "aws_route_table",
+      "tags": {
+        "Name": "storefront-public",
+        "service": "storefront"
+      }
+    },
+    {
+      "arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-590d89f0",
+      "attributes": {
+        "VpcId": "vpc-1561eea5"
+      },
+      "referenced_by": [],
+      "region": "us-east-1",
+      "resource_id": "rtb-590d89f0",
+      "resource_type": "aws_route_table",
+      "tags": {
+        "Name": "storefront-private",
+        "service": "storefront"
+      }
+    },
+    {
+      "arn": "arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-e27d9033",
+      "attributes": {
+        "VpcIds": [
+          "vpc-1561eea5"
+        ]
+      },
+      "referenced_by": [],
+      "region": "us-east-1",
+      "resource_id": "igw-e27d9033",
+      "resource_type": "aws_internet_gateway",
+      "tags": {
+        "Name": "storefront-igw",
+        "service": "storefront"
+      }
+    },
+    {
+      "arn": "arn:aws:ec2:us-east-1:123456789012:natgateway/nat-3e17f5a22ce211a96",
+      "attributes": {},
+      "referenced_by": [],
+      "region": "us-east-1",
+      "resource_id": "nat-3e17f5a22ce211a96",
+      "resource_type": "aws_nat_gateway",
+      "tags": {
+        "Name": "storefront-nat",
+        "service": "storefront"
+      }
+    },
+    {
+      "arn": "arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-a3573b69",
+      "attributes": {},
+      "referenced_by": [],
+      "region": "us-east-1",
+      "resource_id": "vpce-a3573b69",
+      "resource_type": "aws_vpc_endpoint",
+      "tags": {
+        "Name": "storefront-s3",
+        "service": "storefront"
+      }
+    },
+    {
+      "arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188",
+      "attributes": {},
+      "referenced_by": [],
+      "region": "us-east-1",
+      "resource_id": "app/storefront-alb/50dc6c495c0c9188",
+      "resource_type": "aws_lb",
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188",
+      "attributes": {},
+      "referenced_by": [],
+      "region": "us-east-1",
+      "resource_id": "storefront-tg/50dc6c495c0c9188",
+      "resource_type": "aws_lb_target_group",
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:acm:us-east-1:123456789012:certificate/59f7c298-c41f-48f5-a3db-cb8263d5fcc6",
+      "attributes": {},
+      "referenced_by": [],
+      "region": "us-east-1",
+      "resource_id": "59f7c298-c41f-48f5-a3db-cb8263d5fcc6",
+      "resource_type": "aws_acm_certificate",
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434430983056",
+      "attributes": {},
+      "referenced_by": [],
+      "region": "us-east-1",
+      "resource_id": "app/storefront-alb/50dc6c495c0c9188/4434430983056",
+      "resource_type": "aws_lb_listener",
+      "tags": {}
+    },
+    {
       "arn": "arn:aws:s3:::orders-public-assets",
+      "attributes": {},
+      "referenced_by": [],
       "region": "global",
       "resource_id": "orders-public-assets",
       "resource_type": "aws_s3_bucket",
       "tags": {}
     },
     {
+      "arn": "arn:aws:s3:::storefront-static",
+      "attributes": {},
+      "referenced_by": [],
+      "region": "global",
+      "resource_id": "storefront-static",
+      "resource_type": "aws_s3_bucket",
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:iam::123456789012:role/order-lambda-role",
+      "attributes": {
+        "Path": "/"
+      },
+      "referenced_by": [],
+      "region": "global",
+      "resource_id": "order-lambda-role",
+      "resource_type": "aws_iam_role",
+      "tags": {}
+    },
+    {
       "arn": "arn:aws:iam::123456789012:role/orders-app-role",
+      "attributes": {
+        "Path": "/"
+      },
+      "referenced_by": [],
       "region": "global",
       "resource_id": "orders-app-role",
       "resource_type": "aws_iam_role",
       "tags": {}
     },
     {
-      "arn": "arn:aws:iam::123456789012:role/order-lambda-role",
+      "arn": "arn:aws:cloudfront::123456789012:distribution/K4SJFH541UU7J",
+      "attributes": {},
+      "referenced_by": [],
       "region": "global",
-      "resource_id": "order-lambda-role",
-      "resource_type": "aws_iam_role",
+      "resource_id": "K4SJFH541UU7J",
+      "resource_type": "aws_cloudfront_distribution",
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:route53:::hostedzone/JX2QH3ZSOFDJU6N",
+      "attributes": {},
+      "referenced_by": [],
+      "region": "global",
+      "resource_id": "JX2QH3ZSOFDJU6N",
+      "resource_type": "aws_route53_zone",
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/45c1df2a-6eb9-40fa-a6ea-d3054f42d04c",
+      "attributes": {},
+      "referenced_by": [],
+      "region": "global",
+      "resource_id": "storefront-waf/45c1df2a-6eb9-40fa-a6ea-d3054f42d04c",
+      "resource_type": "aws_wafv2_web_acl",
       "tags": {}
     }
-  ]
+  ],
+  "scope": {
+    "excluded_defaults": [
+      "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-6f16fc72",
+      "arn:aws:ec2:us-east-1:123456789012:security-group/sg-7ab3caab446b8d5ed",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-0a48f93e",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-4bd5fbe2",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-4c34a1de",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-972b96d0",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-aabab88c",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-c5449e54",
+      "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-8460ddb8"
+    ],
+    "include_defaults": false,
+    "mode": "account",
+    "project_tags": {},
+    "referenced": [],
+    "regions": [
+      "us-east-1"
+    ],
+    "seed_resources": 30
+  }
 }

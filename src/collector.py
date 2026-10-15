@@ -14,6 +14,8 @@ Requirements Coverage:
 - Requirement 12.1: At most 3 attempts, exponential backoff (1 s, 2 s)
 - Requirement 12.2: Failed operations are recorded and collection continues
 - Requirement 12.3: Throttling honours the Retry-After header
+- Requirement 14.1: Network, edge and load-balancing Specifications (CloudFront:
+  distributions only, never edge locations or IP ranges)
 """
 
 from __future__ import annotations
@@ -39,6 +41,7 @@ from botocore.exceptions import (
 
 from src import __version__
 from src.parser import ResourceSpec, Result, SpecMetadata
+from src.resource_types import GLOBAL_REGION, build_arn, parse_arn
 
 logger = logging.getLogger(__name__)
 
@@ -161,6 +164,11 @@ IAM_SERVICE_PREFIX = {
     "dynamodb": "dynamodb",
     "s3": "s3",
     "iam": "iam",
+    "elbv2": "elasticloadbalancing",
+    "cloudfront": "cloudfront",
+    "route53": "route53",
+    "acm": "acm",
+    "wafv2": "wafv2",
 }
 
 
@@ -315,6 +323,18 @@ class SpecCollector:
             "aws_dynamodb_table": self.collect_dynamodb_spec,
             "aws_s3_bucket": self.collect_s3_specs,
             "aws_iam_role": self.collect_iam_role_spec,
+            "aws_subnet": self.collect_subnet_spec,
+            "aws_route_table": self.collect_route_table_spec,
+            "aws_internet_gateway": self.collect_internet_gateway_spec,
+            "aws_nat_gateway": self.collect_nat_gateway_spec,
+            "aws_vpc_endpoint": self.collect_vpc_endpoint_spec,
+            "aws_lb": self.collect_load_balancer_spec,
+            "aws_lb_listener": self.collect_listener_spec,
+            "aws_lb_target_group": self.collect_target_group_spec,
+            "aws_cloudfront_distribution": self.collect_cloudfront_distribution_spec,
+            "aws_route53_zone": self.collect_route53_zone_spec,
+            "aws_acm_certificate": self.collect_acm_certificate_spec,
+            "aws_wafv2_web_acl": self.collect_web_acl_spec,
         }.get(resource_type)
         if method is None:
             return Result.err(
@@ -519,6 +539,238 @@ class SpecCollector:
         return ctx.build("aws_iam_role", region or "global", account_id, specs)
 
     # ------------------------------------------------------------------
+    # Network, edge and load balancing (Requirement 14.1)
+    # ------------------------------------------------------------------
+
+    def _collect_ec2_item(
+        self,
+        resource_type: str,
+        resource_id: str,
+        region: str,
+        account_id: str,
+        arn: str | None,
+        method_name: str,
+        ids_param: str,
+        list_key: str,
+    ) -> Result[ResourceSpec, CollectorError]:
+        """EC2 Describe* by id: the first item of ``list_key``."""
+        arn = arn or build_arn(resource_type, resource_id, region, account_id)
+        ctx = _Context(self, "ec2", arn, resource_id)
+        response = ctx.primary(method_name, **{ids_param: [resource_id]})
+        if response is None:
+            return ctx.failure()
+        items = response.get(list_key, [])
+        if not items:
+            return ctx.not_found()
+        return ctx.build(resource_type, region, account_id, dict(items[0]))
+
+    def collect_subnet_spec(
+        self, subnet_id: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """Subnet: ``Subnets[0]`` of DescribeSubnets."""
+        return self._collect_ec2_item(
+            "aws_subnet", subnet_id, region, account_id, arn,
+            "describe_subnets", "SubnetIds", "Subnets",
+        )  # fmt: skip
+
+    def collect_route_table_spec(
+        self, route_table_id: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """Route table: ``RouteTables[0]`` (routes and subnet associations)."""
+        return self._collect_ec2_item(
+            "aws_route_table", route_table_id, region, account_id, arn,
+            "describe_route_tables", "RouteTableIds", "RouteTables",
+        )  # fmt: skip
+
+    def collect_internet_gateway_spec(
+        self, gateway_id: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """Internet gateway: ``InternetGateways[0]`` (with its VPC attachments)."""
+        return self._collect_ec2_item(
+            "aws_internet_gateway", gateway_id, region, account_id, arn,
+            "describe_internet_gateways", "InternetGatewayIds", "InternetGateways",
+        )  # fmt: skip
+
+    def collect_nat_gateway_spec(
+        self, gateway_id: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """NAT gateway: ``NatGateways[0]``."""
+        return self._collect_ec2_item(
+            "aws_nat_gateway", gateway_id, region, account_id, arn,
+            "describe_nat_gateways", "NatGatewayIds", "NatGateways",
+        )  # fmt: skip
+
+    def collect_vpc_endpoint_spec(
+        self, endpoint_id: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """VPC endpoint: ``VpcEndpoints[0]``."""
+        return self._collect_ec2_item(
+            "aws_vpc_endpoint", endpoint_id, region, account_id, arn,
+            "describe_vpc_endpoints", "VpcEndpointIds", "VpcEndpoints",
+        )  # fmt: skip
+
+    def _elb_tags(self, ctx: _Context, specs: dict[str, Any], arn: str) -> None:
+        response = ctx.secondary("describe_tags", "", ResourceArns=[arn])
+        if response is not None:
+            descriptions = response.get("TagDescriptions") or [{}]
+            specs["Tags"] = descriptions[0].get("Tags", [])
+
+    def collect_load_balancer_spec(
+        self, raw_id: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """Load balancer: ``LoadBalancers[0]`` + ``Attributes`` + ``Tags`` + ``Listeners``."""
+        arn = arn or build_arn("aws_lb", raw_id, region, account_id)
+        ctx = _Context(self, "elbv2", arn, raw_id)
+        response = ctx.primary("describe_load_balancers", LoadBalancerArns=[arn])
+        if response is None:
+            return ctx.failure()
+        items = response.get("LoadBalancers", [])
+        if not items:
+            return ctx.not_found()
+        specs = dict(items[0])
+        attributes = ctx.secondary("describe_load_balancer_attributes", "", LoadBalancerArn=arn)
+        if attributes is not None:
+            specs["Attributes"] = attributes.get("Attributes", [])
+        self._elb_tags(ctx, specs, arn)
+        listeners = ctx.secondary("describe_listeners", "", paginate=True, LoadBalancerArn=arn)
+        if listeners is not None:
+            specs["Listeners"] = listeners.get("Listeners", [])
+        return ctx.build("aws_lb", region, account_id, specs)
+
+    def collect_listener_spec(
+        self, raw_id: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """Listener: ``Listeners[0]`` + ``Tags``."""
+        arn = arn or build_arn("aws_lb_listener", raw_id, region, account_id)
+        ctx = _Context(self, "elbv2", arn, raw_id)
+        response = ctx.primary("describe_listeners", ListenerArns=[arn])
+        if response is None:
+            return ctx.failure()
+        items = response.get("Listeners", [])
+        if not items:
+            return ctx.not_found()
+        specs = dict(items[0])
+        self._elb_tags(ctx, specs, arn)
+        return ctx.build("aws_lb_listener", region, account_id, specs)
+
+    def collect_target_group_spec(
+        self, raw_id: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """Target group: ``TargetGroups[0]`` + ``Attributes`` + ``Tags``."""
+        arn = arn or build_arn("aws_lb_target_group", raw_id, region, account_id)
+        ctx = _Context(self, "elbv2", arn, raw_id)
+        response = ctx.primary("describe_target_groups", TargetGroupArns=[arn])
+        if response is None:
+            return ctx.failure()
+        items = response.get("TargetGroups", [])
+        if not items:
+            return ctx.not_found()
+        specs = dict(items[0])
+        attributes = ctx.secondary("describe_target_group_attributes", "", TargetGroupArn=arn)
+        if attributes is not None:
+            specs["Attributes"] = attributes.get("Attributes", [])
+        self._elb_tags(ctx, specs, arn)
+        return ctx.build("aws_lb_target_group", region, account_id, specs)
+
+    def collect_cloudfront_distribution_spec(
+        self,
+        distribution_id: str,
+        region: str = GLOBAL_REGION,
+        account_id: str = "",
+        arn: str | None = None,
+    ) -> Result[ResourceSpec, CollectorError]:
+        """CloudFront: GetDistribution ``Distribution`` (incl. DistributionConfig) + ``Tags``.
+
+        Only the distribution itself is read; edge locations and CloudFront IP ranges
+        are never collected (Req 14.1).
+        """
+        region = region or GLOBAL_REGION
+        arn = arn or build_arn("aws_cloudfront_distribution", distribution_id, region, account_id)
+        ctx = _Context(self, "cloudfront", arn, distribution_id)
+        response = ctx.primary("get_distribution", Id=distribution_id)
+        if response is None:
+            return ctx.failure()
+        specs = dict(response.get("Distribution") or {})
+        if not specs:
+            return ctx.not_found()
+        tags = ctx.secondary("list_tags_for_resource", "", Resource=specs.get("ARN") or arn)
+        if tags is not None:
+            specs["Tags"] = (tags.get("Tags") or {}).get("Items", [])
+        return ctx.build("aws_cloudfront_distribution", region, account_id, specs)
+
+    def collect_route53_zone_spec(
+        self,
+        zone_id: str,
+        region: str = GLOBAL_REGION,
+        account_id: str = "",
+        arn: str | None = None,
+    ) -> Result[ResourceSpec, CollectorError]:
+        """Route 53: ``HostedZone`` + ``DelegationSet``/``VPCs`` + ``ResourceRecordSets`` + ``Tags``."""
+        region = region or GLOBAL_REGION
+        arn = arn or build_arn("aws_route53_zone", zone_id, region, account_id)
+        ctx = _Context(self, "route53", arn, zone_id)
+        response = ctx.primary("get_hosted_zone", Id=zone_id)
+        if response is None:
+            return ctx.failure()
+        specs = dict(response.get("HostedZone") or {})
+        for key in ("DelegationSet", "VPCs"):
+            if key in response:
+                specs[key] = response[key]
+        records = ctx.secondary(
+            "list_resource_record_sets", "", paginate=True, HostedZoneId=zone_id
+        )
+        if records is not None:
+            specs["ResourceRecordSets"] = records.get("ResourceRecordSets", [])
+        tags = ctx.secondary(
+            "list_tags_for_resource", "", ResourceType="hostedzone", ResourceId=zone_id
+        )
+        if tags is not None:
+            specs["Tags"] = (tags.get("ResourceTagSet") or {}).get("Tags", [])
+        return ctx.build("aws_route53_zone", region, account_id, specs)
+
+    def collect_acm_certificate_spec(
+        self, raw_id: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """ACM certificate: DescribeCertificate ``Certificate`` + ``Tags``."""
+        arn = arn or build_arn("aws_acm_certificate", raw_id, region, account_id)
+        ctx = _Context(self, "acm", arn, raw_id)
+        response = ctx.primary("describe_certificate", CertificateArn=arn)
+        if response is None:
+            return ctx.failure()
+        specs = dict(response.get("Certificate") or {})
+        if not specs:
+            return ctx.not_found()
+        tags = ctx.secondary("list_tags_for_certificate", "", CertificateArn=arn)
+        if tags is not None:
+            specs["Tags"] = tags.get("Tags", [])
+        return ctx.build("aws_acm_certificate", region, account_id, specs)
+
+    def collect_web_acl_spec(
+        self, raw_id: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """WAFv2 web ACL: GetWebACL ``WebACL`` + ``Tags`` (``LockToken`` dropped).
+
+        ``raw_id`` is ``<name>/<id>``; region ``global`` means Scope=CLOUDFRONT.
+        """
+        arn = arn or build_arn("aws_wafv2_web_acl", raw_id, region, account_id)
+        parsed = parse_arn(arn)
+        if parsed is not None:
+            region = parsed[2]
+        name, _, acl_id = raw_id.partition("/")
+        scope = "CLOUDFRONT" if region == GLOBAL_REGION else "REGIONAL"
+        ctx = _Context(self, "wafv2", arn, raw_id)
+        response = ctx.primary("get_web_acl", Name=name, Scope=scope, Id=acl_id)
+        if response is None:
+            return ctx.failure()
+        specs = dict(response.get("WebACL") or {})
+        if not specs:
+            return ctx.not_found()
+        tags = ctx.secondary("list_tags_for_resource", "", ResourceARN=specs.get("ARN") or arn)
+        if tags is not None:
+            specs["Tags"] = (tags.get("TagInfoForResource") or {}).get("TagList", [])
+        return ctx.build("aws_wafv2_web_acl", region, account_id, specs)
+
+    # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 
@@ -605,6 +857,21 @@ class SpecCollector:
         return _CallOutcome(None, CallStatus.FAILED, cfg.max_attempts, error_type, message)
 
 
+def _merge_pages(pages: Any) -> dict[str, Any]:
+    """One response from paginated responses: list fields concatenated, the first page's
+    ``ResponseMetadata`` kept (Req 2.6), other fields taken from the last page."""
+    merged: dict[str, Any] = {}
+    for page in pages:
+        for key, value in page.items():
+            if key == "ResponseMetadata" and key in merged:
+                continue
+            if isinstance(value, list) and isinstance(merged.get(key), list):
+                merged[key] = merged[key] + value
+            else:
+                merged[key] = value
+    return merged
+
+
 def _policy_document(document: Any) -> Any:
     """IAM returns policy documents as dicts (boto3) or URL-encoded JSON strings."""
     if isinstance(document, str):
@@ -630,13 +897,33 @@ class _Context:
         self.failed_operation = ""
         self.primary_operation = ""
 
-    def _call(self, method_name: str, key_suffix: str, primary: bool, **kwargs: Any) -> Any:
+    def _call(
+        self,
+        method_name: str,
+        key_suffix: str,
+        primary: bool,
+        paginate: bool = False,
+        **kwargs: Any,
+    ) -> Any:
         operation = self.collector._operation_name(method_name)
         if primary:
             self.primary_operation = operation
-        method = getattr(self.collector.api_client, method_name)
+        client = self.collector.api_client
+        call_fn: Callable[[], dict[str, Any]]
+        if paginate and client.can_paginate(method_name) is True:
+            # All pages merged into one response (one recorded operation).
+            def call_fn() -> dict[str, Any]:
+                return _merge_pages(client.get_paginator(method_name).paginate(**kwargs))
+
+        else:
+            method = getattr(client, method_name)
+
+            def call_fn() -> dict[str, Any]:
+                result: dict[str, Any] = method(**kwargs)
+                return result
+
         outcome = self.collector._execute(
-            lambda: method(**kwargs), operation, self.resource_id, self.service, primary
+            call_fn, operation, self.resource_id, self.service, primary
         )
         self.collector._record(
             OperationRecord(
@@ -661,8 +948,10 @@ class _Context:
     def primary(self, method_name: str, **kwargs: Any) -> Any:
         return self._call(method_name, "", True, **kwargs)
 
-    def secondary(self, method_name: str, key_suffix: str, **kwargs: Any) -> Any:
-        return self._call(method_name, key_suffix, False, **kwargs)
+    def secondary(
+        self, method_name: str, key_suffix: str, paginate: bool = False, **kwargs: Any
+    ) -> Any:
+        return self._call(method_name, key_suffix, False, paginate, **kwargs)
 
     def failure(self) -> Result[ResourceSpec, CollectorError]:
         outcome = self.failed

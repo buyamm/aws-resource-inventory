@@ -14,6 +14,9 @@ Requirements Coverage:
   region is inaccessible
 - Requirement 1.5: Discovery completes within 5 minutes for up to 1000
   resources
+- Requirement 14.1: Network, edge and load-balancing types; listeners are listed per
+  load balancer; CloudFront distributions, Route 53 zones and CloudFront-scope WAF web
+  ACLs are discovered once through ``us-east-1``
 """
 
 from __future__ import annotations
@@ -24,6 +27,8 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import Any
+
+from src.resource_types import GLOBAL_REGION, build_arn, parse_arn
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +53,8 @@ class DiscoveredResource:
     tags: Any tags attached to the resource, when available.
     attributes: List-API fields used to recognise account defaults (Req 13.4):
         ``IsDefault`` for VPCs, ``GroupName``/``VpcId`` for security groups,
-        ``Path`` for IAM roles.
+        ``VpcId``/``DefaultForAz`` for subnets, ``VpcId`` for route tables,
+        ``VpcIds`` for internet gateways, ``Path`` for IAM roles.
     referenced_by: ``<arn>#<property path>`` of each spec that pulled this resource
         into the dependency closure (Req 13.3); empty for seeds.
     """
@@ -266,6 +272,130 @@ def _extract_iam_roles(
     return resources
 
 
+def _tag_map(tags: Any) -> dict[str, str]:
+    return {t["Key"]: t["Value"] for t in tags or [] if "Key" in t}
+
+
+def _ec2_extractor(
+    resource_type: str,
+    list_key: str,
+    id_key: str,
+    attributes: Callable[[dict[str, Any]], dict[str, Any]] = lambda _item: {},
+    keep: Callable[[dict[str, Any]], bool] = lambda _item: True,
+) -> Callable[[dict[str, Any], str, str], list[DiscoveredResource]]:
+    """Extractor for EC2 Describe* responses (ARNs built from the id, as for VPCs)."""
+
+    def extract(
+        response: dict[str, Any], region: str, account_id: str = ""
+    ) -> list[DiscoveredResource]:
+        return [
+            DiscoveredResource(
+                resource_type=resource_type,
+                resource_id=item[id_key],
+                arn=build_arn(resource_type, item[id_key], region, account_id),
+                region=region,
+                tags=_tag_map(item.get("Tags")),
+                attributes=attributes(item),
+            )
+            for item in response.get(list_key, [])
+            if keep(item)
+        ]
+
+    return extract
+
+
+def _arn_extractor(
+    list_path: tuple[str, ...], arn_key: str
+) -> Callable[[dict[str, Any], str, str], list[DiscoveredResource]]:
+    """Extractor for list APIs that return ARNs (ELB, ACM, WAF): ids/regions via parse_arn."""
+
+    def extract(
+        response: dict[str, Any], region: str, account_id: str = ""
+    ) -> list[DiscoveredResource]:
+        items: Any = response
+        for key in list_path:
+            items = items.get(key, {}) if isinstance(items, dict) else {}
+        resources = []
+        for item in items if isinstance(items, list) else []:
+            parsed = parse_arn(str(item.get(arn_key, "")))
+            if parsed is None:
+                continue
+            type_id, raw_id, arn_region = parsed
+            resources.append(
+                DiscoveredResource(
+                    resource_type=type_id,
+                    resource_id=raw_id,
+                    arn=item[arn_key],
+                    region=arn_region,
+                )
+            )
+        return resources
+
+    return extract
+
+
+def _extract_distributions(
+    response: dict[str, Any], region: str, account_id: str = ""
+) -> list[DiscoveredResource]:
+    items = (response.get("DistributionList") or {}).get("Items", [])
+    return [
+        DiscoveredResource(
+            resource_type="aws_cloudfront_distribution",
+            resource_id=item["Id"],
+            arn=build_arn("aws_cloudfront_distribution", item["Id"], GLOBAL_REGION, account_id),
+            region=GLOBAL_REGION,
+        )
+        for item in items
+    ]
+
+
+def _extract_hosted_zones(
+    response: dict[str, Any], region: str, account_id: str = ""
+) -> list[DiscoveredResource]:
+    resources = []
+    for zone in response.get("HostedZones", []):
+        zone_id = str(zone["Id"]).split("/")[-1]
+        resources.append(
+            DiscoveredResource(
+                resource_type="aws_route53_zone",
+                resource_id=zone_id,
+                arn=build_arn("aws_route53_zone", zone_id, GLOBAL_REGION, account_id),
+                region=GLOBAL_REGION,
+            )
+        )
+    return resources
+
+
+_extract_subnets = _ec2_extractor(
+    "aws_subnet",
+    "Subnets",
+    "SubnetId",
+    lambda s: {"VpcId": s.get("VpcId", ""), "DefaultForAz": bool(s.get("DefaultForAz", False))},
+)
+_extract_route_tables = _ec2_extractor(
+    "aws_route_table", "RouteTables", "RouteTableId", lambda r: {"VpcId": r.get("VpcId", "")}
+)
+_extract_internet_gateways = _ec2_extractor(
+    "aws_internet_gateway",
+    "InternetGateways",
+    "InternetGatewayId",
+    lambda g: {"VpcIds": [a["VpcId"] for a in g.get("Attachments", []) if a.get("VpcId")]},
+)
+# DescribeNatGateways keeps deleted gateways for about an hour.
+_extract_nat_gateways = _ec2_extractor(
+    "aws_nat_gateway",
+    "NatGateways",
+    "NatGatewayId",
+    keep=lambda n: n.get("State") not in ("deleted", "deleting", "failed"),
+)
+_extract_vpc_endpoints = _ec2_extractor("aws_vpc_endpoint", "VpcEndpoints", "VpcEndpointId")
+_extract_load_balancers = _arn_extractor(("LoadBalancers",), "LoadBalancerArn")
+_extract_listeners = _arn_extractor(("Listeners",), "ListenerArn")
+_extract_target_groups = _arn_extractor(("TargetGroups",), "TargetGroupArn")
+_extract_certificates = _arn_extractor(("CertificateSummaryList",), "CertificateArn")
+_extract_web_acls = _arn_extractor(("WebACLs",), "ARN")
+
+
 # Each entry: (resource_type, service_name, api_method_name, extractor_fn, api_kwargs)
 _REGIONAL_DISCOVERERS: list[Any] = [
     ("aws_instance", "ec2", "describe_instances", _extract_ec2_instances, {}),
@@ -276,12 +406,25 @@ _REGIONAL_DISCOVERERS: list[Any] = [
     ("aws_cloudwatch_log_group", "logs", "describe_log_groups", _extract_log_groups, {}),
     ("aws_sfn_state_machine", "stepfunctions", "list_state_machines", _extract_state_machines, {}),
     ("aws_dynamodb_table", "dynamodb", "list_tables", _extract_dynamodb_tables, {}),
+    ("aws_subnet", "ec2", "describe_subnets", _extract_subnets, {}),
+    ("aws_route_table", "ec2", "describe_route_tables", _extract_route_tables, {}),
+    ("aws_internet_gateway", "ec2", "describe_internet_gateways", _extract_internet_gateways, {}),
+    ("aws_nat_gateway", "ec2", "describe_nat_gateways", _extract_nat_gateways, {}),
+    ("aws_vpc_endpoint", "ec2", "describe_vpc_endpoints", _extract_vpc_endpoints, {}),
+    ("aws_lb", "elbv2", "describe_load_balancers", _extract_load_balancers, {}),
+    ("aws_lb_target_group", "elbv2", "describe_target_groups", _extract_target_groups, {}),
+    ("aws_acm_certificate", "acm", "list_certificates", _extract_certificates, {}),
+    # ListWebACLs cannot be paginated by boto3; one call returns up to 100 ACLs.
+    ("aws_wafv2_web_acl", "wafv2", "list_web_acls", _extract_web_acls, {"Scope": "REGIONAL"}),
 ]
 
 # Account-wide ("global") resource types: discovered once, not per-region.
 _GLOBAL_DISCOVERERS: list[Any] = [
     ("aws_s3_bucket", "s3", "list_buckets", _extract_s3_buckets, {}),
     ("aws_iam_role", "iam", "list_roles", _extract_iam_roles, {}),
+    ("aws_cloudfront_distribution", "cloudfront", "list_distributions", _extract_distributions, {}),
+    ("aws_route53_zone", "route53", "list_hosted_zones", _extract_hosted_zones, {}),
+    ("aws_wafv2_web_acl", "wafv2", "list_web_acls", _extract_web_acls, {"Scope": "CLOUDFRONT"}),
 ]
 
 # Region used to issue the account-wide ("global") API calls above.
@@ -409,10 +552,22 @@ class ResourceDiscovery:
                     resource_type, service_name, method_name, extractor, region, kwargs
                 )
             )
+        # Listeners can only be listed per load balancer.
+        for lb in [r for r in resources if r.resource_type == "aws_lb"]:
+            resources.extend(
+                self._safe_discover(
+                    "aws_lb_listener",
+                    "elbv2",
+                    "describe_listeners",
+                    _extract_listeners,
+                    region,
+                    {"LoadBalancerArn": lb.arn},
+                )
+            )
         return resources
 
     def _discover_global(self) -> list[DiscoveredResource]:
-        """Discover account-wide resource types (S3 buckets, IAM roles)."""
+        """Discover account-wide types (S3, IAM, CloudFront, Route 53, CloudFront-scope WAF)."""
         resources: list[DiscoveredResource] = []
         for resource_type, service_name, method_name, extractor, kwargs in _GLOBAL_DISCOVERERS:
             resources.extend(

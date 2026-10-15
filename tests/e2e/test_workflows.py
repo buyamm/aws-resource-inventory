@@ -1,6 +1,6 @@
 """
 End-to-end workflows: the aws-inventory CLI (Click's CliRunner) against a moto
-account holding all ten Supported_Resource_Types (``sample_account`` fixture).
+account holding every Supported_Resource_Type (``sample_account`` fixture).
 
 Validates: Requirements 1.1, 2.1, 3.1-3.6, 5.1, 6.1, 7.1-7.4, 8.1, 8.3, 8.4,
 12.2, 12.4, 12.5
@@ -94,14 +94,16 @@ def test_e2e_discovery_collection_output_workflow(collected, sample_account):
         assert (out / name).is_file(), name
 
     specs = OutputGenerator.load_specs(out)
-    assert {spec.resource_type for spec in specs} == set(REGISTRY), "all 10 types collected"
+    assert {spec.resource_type for spec in specs} == set(REGISTRY), "all types collected"
 
     discovered = json.loads((out / "discovery.json").read_text(encoding="utf-8"))["resources"]
     assert sorted(r["arn"] for r in discovered) == sorted(spec.arn for spec in specs)
 
     for spec in specs:
         rel = spec_relpath(spec)
-        expected_region = "global" if REGISTRY[spec.resource_type].scope == "global" else REGION
+        cloudfront_acl = ":global/webacl/" in spec.arn  # CloudFront-scope WAF (Req 14.1)
+        is_global = REGISTRY[spec.resource_type].scope == "global" or cloudfront_acl
+        expected_region = "global" if is_global else REGION
         assert rel.split("/")[1] == expected_region, rel
         document = json.loads((out / rel).read_text(encoding="utf-8"))
         assert document["arn"] == spec.arn

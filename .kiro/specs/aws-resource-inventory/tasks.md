@@ -446,12 +446,13 @@ Findings from the first live run (account `monetkit-prod`): without `--region` t
   - _Requirements: 13.1–13.5 (new)_
   - Commit: `feat(scope): project tag scoping with dependency closure (Task 27)`
 
-- [ ] 28. Network, edge and load-balancing resource types
-  - [ ] 28.1 Registry entries, discovery, collection and spec schema for `aws_subnet`, `aws_route_table`, `aws_internet_gateway`, `aws_nat_gateway`, `aws_vpc_endpoint`, `aws_cloudfront_distribution`, `aws_lb`, `aws_lb_listener`, `aws_lb_target_group`, `aws_route53_zone`, `aws_acm_certificate`, `aws_wafv2_web_acl` (tests first, moto 4.x)
-  - [ ] 28.2 CloudFront: distributions only (`list_distributions` + `get_distribution_config`, global, client in `us-east-1`) — origins, behaviors, aliases, WAF/ACM ids; never edge locations or IP ranges
-  - [ ] 28.3 Relationships with citations: subnet→VPC, route table→subnet/IGW/NAT, NAT→subnet, LB→subnets/SGs, listener→LB/TG/cert, CloudFront→origin (S3/LB), CloudFront→WAF/ACM, Route53 alias→CloudFront/LB
-  - [ ] 28.4 IAM policy, `sample_account.py`, MCP alias list
-  - [ ] 28.5 `scope.REFERENCE_RULES` for the new types (instance/Lambda/RDS `SubnetId(s)`, LB subnets/SGs, listener→TG/cert, CloudFront origins/WAF/ACM) and default-VPC subnets (`DefaultForAz`) in `exclude_defaults` — _Req 13.3, 13.4_
+- [x] 28. Network, edge and load-balancing resource types
+  - [x] 28.1 Registry entries, discovery, collection and spec schema for `aws_subnet`, `aws_route_table`, `aws_internet_gateway`, `aws_nat_gateway`, `aws_vpc_endpoint`, `aws_cloudfront_distribution`, `aws_lb`, `aws_lb_listener`, `aws_lb_target_group`, `aws_route53_zone`, `aws_acm_certificate`, `aws_wafv2_web_acl` (tests first, moto 4.x)
+  - [x] 28.2 CloudFront: distributions only (`list_distributions` + `get_distribution`, global, client in `us-east-1`) — origins, behaviors, aliases, WAF/ACM ids; never edge locations or IP ranges
+  - [x] 28.3 Relationships with citations: subnet→VPC, route table→subnet/IGW/NAT, NAT→subnet, LB→subnets/SGs, listener→LB/TG/cert, CloudFront→origin (S3/LB), CloudFront→WAF/ACM, Route53 alias→CloudFront/LB
+  - [x] 28.4 IAM policy, `sample_account.py`, MCP alias list
+  - [x] 28.5 `scope.REFERENCE_RULES` for the new types (instance/Lambda/RDS `SubnetId(s)`, LB subnets/SGs, listener→TG/cert, CloudFront origins/WAF/ACM) and default-VPC subnets (`DefaultForAz`) in `exclude_defaults` — _Req 13.3, 13.4_
+  - `get_distribution` instead of `get_distribution_config`: it also returns `DomainName`, needed to match Route 53 aliases. Ids without a Specifications field come from the ARN (`app/<name>/<hash>` for load balancers, `<name>/<id>` for web ACLs); CloudFront-scope web ACLs use region `global`. Load balancer specs carry their `Listeners` so the closure reaches listeners → target groups/certificates; CloudFront LB origins are DNS names and are matched only by the Analysis_Engine. Route tables and internet gateways of the default VPC are excluded too. `REFERENCE_RULES` entries are `Rule(path, target, resolve)`; the `[]` path walker moved to `integrity.iter_property_paths`. Terraform mappers for all twelve types (route table associations and Route 53 records as companions); the sample account (storefront stack) passes a real `terraform validate`. Undetectable-pattern reasons no longer claim CloudFront/ELB are unsupported. `scripts/benchmark.py` measures moto's default network resources. MCP aliases come from the registry. README/instruction.md coverage statements corrected (full Phase 2 docs in Task 32)
   - _Requirements: 1.3 (extended), 14.1–14.3 (new)_
   - Commit: `feat(collect): network, edge and load balancer resource types (Task 28)`
 

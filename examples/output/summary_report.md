@@ -2,17 +2,17 @@
 
 | Metric | Value |
 |---|---|
-| resources_discovered | 14 |
-| specs_collected | 14 |
+| resources_discovered | 30 |
+| specs_collected | 30 |
 | specs_failed | 0 |
-| api_calls | 44 |
-| data_volume_bytes | 131383 |
+| api_calls | 89 |
+| data_volume_bytes | 326762 |
 
 | Phase | Duration (s) |
 |---|---|
-| discovery | 0.24 |
-| collection | 0.07 |
-| output | 0.02 |
+| discovery | 0.53 |
+| collection | 0.16 |
+| output | 0.04 |
 
 ## Performance & Time Savings Summary Report
 
@@ -22,6 +22,6 @@
 | Metric          | Manual Effort (Baseline) | Automated Collection      | Savings           |
 | --------------- | ------------------------ | ------------------------- | ----------------- |
 | Baseline Rate   | 5 minutes / resource     | N/A                       | -                 |
-| Total Resources | 14                       | 14                        | -                 |
-| Total Duration  | 1.17 hours (70 min)      | 0.32 seconds (0.0001 hrs) | 1.17 hours saved  |
+| Total Resources | 30                       | 30                        | -                 |
+| Total Duration  | 2.50 hours (150 min)     | 0.73 seconds (0.0002 hrs) | 2.50 hours saved  |
 | Efficiency Gain | Baseline (100%)          | +100.0% faster            | 100.0% time saved |

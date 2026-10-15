@@ -58,8 +58,8 @@ REGIONS = (
     "ap-southeast-1",
     "ap-southeast-2",
 )
-# moto creates a default VPC and its default security group in every region.
-DEFAULTS_PER_REGION = 2
+# moto creates a default VPC in every region, with its default security group, main route
+# table and one default subnet per availability zone; count_defaults() measures them.
 # Share of the created (non-default) resources per regional type; S3 buckets and IAM
 # roles (global) take the remaining ~5 %.
 REGIONAL_WEIGHTS = {
@@ -90,9 +90,32 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def plan(resources: int, regions: int) -> tuple[dict[str, int], dict[str, int]]:
+class TooFewResources(ValueError):
+    """--resources does not cover the account defaults plus one role and one bucket."""
+
+
+def count_defaults(session: Any, regions: list[str]) -> int:
+    """Network resources moto creates by itself (default VPCs, SGs, subnets, route tables)."""
+    total = 0
+    for region in regions:
+        ec2 = session.client("ec2", region_name=region)
+        total += len(ec2.describe_vpcs()["Vpcs"])
+        total += len(ec2.describe_security_groups()["SecurityGroups"])
+        total += len(ec2.describe_subnets()["Subnets"])
+        total += len(ec2.describe_route_tables()["RouteTables"])
+        total += len(ec2.describe_internet_gateways()["InternetGateways"])
+    return total
+
+
+def plan(resources: int, regions: int, defaults: int) -> tuple[dict[str, int], dict[str, int]]:
     """Per-region counts of created resources by type, and global bucket/role counts."""
-    created = resources - DEFAULTS_PER_REGION * regions
+    minimum = defaults + 2
+    if resources < minimum:
+        raise TooFewResources(
+            f"at least {minimum} resources are needed (the account defaults of the regions "
+            "plus one IAM role and one bucket)"
+        )
+    created = resources - defaults
     per_region = int(created * (1 - GLOBAL_SHARE)) // regions
     total_weight = sum(REGIONAL_WEIGHTS.values())
     shares = {t: per_region * w / total_weight for t, w in REGIONAL_WEIGHTS.items()}
@@ -100,7 +123,7 @@ def plan(resources: int, regions: int) -> tuple[dict[str, int], dict[str, int]]:
     by_remainder = sorted(shares, key=lambda t: shares[t] - counts[t], reverse=True)
     for resource_type in by_remainder[: per_region - sum(counts.values())]:
         counts[resource_type] += 1
-    global_count = resources - regions * (DEFAULTS_PER_REGION + per_region)
+    global_count = created - regions * per_region
     roles = max(1, global_count // 2)
     return counts, {"aws_iam_role": roles, "aws_s3_bucket": global_count - roles}
 
@@ -226,11 +249,12 @@ def run(args: argparse.Namespace, output_dir: Path) -> dict[str, Any]:
     import boto3
 
     regions = list(REGIONS[: args.regions])
-    regional, glob = plan(args.resources, args.regions)
     injector = LatencyInjector(args.latency_ms / 1000)
     with mocked_aws():
-        build_account(boto3.Session(region_name="us-east-1"), regions, regional, glob)
-        # --include-defaults: the default VPCs/SGs count towards --resources.
+        session = boto3.Session(region_name="us-east-1")
+        regional, glob = plan(args.resources, args.regions, count_defaults(session, regions))
+        build_account(session, regions, regional, glob)
+        # --include-defaults: the default network resources count towards --resources.
         collect = ["--log-level", "ERROR", "--no-color", "collect", "--include-defaults"]
         collect += ["--output-dir", str(output_dir)]
         for region in regions:
@@ -279,17 +303,16 @@ def print_summary(result: dict[str, Any]) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    minimum = (DEFAULTS_PER_REGION * args.regions) + 2
-    if not 1 <= args.regions <= len(REGIONS) or args.resources < minimum:
-        print(
-            f"benchmark: need 1-{len(REGIONS)} regions and at least {minimum} resources "
-            f"(default VPC + security group per region, one IAM role and one bucket)",
-            file=sys.stderr,
-        )
+    if not 1 <= args.regions <= len(REGIONS):
+        print(f"benchmark: need 1-{len(REGIONS)} regions", file=sys.stderr)
         return 2
     with contextlib.ExitStack() as stack:
         output_dir = args.output_dir or Path(stack.enter_context(tempfile.TemporaryDirectory()))
-        result = run(args, output_dir)
+        try:
+            result = run(args, output_dir)
+        except TooFewResources as exc:
+            print(f"benchmark: {exc}", file=sys.stderr)
+            return 2
     print_summary(result)
     if args.json:
         args.json.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")

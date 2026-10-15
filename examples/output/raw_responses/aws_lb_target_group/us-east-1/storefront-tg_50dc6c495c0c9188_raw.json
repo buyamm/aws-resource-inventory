@@ -1,0 +1,108 @@
+{
+  "DescribeTags": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Thu, 15 Oct 2026 23:01:58 GMT",
+        "server": "amazon.com",
+        "x-amzn-requestid": "K4et73T2sducpxUpp8cbmBsFzxWNG2Gy6mzhHWoDqu4VO7U2zc7Q"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "K4et73T2sducpxUpp8cbmBsFzxWNG2Gy6mzhHWoDqu4VO7U2zc7Q",
+      "RetryAttempts": 0
+    },
+    "TagDescriptions": [
+      {
+        "ResourceArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188",
+        "Tags": [
+          {
+            "Key": "service",
+            "Value": "storefront"
+          }
+        ]
+      }
+    ]
+  },
+  "DescribeTargetGroupAttributes": {
+    "Attributes": [
+      {
+        "Key": "deregistration_delay.timeout_seconds",
+        "Value": "300"
+      },
+      {
+        "Key": "stickiness.enabled",
+        "Value": "false"
+      },
+      {
+        "Key": "load_balancing.algorithm.type",
+        "Value": "round_robin"
+      },
+      {
+        "Key": "load_balancing.cross_zone.enabled",
+        "Value": "use_load_balancer_configuration"
+      },
+      {
+        "Key": "slow_start.duration_seconds",
+        "Value": "0"
+      },
+      {
+        "Key": "waf.fail_open.enabled",
+        "Value": "false"
+      },
+      {
+        "Key": "stickiness.type",
+        "Value": "lb_cookie"
+      }
+    ],
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Thu, 15 Oct 2026 23:01:58 GMT",
+        "server": "amazon.com",
+        "x-amzn-requestid": "z1ISG0K6Kzb6GeaTuhugOEyjqBlIVfHYzOoGZqsLDVmrDM390h6c"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "z1ISG0K6Kzb6GeaTuhugOEyjqBlIVfHYzOoGZqsLDVmrDM390h6c",
+      "RetryAttempts": 0
+    }
+  },
+  "DescribeTargetGroups": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Thu, 15 Oct 2026 23:01:58 GMT",
+        "server": "amazon.com",
+        "x-amzn-requestid": "wGynVJBBIpJhA2DQjK5AWZeWLmIxqQNng0uKnjE46QNw2q08Cbdt"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "wGynVJBBIpJhA2DQjK5AWZeWLmIxqQNng0uKnjE46QNw2q08Cbdt",
+      "RetryAttempts": 0
+    },
+    "TargetGroups": [
+      {
+        "HealthCheckEnabled": true,
+        "HealthCheckIntervalSeconds": 30,
+        "HealthCheckPath": "/health",
+        "HealthCheckPort": "traffic-port",
+        "HealthCheckProtocol": "HTTP",
+        "HealthCheckTimeoutSeconds": 5,
+        "HealthyThresholdCount": 5,
+        "IpAddressType": "ipv4",
+        "LoadBalancerArns": [
+          "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188"
+        ],
+        "Matcher": {
+          "HttpCode": "200"
+        },
+        "Port": 80,
+        "Protocol": "HTTP",
+        "ProtocolVersion": "HTTP1",
+        "TargetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188",
+        "TargetGroupName": "storefront-tg",
+        "TargetType": "ip",
+        "UnhealthyThresholdCount": 2,
+        "VpcId": "vpc-1561eea5"
+      }
+    ]
+  }
+}

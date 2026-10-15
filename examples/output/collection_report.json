@@ -2,15 +2,55 @@
   "account_id": "123456789012",
   "collection_errors": [],
   "discovery_errors": [],
-  "finished_at": "2026-10-14T16:28:57.364292Z",
+  "finished_at": "2026-10-15T16:01:58.157696Z",
   "metrics": {
-    "api_calls": 44,
-    "data_volume_bytes": 131383,
-    "resources_discovered": 14,
-    "specs_collected": 14,
+    "api_calls": 89,
+    "data_volume_bytes": 326762,
+    "resources_discovered": 30,
+    "specs_collected": 30,
     "specs_failed": 0
   },
   "operations": [
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeCertificate",
+      "outcome": "success",
+      "resource_arn": "arn:aws:acm:us-east-1:123456789012:certificate/59f7c298-c41f-48f5-a3db-cb8263d5fcc6",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "ListTagsForCertificate",
+      "outcome": "success",
+      "resource_arn": "arn:aws:acm:us-east-1:123456789012:certificate/59f7c298-c41f-48f5-a3db-cb8263d5fcc6",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "GetDistribution",
+      "outcome": "success",
+      "resource_arn": "arn:aws:cloudfront::123456789012:distribution/K4SJFH541UU7J",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "ListTagsForResource",
+      "outcome": "success",
+      "resource_arn": "arn:aws:cloudfront::123456789012:distribution/K4SJFH541UU7J",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
     {
       "attempts": 1,
       "detail": "",
@@ -19,7 +59,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:dynamodb:us-east-1:123456789012:table/orders",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:57Z"
     },
     {
       "attempts": 1,
@@ -29,7 +69,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:dynamodb:us-east-1:123456789012:table/orders",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -37,9 +77,59 @@
       "error_type": "",
       "operation": "DescribeInstances",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-9f9c49245e711cdd9",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-96ebec6d01233d3d7",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeInternetGateways",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-e27d9033",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeNatGateways",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:natgateway/nat-3e17f5a22ce211a96",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeRouteTables",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-395e2831",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeRouteTables",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-57076453",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeRouteTables",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-590d89f0",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -47,9 +137,9 @@
       "error_type": "",
       "operation": "DescribeSecurityGroups",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-285ba61d10f344e74",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-347a556c97894d9e4",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:57Z"
     },
     {
       "attempts": 1,
@@ -57,9 +147,9 @@
       "error_type": "",
       "operation": "DescribeSecurityGroups",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-7c880b8c4789c2216",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-57d34a1b59fbd9d55",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:57Z"
     },
     {
       "attempts": 1,
@@ -67,9 +157,49 @@
       "error_type": "",
       "operation": "DescribeSecurityGroups",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-cc3138f31141d30f1",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-ceb6d3dc119d60702",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeSubnets",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-86551e9d",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeSubnets",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-dc94c752",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeSubnets",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-ee0601cc",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeVpcEndpoints",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-a3573b69",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -77,9 +207,9 @@
       "error_type": "",
       "operation": "DescribeVpcs",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-ce9c3403",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-1561eea5",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:57Z"
     },
     {
       "attempts": 1,
@@ -87,9 +217,9 @@
       "error_type": "",
       "operation": "DescribeVpcAttribute:enableDnsSupport",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-ce9c3403",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-1561eea5",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:57Z"
     },
     {
       "attempts": 1,
@@ -97,39 +227,99 @@
       "error_type": "",
       "operation": "DescribeVpcAttribute:enableDnsHostnames",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-ce9c3403",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-1561eea5",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:57Z"
     },
     {
       "attempts": 1,
       "detail": "",
       "error_type": "",
-      "operation": "DescribeVpcs",
+      "operation": "DescribeListeners",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-db407a2e",
+      "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434430983056",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
       "detail": "",
       "error_type": "",
-      "operation": "DescribeVpcAttribute:enableDnsSupport",
+      "operation": "DescribeTags",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-db407a2e",
+      "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434430983056",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
       "detail": "",
       "error_type": "",
-      "operation": "DescribeVpcAttribute:enableDnsHostnames",
+      "operation": "DescribeLoadBalancers",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-db407a2e",
+      "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeLoadBalancerAttributes",
+      "outcome": "success",
+      "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeTags",
+      "outcome": "success",
+      "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeListeners",
+      "outcome": "success",
+      "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeTargetGroups",
+      "outcome": "success",
+      "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeTargetGroupAttributes",
+      "outcome": "success",
+      "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeTags",
+      "outcome": "success",
+      "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -139,7 +329,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/order-lambda-role",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -149,7 +339,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/order-lambda-role",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -159,7 +349,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/order-lambda-role",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -169,7 +359,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/order-lambda-role",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -179,7 +369,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/orders-app-role",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -189,7 +379,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/orders-app-role",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -199,7 +389,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/orders-app-role",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -209,7 +399,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:lambda:us-east-1:123456789012:function:order-processor",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:57Z"
     },
     {
       "attempts": 1,
@@ -219,7 +409,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:57Z"
     },
     {
       "attempts": 1,
@@ -229,7 +419,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:57Z"
     },
     {
       "attempts": 1,
@@ -239,7 +429,37 @@
       "outcome": "success",
       "resource_arn": "arn:aws:rds:us-east-1:123456789012:db:orders-db",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "GetHostedZone",
+      "outcome": "success",
+      "resource_arn": "arn:aws:route53:::hostedzone/JX2QH3ZSOFDJU6N",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "ListResourceRecordSets",
+      "outcome": "success",
+      "resource_arn": "arn:aws:route53:::hostedzone/JX2QH3ZSOFDJU6N",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "ListTagsForResource",
+      "outcome": "success",
+      "resource_arn": "arn:aws:route53:::hostedzone/JX2QH3ZSOFDJU6N",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -249,7 +469,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:s3:::orders-public-assets",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -259,7 +479,7 @@
       "outcome": "not_configured",
       "resource_arn": "arn:aws:s3:::orders-public-assets",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -269,7 +489,7 @@
       "outcome": "not_configured",
       "resource_arn": "arn:aws:s3:::orders-public-assets",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -279,7 +499,7 @@
       "outcome": "not_configured",
       "resource_arn": "arn:aws:s3:::orders-public-assets",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -289,7 +509,7 @@
       "outcome": "not_configured",
       "resource_arn": "arn:aws:s3:::orders-public-assets",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -299,7 +519,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:s3:::orders-public-assets",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -309,7 +529,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:s3:::orders-public-assets",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -319,7 +539,87 @@
       "outcome": "not_configured",
       "resource_arn": "arn:aws:s3:::orders-public-assets",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "GetBucketAcl",
+      "outcome": "success",
+      "resource_arn": "arn:aws:s3:::storefront-static",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "NoSuchCORSConfiguration",
+      "operation": "GetBucketCors",
+      "outcome": "not_configured",
+      "resource_arn": "arn:aws:s3:::storefront-static",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "ServerSideEncryptionConfigurationNotFoundError",
+      "operation": "GetBucketEncryption",
+      "outcome": "not_configured",
+      "resource_arn": "arn:aws:s3:::storefront-static",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "NoSuchLifecycleConfiguration",
+      "operation": "GetBucketLifecycleConfiguration",
+      "outcome": "not_configured",
+      "resource_arn": "arn:aws:s3:::storefront-static",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "NoSuchBucketPolicy",
+      "operation": "GetBucketPolicy",
+      "outcome": "not_configured",
+      "resource_arn": "arn:aws:s3:::storefront-static",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "GetBucketTagging",
+      "outcome": "success",
+      "resource_arn": "arn:aws:s3:::storefront-static",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "GetBucketVersioning",
+      "outcome": "success",
+      "resource_arn": "arn:aws:s3:::storefront-static",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "NoSuchWebsiteConfiguration",
+      "operation": "GetBucketWebsite",
+      "outcome": "not_configured",
+      "resource_arn": "arn:aws:s3:::storefront-static",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
     },
     {
       "attempts": 1,
@@ -329,7 +629,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:states:us-east-1:123456789012:stateMachine:order-flow",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:57Z"
     },
     {
       "attempts": 1,
@@ -339,37 +639,78 @@
       "outcome": "success",
       "resource_arn": "arn:aws:states:us-east-1:123456789012:stateMachine:order-flow",
       "status": "success",
-      "timestamp": "2026-10-14T16:28:57Z"
+      "timestamp": "2026-10-15T16:01:57Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "GetWebACL",
+      "outcome": "success",
+      "resource_arn": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/45c1df2a-6eb9-40fa-a6ea-d3054f42d04c",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "ListTagsForResource",
+      "outcome": "success",
+      "resource_arn": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/45c1df2a-6eb9-40fa-a6ea-d3054f42d04c",
+      "status": "success",
+      "timestamp": "2026-10-15T16:01:58Z"
     }
   ],
   "phases": [
     {
-      "duration_seconds": 0.237781,
-      "ended_at": "2026-10-14T16:28:57.279975Z",
+      "duration_seconds": 0.527659,
+      "ended_at": "2026-10-15T16:01:57.952023Z",
       "name": "discovery",
-      "started_at": "2026-10-14T16:28:57.042194Z"
+      "started_at": "2026-10-15T16:01:57.424365Z"
     },
     {
-      "duration_seconds": 0.068361,
-      "ended_at": "2026-10-14T16:28:57.348351Z",
+      "duration_seconds": 0.162752,
+      "ended_at": "2026-10-15T16:01:58.114791Z",
       "name": "collection",
-      "started_at": "2026-10-14T16:28:57.279988Z"
+      "started_at": "2026-10-15T16:01:57.952037Z"
     },
     {
-      "duration_seconds": 0.015333,
-      "ended_at": "2026-10-14T16:28:57.364292Z",
+      "duration_seconds": 0.042309,
+      "ended_at": "2026-10-15T16:01:58.157696Z",
       "name": "output",
-      "started_at": "2026-10-14T16:28:57.348953Z"
+      "started_at": "2026-10-15T16:01:58.115379Z"
     }
   ],
   "regions": [
     "us-east-1"
   ],
-  "started_at": "2026-10-14T16:28:57.042194Z",
+  "scope": {
+    "excluded_defaults": [
+      "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-6f16fc72",
+      "arn:aws:ec2:us-east-1:123456789012:security-group/sg-7ab3caab446b8d5ed",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-0a48f93e",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-4bd5fbe2",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-4c34a1de",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-972b96d0",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-aabab88c",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-c5449e54",
+      "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-8460ddb8"
+    ],
+    "include_defaults": false,
+    "mode": "account",
+    "project_tags": {},
+    "referenced": [],
+    "regions": [
+      "us-east-1"
+    ],
+    "seed_resources": 30
+  },
+  "started_at": "2026-10-15T16:01:57.424365Z",
   "time_savings": {
-    "automated_hours": 8.929861111111111e-05,
-    "hours_saved": 1.1665773680555556,
-    "manual_hours": 1.1666666666666667,
-    "percent_saved": 99.99234583333333
+    "automated_hours": 0.00020353333333333334,
+    "hours_saved": 2.4997964666666666,
+    "manual_hours": 2.5,
+    "percent_saved": 99.99185866666667
   }
 }

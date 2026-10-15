@@ -40,7 +40,7 @@ Binding scope decisions are listed in requirements.md §"Scope decisions". In sh
 
 | Module | Responsibility |
 |---|---|
-| `src/resource_types.py` | Registry of the 10 Supported_Resource_Types: canonical id, aliases, service, scope, id extraction, file id, Terraform type, import id, draw.io style. |
+| `src/resource_types.py` | Registry of the Supported_Resource_Types: canonical id, aliases, service, scope, id extraction, file id, Terraform type, import id, draw.io style. |
 | `src/parser.py` | `ResourceSpec`, `SpecMetadata`, `Result`, `ParseError`, `ResourceParser` (parse/print JSON). |
 | `src/sanitizer.py` | `DataSanitizer`: structure-preserving redaction with a redaction log. |
 | `src/discovery.py` | `ResourceDiscovery`: concurrent per-region listing with pagination; `DiscoveredResource`, `DiscoveryError`. |
@@ -164,10 +164,12 @@ class Citation:                      # src/analysis_engine.py (Req 8.2)
 `ResourceTypeInfo(type_id, service, scope, terraform_type, aliases, drawio_style)` for each Supported_Resource_Type. Functions:
 
 - `canonical_type(name: str) -> str | None`: case-insensitive lookup of canonical ids and aliases (alias list in requirements.md).
-- `resource_id(spec: ResourceSpec) -> str`: the id from the "Resource id" column of requirements.md, read from Specifications, falling back to the last ARN segment (after the last `/` or `:`).
+- `resource_id(spec: ResourceSpec) -> str`: the id from the "Resource id" column of requirements.md, read from the Specifications `id_field`; types without one (`aws_lb`, `aws_lb_listener`, `aws_lb_target_group`, `aws_route53_zone`, `aws_acm_certificate`, `aws_wafv2_web_acl`) take the id `parse_arn` reads from the ARN; anything else falls back to the last ARN segment (after the last `/` or `:`).
 - `file_id(resource_id: str) -> str`: `re.sub(r"[^A-Za-z0-9_.-]", "_", id).strip("_") or "resource"`.
 - `spec_relpath(spec) -> str`: `f"{resource_type}/{region}/{file_id}.json"` (posix, relative to Output_Dir).
-- `build_arn(type_id, resource_id, region, account_id) -> str` / `parse_arn(arn) -> (type_id, resource_id, region) | None`: driven by the `arn_service` / `arn_resource` registry fields (e.g. `ec2` + `security-group/{id}`). `parse_arn` drops IAM role paths and the `:*` log group suffix, maps S3/IAM to region `"global"`, and returns None for unsupported kinds (subnets, S3 objects).
+- `build_arn(type_id, resource_id, region, account_id) -> str` / `parse_arn(arn) -> (type_id, resource_id, region) | None`: driven by the `arn_service` / `arn_resource` registry fields (e.g. `ec2` + `security-group/{id}`). `parse_arn` drops IAM role paths and the `:*` log group suffix, maps global types to region `"global"`, maps CloudFront-scope web ACLs (`global/webacl/<name>/<id>`) to `"global"` and REGIONAL ones (`regional/webacl/...`) to their region, checks the optional `id_pattern` (load balancers `(app|net|gwy)/<name>/<hash>`, listeners one more segment, target groups and web ACLs `<name>/<id>`), and returns None for unsupported kinds (classic load balancers, listener rules, WAF IP sets, network ACLs, S3 objects). `build_arn` writes Route 53 ARNs without region and account (`arn:aws:route53:::hostedzone/<id>`) and CloudFront-scope web ACLs as `arn:aws:wafv2:us-east-1:<account>:global/webacl/<name>/<id>`.
+- `s3_bucket_from_domain(domain) -> str | None`: the bucket of an S3 REST or website endpoint (`<bucket>.s3.amazonaws.com`, `<bucket>.s3.<region>.amazonaws.com`, `<bucket>.s3-website-<region>.amazonaws.com`, ...); used for CloudFront origins by the closure and the Analysis_Engine.
+- Draw.io styles: service icons use `shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.<icon>`, resource-level icons (ALB, NAT/internet gateway, VPC endpoint, Route 53 hosted zone, route table = `router`) use `shape=mxgraph.aws4.<shape>`, subnets use the subnet group `shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_security_group` (verified stencil names from the `aws-architecture-diagram` skill).
 
 Every module that needs a type name, file name or id uses these functions; no module hard-codes alternative type names.
 
@@ -187,8 +189,20 @@ Every module that needs a type name, file name or id uses these functions; no mo
 | `aws_dynamodb_table` | `dynamodb.describe_table(TableName=id)`, `dynamodb.list_tags_of_resource(ResourceArn=arn)` | `Table` + `Tags` |
 | `aws_s3_bucket` | 8 `s3.get_bucket_*` calls (Req 2.2), client `us-east-1` | `{"Name": bucket, "bucket-acl": {...}, ...}` (missing sub-configs omitted) |
 | `aws_iam_role` | `iam.get_role`, `iam.list_attached_role_policies`, `iam.list_role_policies`, `iam.get_role_policy` per inline policy | `Role` + `AttachedPolicies: [{PolicyName, PolicyArn}]` + `InlinePolicies: {name: policy document dict}` |
+| `aws_subnet` | `ec2.describe_subnets(SubnetIds=[id])` | `Subnets[0]` |
+| `aws_route_table` | `ec2.describe_route_tables(RouteTableIds=[id])` | `RouteTables[0]` (`Routes`, `Associations`) |
+| `aws_internet_gateway` | `ec2.describe_internet_gateways(InternetGatewayIds=[id])` | `InternetGateways[0]` (`Attachments`) |
+| `aws_nat_gateway` | `ec2.describe_nat_gateways(NatGatewayIds=[id])` | `NatGateways[0]` |
+| `aws_vpc_endpoint` | `ec2.describe_vpc_endpoints(VpcEndpointIds=[id])` | `VpcEndpoints[0]` (`PolicyDocument` is a JSON string) |
+| `aws_lb` | `elbv2.describe_load_balancers(LoadBalancerArns=[arn])`, `describe_load_balancer_attributes`, `describe_tags(ResourceArns=[arn])`, `describe_listeners(LoadBalancerArn=arn)` (all pages) | `LoadBalancers[0]` + `Attributes: [{Key, Value}]` + `Tags` + `Listeners` (full listener objects, followed by the closure) |
+| `aws_lb_listener` | `elbv2.describe_listeners(ListenerArns=[arn])`, `describe_tags` | `Listeners[0]` + `Tags` |
+| `aws_lb_target_group` | `elbv2.describe_target_groups(TargetGroupArns=[arn])`, `describe_target_group_attributes`, `describe_tags` | `TargetGroups[0]` + `Attributes` + `Tags` |
+| `aws_cloudfront_distribution` | `cloudfront.get_distribution(Id=id)`, `cloudfront.list_tags_for_resource(Resource=Distribution.ARN)`, client `us-east-1` | the `Distribution` object (`Id`, `ARN`, `DomainName`, `Status`, `DistributionConfig`, ...) + `Tags` (the `Tags.Items` list). `ETag` is dropped; edge locations and IP ranges are never read |
+| `aws_route53_zone` | `route53.get_hosted_zone(Id=id)`, `list_resource_record_sets(HostedZoneId=id)` (all pages), `list_tags_for_resource(ResourceType="hostedzone")`, client `us-east-1` | `HostedZone` fields + `DelegationSet`/`VPCs` when returned + `ResourceRecordSets` + `Tags` |
+| `aws_acm_certificate` | `acm.describe_certificate(CertificateArn=arn)`, `list_tags_for_certificate` | `Certificate` + `Tags` |
+| `aws_wafv2_web_acl` | `wafv2.get_web_acl(Name, Scope, Id)` (Scope `CLOUDFRONT` for region `global`, else `REGIONAL`), `list_tags_for_resource(ResourceARN)` | `WebACL` + `Tags` (`TagInfoForResource.TagList`); `LockToken` is dropped |
 
-Secondary calls (tags, attributes, policies) are best-effort: an access-denied secondary call omits that key and is logged (Req 2.5); a failure of the **primary** call (first call in the row) makes the resource fail (Req 12.2). `datetime` values are converted to ISO-8601 strings so Specifications are JSON-serializable.
+Paginated secondary calls (load balancer listeners, Route 53 record sets) are one recorded operation whose pages are merged: list fields concatenated, the first page's `ResponseMetadata` kept in `raw_response`. Secondary calls (tags, attributes, policies) are best-effort: an access-denied secondary call omits that key and is logged (Req 2.5); a failure of the **primary** call (first call in the row) makes the resource fail (Req 12.2). `datetime` values are converted to ISO-8601 strings so Specifications are JSON-serializable.
 
 ## Collection (`src/collector.py`, `src/inventory.py`, `src/aws_session.py`)
 
@@ -206,7 +220,7 @@ Secondary calls (tags, attributes, policies) are best-effort: an access-denied s
 
 `RetryConfig(max_attempts=3, base_delay=1.0, backoff_multiplier=2.0)`: attempts at t=0, +1 s, +2 s. A rate-limit wait replaces the backoff delay for that attempt. `SpecCollector.api_calls` counts every attempt. Operations with status `denied` or `failed` (primary or secondary) are collection errors and make the run exit with code 1; `not_configured` is not an error. `raw_response` keys are the API operation names, with `:<attribute>` / `:<policy name>` suffixes for repeated operations (e.g. `DescribeVpcAttribute:enableDnsSupport`).
 
-`ResourceDiscovery(session, regions, max_workers, progress_callback, account_id)` uses `account_id` for ARNs that list APIs do not return (EC2, DynamoDB) and strips the `:*` suffix from log group ARNs.
+`ResourceDiscovery(session, regions, max_workers, progress_callback, account_id)` uses `account_id` for ARNs that list APIs do not return (EC2, DynamoDB, CloudFront, Route 53 — built with `build_arn`) and strips the `:*` suffix from log group ARNs. ELB, ACM and WAF list APIs return ARNs; their ids and regions come from `parse_arn`. Listeners are listed per discovered load balancer (`describe_listeners(LoadBalancerArn=...)`). Web ACLs are listed with `Scope=REGIONAL` per region and once with `Scope=CLOUDFRONT` through `us-east-1` (one call each: boto3 cannot paginate `ListWebACLs`, a call returns up to 100 ACLs). NAT gateways in state `deleted`, `deleting` or `failed` are skipped. Subnets record `VpcId`/`DefaultForAz`, route tables `VpcId`, internet gateways `VpcIds` in `attributes` for the default exclusion.
 
 `src/aws_session.py` builds the session: `boto3.Session(profile_name=profile)`; with `role_arn`, calls `sts.assume_role(RoleArn, RoleSessionName="aws-resource-inventory", ExternalId?)` and builds a new session from the temporary credentials. All clients are created with `botocore.config.Config(retries={"total_max_attempts": 1, "mode": "standard"}, user_agent_extra="aws-resource-inventory")` (`total_max_attempts` counts the initial call, so 1 disables botocore retries; the legacy `max_attempts` key counts retries only). `get_account_id(session)` calls `sts.get_caller_identity()`.
 
@@ -231,9 +245,9 @@ Groups resources by (service, client region), creates one client + `SpecCollecto
 
 **Seeds.** Without `--project-tag`, `ResourceDiscovery` lists every resource of the supported types. With it, `TagScopedDiscovery(session, tags, regions, max_workers, progress_callback, account_id)` (same interface: `discover_all_resources`, `get_regions`, `get_api_calls`, `get_errors`) calls `resourcegroupstaggingapi.get_resources(TagFilters=[{"Key": k, "Values": [v]}, ...])` (paginated) in every queried region — enabled regions, or `--region` plus `us-east-1` restricted to global types — and maps each ARN with `parse_arn` (unsupported ARNs are ignored; seed ARNs are rebuilt with `build_arn` so they match closure ARNs). IAM roles come from `iam.list_roles` + `iam.list_role_tags` per role. A failing region is a `DiscoveryError(region, "tagging", message)`. `seed_regions(resources, requested)` returns `--region` values when given, else the sorted regions of regional seeds.
 
-**Default exclusion.** `exclude_defaults(resources, include_defaults=False) -> (kept, excluded)`: a VPC with `attributes.IsDefault`, a security group named `default` whose `VpcId` is such a VPC (same region), and an IAM role whose path starts with `/aws-service-role/`. Tag-seeded resources carry no list attributes, so only the role rule can apply to them. Subnets of the default VPC join this rule when `aws_subnet` is supported (Task 28).
+**Default exclusion.** `exclude_defaults(resources, include_defaults=False) -> (kept, excluded)`: a VPC with `attributes.IsDefault`, a security group named `default` whose `VpcId` is such a VPC (same region), a subnet with `DefaultForAz` (only default VPCs have default subnets; a subnet a user added to the default VPC is kept), a route table whose `VpcId` is a default VPC, an internet gateway attached only to default VPCs, and an IAM role whose path starts with `/aws-service-role/`. Tag-seeded resources carry no list attributes, so only the role rule can apply to them.
 
-**Reference rules** (`REFERENCE_RULES`, source type → `(Specifications path, target type)`; `[]` walks list elements). Values may be ids, names or ARNs; an ARN that `parse_arn` does not map to the target type is ignored; ids/names are resolved in the source spec's region (`global` for IAM/S3).
+**Reference rules** (`REFERENCE_RULES`, source type → `Rule(path, target, resolve=None)`; `[]` walks list elements via `integrity.iter_property_paths`). Values may be ids, names or ARNs; `resolve` maps a raw value to the target id first (or None to skip it); an ARN that `parse_arn` does not map to the target type is ignored; ids/names are resolved in the source spec's region (`global` for global types).
 
 | Source | Path | Target |
 |---|---|---|
@@ -242,10 +256,22 @@ Groups resources by (service, client region), creates one client + `SpecCollecto
 | `aws_lambda_function` | `Role`, `VpcConfig.VpcId`, `VpcConfig.SecurityGroupIds[]`, `LoggingConfig.LogGroup` | role, VPC, SG, log group |
 | `aws_db_instance` | `VpcSecurityGroups[].VpcSecurityGroupId`, `DBSubnetGroup.VpcId`, `MonitoringRoleArn`, `AssociatedRoles[].RoleArn` | SG, VPC, role |
 | `aws_sfn_state_machine` | `roleArn`, `loggingConfiguration.destinations[].cloudWatchLogsLogGroup.logGroupArn` | role, log group |
+| `aws_instance` (Req 14) | `SubnetId` | subnet |
+| `aws_lambda_function` | `VpcConfig.SubnetIds[]` | subnet |
+| `aws_db_instance` | `DBSubnetGroup.Subnets[].SubnetIdentifier` | subnet |
+| `aws_subnet` | `VpcId` | VPC |
+| `aws_route_table` | `VpcId`, `Associations[].SubnetId`, `Routes[].GatewayId` (`igw-` → internet gateway, `vpce-` → VPC endpoint), `Routes[].NatGatewayId` | VPC, subnet, gateways, endpoint |
+| `aws_internet_gateway` | `Attachments[].VpcId` | VPC |
+| `aws_nat_gateway` | `VpcId`, `SubnetId` | VPC, subnet |
+| `aws_vpc_endpoint` | `VpcId`, `RouteTableIds[]`, `SubnetIds[]`, `Groups[].GroupId` | VPC, route table, subnet, SG |
+| `aws_lb` | `VpcId`, `AvailabilityZones[].SubnetId`, `SecurityGroups[]`, `Listeners[].ListenerArn` | VPC, subnet, SG, listener |
+| `aws_lb_listener` | `LoadBalancerArn`, `Certificates[].CertificateArn`, `DefaultActions[].TargetGroupArn`, `DefaultActions[].ForwardConfig.TargetGroups[].TargetGroupArn` | load balancer, certificate, target group |
+| `aws_lb_target_group` | `VpcId`, `LoadBalancerArns[]` | VPC, load balancer |
+| `aws_cloudfront_distribution` | `DistributionConfig.Origins.Items[].DomainName` (resolved with `s3_bucket_from_domain`), `DistributionConfig.WebACLId`, `DistributionConfig.ViewerCertificate.ACMCertificateArn` | S3 bucket, web ACL, certificate |
 
-Tasks 28–29 add rules for the new types (subnets, target groups, CloudFront origins, ECS task roles, ...). `referenced_by` entries use the concrete path, e.g. `arn:...:instance/i-1#specifications.SecurityGroups[0].GroupId`.
+Load balancer origins of a distribution are named by DNS name only, which does not identify an ARN, so the closure does not follow them (the Analysis_Engine still matches them by `DNSName`). Route 53 aliases are DNS names too and are not followed. Children that their parent does not name (route tables of a VPC, target group members) are only collected when seeded. Task 29 adds rules for the compute and data types (ECS, ASG, ElastiCache, ...). `referenced_by` entries use the concrete path, e.g. `arn:...:instance/i-1#specifications.SecurityGroups[0].GroupId`.
 
-**Scope record.** `scope_document(config, regions, seeds, excluded, referenced=None)` builds the `scope` block of Req 13.5; `excluded_defaults` omits ARNs the closure pulled back. `collect` reports `resources_discovered = seeds + referenced` in the metrics. `scripts/benchmark.py` passes `--include-defaults` because moto's default VPCs/SGs count towards its resource budget.
+**Scope record.** `scope_document(config, regions, seeds, excluded, referenced=None)` builds the `scope` block of Req 13.5; `excluded_defaults` omits ARNs the closure pulled back. `collect` reports `resources_discovered = seeds + referenced` in the metrics. `scripts/benchmark.py` passes `--include-defaults` because moto's default network resources (VPC, security group, subnets, main route table per region, counted by `count_defaults`) are part of its resource budget.
 
 ## Integrity (`src/integrity.py`)
 
@@ -255,6 +281,7 @@ def spec_checksum(specifications: dict) -> str   # sha256(canonical_json(specifi
 def seal_specs(specs, sanitizer) -> list[ResourceSpec]
     # returns NEW specs: specifications and raw_response sanitized; metadata.checksum = spec_checksum(sanitized specifications)
 def resolve_property_path(document: dict, path: str) -> Any   # raises KeyError if not resolvable
+def iter_property_paths(specifications, pattern) -> Iterator[(path, value)]   # "Routes[].GatewayId" -> ("specifications.Routes[1].GatewayId", value), ...
 def find_property_line(json_text: str, path: str) -> int      # 1-based line of the last path key in pretty JSON; 0 if absent
 def verify_output_dir(output_dir) -> VerificationReport       # Req 8.3 / 8.4
 ```
@@ -303,11 +330,22 @@ Rules operate on the AWS-field-name schema. Every rule records Citations whose `
 | `security_group` | EC2 `SecurityGroups[].GroupId`, Lambda `VpcConfig.SecurityGroupIds[]`, RDS `VpcSecurityGroups[].VpcSecurityGroupId` | SG `GroupId` | 0.9 |
 | `dynamodb_access` | Lambda `Environment.Variables.<K>` | value equals a `TableName`/`TableArn`, or contains a table name of length > 3 | 1.0 if equal, else 0.85 |
 | `log_group` | Lambda `FunctionName` | log group `/aws/lambda/<FunctionName>` | 1.0 |
+| `vpc_connection` (Req 14.2) | `VpcId` of subnet, route table, NAT gateway, VPC endpoint, load balancer, target group; internet gateway `Attachments[].VpcId` | VPC `VpcId` | 1.0 |
+| `subnet_placement` | EC2 `SubnetId`, Lambda `VpcConfig.SubnetIds[]`, RDS `DBSubnetGroup.Subnets[].SubnetIdentifier`, NAT `SubnetId`, VPC endpoint `SubnetIds[]`, LB `AvailabilityZones[].SubnetId` | subnet `SubnetId` | 1.0 |
+| `route_table_association` | route table `Associations[].SubnetId` | subnet | 1.0 |
+| `route_target` | route table `Routes[].GatewayId`, `Routes[].NatGatewayId` | internet gateway, VPC endpoint, NAT gateway id | 1.0 |
+| `security_group` | LB `SecurityGroups[]` | SG `GroupId` | 0.9 |
+| `lb_listener` | listener `LoadBalancerArn` | load balancer ARN | 1.0 |
+| `forwards_to` | listener `DefaultActions[].TargetGroupArn`, `DefaultActions[].ForwardConfig.TargetGroups[].TargetGroupArn` | target group ARN | 1.0 |
+| `certificate` | listener `Certificates[].CertificateArn`; CloudFront `DistributionConfig.ViewerCertificate.ACMCertificateArn` | certificate ARN | 1.0 |
+| `waf_protection` (Req 14.3) | CloudFront `DistributionConfig.WebACLId` | web ACL ARN | 1.0 |
+| `cdn_origin` | CloudFront `DistributionConfig.Origins.Items[].DomainName` | S3 bucket named by the endpoint domain (cites bucket `Name` too); load balancer with equal `DNSName` (cites `DNSName` too) | 1.0 |
+| `dns_alias` | Route 53 `ResourceRecordSets[].AliasTarget.DNSName` | CloudFront `DomainName` / LB `DNSName` (lower case, no trailing dot, no `dualstack.`; cites the matched field too) | 1.0 |
 
 Patterns (confidence = min of supporting relationship confidences):
 - **Serverless Application**: Lambda with ≥1 `iam_role_usage` or `dynamodb_access`.
 - **Compute in VPC**: EC2 instance with a `vpc_connection`.
-- **API Gateway + Lambda + DynamoDB**, **EC2 + Load Balancer**, **S3 + CloudFront**: reported in `undetectable_patterns` with reason "<service> is not a Supported_Resource_Type ..." (no statement is made about them).
+- **API Gateway + Lambda + DynamoDB** (API Gateway is not a Supported_Resource_Type), **EC2 + Load Balancer** (target group members — `DescribeTargetHealth` — are not collected), **S3 + CloudFront** (no pattern rule yet; reported as `cdn_origin` relationships): listed in `undetectable_patterns` with these reasons (`UNDETECTABLE_PATTERNS` holds `(pattern, reason)`); no pattern statement is made about them. Task 29 adds the web-app and static-site patterns.
 
 Citations are built by `cite(spec, property_path)`, which resolves `evidence_value` from the spec itself, so every citation resolves by construction (Property 5). `source_checksum` is `metadata.checksum`, or the computed Spec_Checksum when the spec is not sealed. Environment variable or policy names containing `.`, `[` or `]` are cited at their parent object.
 
@@ -337,6 +375,18 @@ Mapping from Specifications to Terraform arguments (AWS provider ~> 5.0). Values
 | `aws_dynamodb_table` | `name`, `billing_mode`, `hash_key`, `range_key`, `attribute {}` blocks, `read_capacity`/`write_capacity` (PROVISIONED only), `global_secondary_index {}` blocks, `stream_enabled`, `stream_view_type`, `tags` | – | TableName | – |
 | `aws_s3_bucket` | `bucket`, `tags`←bucket-tagging.TagSet | `aws_s3_bucket_versioning` (when Status present), `aws_s3_bucket_policy` (when Policy present), `aws_s3_bucket_server_side_encryption_configuration` (when rules present) | bucket name (all) | – |
 | `aws_iam_role` | `name`, `path`, `assume_role_policy` (jsonencode), `description`, `max_session_duration`, `tags` | `aws_iam_role_policy_attachment` per AttachedPolicies (id `<role>/<policy_arn>`), `aws_iam_role_policy` per InlinePolicies (id `<role>:<policy>`) | RoleName | – |
+| `aws_subnet` | `vpc_id`, `cidr_block`, `availability_zone`, `map_public_ip_on_launch`, `assign_ipv6_address_on_creation`, `ipv6_cidr_block` (associated block), `tags` | – | SubnetId | – |
+| `aws_route_table` | `vpc_id`, `route {}` per route (`cidr_block`/`ipv6_cidr_block`/`destination_prefix_list_id` + `gateway_id`, `nat_gateway_id`, `vpc_endpoint_id` (vpce- gateway), `transit_gateway_id`, `vpc_peering_connection_id`, `egress_only_gateway_id`, ...; the `local` route, propagated routes and gateway-endpoint prefix-list routes are skipped), `propagating_vgws`, `tags` | `aws_route_table_association` per non-main association (subnet or gateway; id `<subnet-or-gateway>/<rtb>`) | RouteTableId | – |
+| `aws_internet_gateway` | `vpc_id`←Attachments[0].VpcId, `tags` | – | InternetGatewayId | – |
+| `aws_nat_gateway` | `subnet_id`, `connectivity_type` (public/private), `allocation_id`/`private_ip`←NatGatewayAddresses[0], `tags` | – | NatGatewayId | – |
+| `aws_vpc_endpoint` | `vpc_id`, `service_name`, `vpc_endpoint_type`, `route_table_ids`, `subnet_ids`, `security_group_ids`←Groups[].GroupId, `private_dns_enabled` (Interface only), `ip_address_type`, `policy` (heredoc), `tags` | – | VpcEndpointId | – |
+| `aws_lb` | `name`, `internal`←Scheme, `load_balancer_type`←Type, `subnets`←AvailabilityZones[].SubnetId, `security_groups`, `ip_address_type`, from Attributes: `enable_deletion_protection`, `idle_timeout`, `enable_http2`, `drop_invalid_header_fields`, `access_logs {}`; `tags` | – | LoadBalancerArn | – |
+| `aws_lb_listener` | `load_balancer_arn`, `port`, `protocol`, `ssl_policy`, `certificate_arn` (default certificate), `alpn_policy`, `default_action {}` (`type`, `order`, `target_group_arn` or `forward { target_group {} stickiness {} }` for several groups, `redirect {}`, `fixed_response {}`), `tags` | – | ListenerArn | – |
+| `aws_lb_target_group` | `name`, `port`, `protocol`, `protocol_version`, `vpc_id`, `target_type`, `ip_address_type`, `health_check {}` from HealthCheck* and Matcher, from Attributes: `deregistration_delay`, `slow_start`, `load_balancing_algorithm_type`, `stickiness {}`; `tags` | – | TargetGroupArn | – |
+| `aws_cloudfront_distribution` | from DistributionConfig: `enabled`, `aliases`, `comment`, `default_root_object`, `price_class`, `http_version`, `is_ipv6_enabled`, `web_acl_id`, `origin {}` (`s3_origin_config` / `custom_origin_config` with `origin_ssl_protocols` whenever collected, `custom_header`), `default_cache_behavior {}` / `ordered_cache_behavior {}` (methods, policies, TTLs, `forwarded_values` when no cache policy, function associations), `custom_error_response {}`, `logging_config {}`, `restrictions { geo_restriction }`, `viewer_certificate {}` (ACM/IAM certificate or `cloudfront_default_certificate`); `tags` | – | Id | – |
+| `aws_route53_zone` | `name` (no trailing dot), `comment`←Config.Comment, `vpc {}` per VPCs, `tags` | `aws_route53_record` per record set except the apex NS/SOA (`name`, `type`, `set_identifier`, `ttl`+`records` or `alias {}`, `weighted_routing_policy`, `health_check_id`; id `<zone>_<name>_<type>[_<set id>]`) | zone id | – |
+| `aws_acm_certificate` | `domain_name`, `subject_alternative_names`, `validation_method`←DomainValidationOptions, `key_algorithm`, `options {}`, `tags` (Type `IMPORTED`: a comment that `certificate_body`/`private_key` must be set) | – | CertificateArn | `certificate_body`, `private_key`, `certificate_chain` (imported only) |
+| `aws_wafv2_web_acl` | `name`, `scope` (CLOUDFRONT for region `global`), `description`, `default_action { allow/block {} }`, `visibility_config {}`, `tags`; `Rules` stay unmapped | – | `<id>/<name>/<scope>` | `rule` (when Rules exist) |
 
 Unknown types fall back to emitting every identifier-like top-level key as an argument (debug aid only). Terraform resource names are `file_id` with `.` → `_` (hyphens are valid in Terraform names), prefixed with `r_` when not starting with a letter or `_`, and de-duplicated per (region, type) with `_2`, `_3`, ... Companion resources reuse the bucket name (S3) or use `<role name>_<policy name>` (IAM).
 
@@ -346,7 +396,7 @@ Terraform only loads `.tf` files of the root directory, so each region directory
 
 `verify_terraform_plan(tf_dir) -> (bool, str)` runs `terraform plan -detailed-exitcode -no-color -input=false` and decides **only by exit code** (0 = ok, 2 = changes, else error; missing `terraform` binary = error).
 
-Known limitations (documented in README): resource types outside the registry are not generated; S3 lifecycle/CORS/website/ACL and DynamoDB TTL/PITR are not mapped (left unmanaged, so they do not cause plan diffs); security group rules with differing per-range descriptions are emitted without descriptions.
+Known limitations (documented in README): resource types outside the registry are not generated; WAF rules and non-default listener certificates are not mapped; S3 lifecycle/CORS/website/ACL and DynamoDB TTL/PITR are not mapped (left unmanaged, so they do not cause plan diffs); security group rules with differing per-range descriptions are emitted without descriptions.
 
 ## Documentation Generator (`src/documentation.py`)
 

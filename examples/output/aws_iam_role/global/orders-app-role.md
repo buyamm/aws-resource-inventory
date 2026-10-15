@@ -8,7 +8,7 @@
 | ARN               | arn:aws:iam::123456789012:role/orders-app-role |
 | Region            | global                                         |
 | Account ID        | 123456789012                                   |
-| Collected At      | 2026-10-14T16:28:57Z                           |
+| Collected At      | 2026-10-15T16:01:58Z                           |
 | Collector Version | 0.1.0                                          |
 
 
@@ -17,10 +17,10 @@
 | Configuration Key  | Value                                          |
 | ------------------ | ---------------------------------------------- |
 | Arn                | arn:aws:iam::123456789012:role/orders-app-role |
-| CreateDate         | 2026-10-14T16:28:56.764000+00:00               |
+| CreateDate         | 2026-10-15T16:01:56.945000+00:00               |
 | MaxSessionDuration | 3600                                           |
 | Path               | /                                              |
-| RoleId             | AROARZPUZDIKAHS2OASY6                          |
+| RoleId             | AROARZPUZDIKPSYQ3UTIG                          |
 | RoleName           | orders-app-role                                |
 
 

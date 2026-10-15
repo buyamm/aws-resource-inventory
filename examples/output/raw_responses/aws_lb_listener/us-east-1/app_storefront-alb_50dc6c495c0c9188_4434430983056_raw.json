@@ -1,0 +1,55 @@
+{
+  "DescribeListeners": {
+    "Listeners": [
+      {
+        "AlpnPolicy": [],
+        "Certificates": [
+          {
+            "CertificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/59f7c298-c41f-48f5-a3db-cb8263d5fcc6"
+          }
+        ],
+        "DefaultActions": [
+          {
+            "TargetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188",
+            "Type": "forward"
+          }
+        ],
+        "ListenerArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434430983056",
+        "LoadBalancerArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188",
+        "Port": 443,
+        "Protocol": "HTTPS",
+        "SslPolicy": "ELBSecurityPolicy-2016-08"
+      }
+    ],
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Thu, 15 Oct 2026 23:01:58 GMT",
+        "server": "amazon.com",
+        "x-amzn-requestid": "lnEfKNOKjK3rsYjIz49VjnCgt2W0b125kDZpqowTQKDELDsrIdWU"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "lnEfKNOKjK3rsYjIz49VjnCgt2W0b125kDZpqowTQKDELDsrIdWU",
+      "RetryAttempts": 0
+    }
+  },
+  "DescribeTags": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Thu, 15 Oct 2026 23:01:58 GMT",
+        "server": "amazon.com",
+        "x-amzn-requestid": "0FtqGJwUDfNlls7dnS7I5bGnLGu21h7T9rgwspSWbgKvxHqYxild"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "0FtqGJwUDfNlls7dnS7I5bGnLGu21h7T9rgwspSWbgKvxHqYxild",
+      "RetryAttempts": 0
+    },
+    "TagDescriptions": [
+      {
+        "ResourceArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434430983056",
+        "Tags": []
+      }
+    ]
+  }
+}

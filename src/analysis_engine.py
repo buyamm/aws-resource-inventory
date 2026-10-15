@@ -13,6 +13,10 @@ Requirements Coverage:
 - Requirement 6.5: Rule-defined confidence scores and citations
 - Requirement 6.6: Overly permissive IAM, public S3 buckets, unrestricted security groups
 - Requirement 8.1 / 8.2 / 8.5: Citations with spec file and Spec_Checksum
+- Requirement 14.2: subnet_placement, route_table_association, route_target,
+  lb_listener, forwards_to, certificate relationships
+- Requirement 14.3: cdn_origin, waf_protection, certificate (CloudFront) and dns_alias
+  (Route 53 alias) relationships
 """
 
 from __future__ import annotations
@@ -23,9 +27,9 @@ from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
-from src.integrity import resolve_property_path, spec_checksum
+from src.integrity import iter_property_paths, resolve_property_path, spec_checksum
 from src.parser import ResourceSpec
-from src.resource_types import canonical_type, resource_id, spec_relpath
+from src.resource_types import canonical_type, resource_id, s3_bucket_from_domain, spec_relpath
 
 ADMIN_POLICY_ARN = "arn:aws:iam::aws:policy/AdministratorAccess"
 PUBLIC_GRANTEE_GROUPS = ("AllUsers", "AuthenticatedUsers")
@@ -38,13 +42,72 @@ CONFIDENCE = {
     "dynamodb_access_exact": 1.0,
     "dynamodb_access_substring": 0.85,
     "log_group": 1.0,
+    # Direct id / ARN references and exact DNS-name matches (Req 14.2, 14.3).
+    "subnet_placement": 1.0,
+    "route_table_association": 1.0,
+    "route_target": 1.0,
+    "lb_listener": 1.0,
+    "forwards_to": 1.0,
+    "certificate": 1.0,
+    "cdn_origin": 1.0,
+    "waf_protection": 1.0,
+    "dns_alias": 1.0,
 }
 
+# (pattern, reason): patterns no rule can detect from the collected data.
 UNDETECTABLE_PATTERNS = [
-    ("API Gateway + Lambda + DynamoDB", "API Gateway"),
-    ("EC2 + Load Balancer", "Elastic Load Balancing"),
-    ("S3 + CloudFront", "CloudFront"),
+    (
+        "API Gateway + Lambda + DynamoDB",
+        "API Gateway is not a Supported_Resource_Type; the pattern cannot be detected from "
+        "collected data.",
+    ),
+    (
+        "EC2 + Load Balancer",
+        "Target group members (elasticloadbalancing:DescribeTargetHealth) are not collected; "
+        "the pattern cannot be detected from collected data.",
+    ),
+    (
+        "S3 + CloudFront",
+        "No pattern rule covers it yet; CloudFront origins in S3 are reported as cdn_origin "
+        "relationships.",
+    ),
 ]
+
+# source type -> (pattern path, _Index table, relationship type): id / ARN references.
+_REFERENCE_RELATIONSHIPS: dict[str, list[tuple[str, str, str]]] = {
+    "aws_instance": [("SubnetId", "subnets", "subnet_placement")],
+    "aws_lambda_function": [("VpcConfig.SubnetIds[]", "subnets", "subnet_placement")],
+    "aws_db_instance": [
+        ("DBSubnetGroup.Subnets[].SubnetIdentifier", "subnets", "subnet_placement")
+    ],
+    "aws_nat_gateway": [("SubnetId", "subnets", "subnet_placement")],
+    "aws_vpc_endpoint": [("SubnetIds[]", "subnets", "subnet_placement")],
+    "aws_internet_gateway": [("Attachments[].VpcId", "vpcs", "vpc_connection")],
+    "aws_route_table": [
+        ("Associations[].SubnetId", "subnets", "route_table_association"),
+        ("Routes[].GatewayId", "internet_gateways", "route_target"),
+        ("Routes[].GatewayId", "vpc_endpoints", "route_target"),
+        ("Routes[].NatGatewayId", "nat_gateways", "route_target"),
+    ],
+    "aws_lb": [
+        ("AvailabilityZones[].SubnetId", "subnets", "subnet_placement"),
+        ("SecurityGroups[]", "security_groups", "security_group"),
+    ],
+    "aws_lb_listener": [
+        ("LoadBalancerArn", "load_balancers", "lb_listener"),
+        ("DefaultActions[].TargetGroupArn", "target_groups", "forwards_to"),
+        (
+            "DefaultActions[].ForwardConfig.TargetGroups[].TargetGroupArn",
+            "target_groups",
+            "forwards_to",
+        ),
+        ("Certificates[].CertificateArn", "certificates", "certificate"),
+    ],
+    "aws_cloudfront_distribution": [
+        ("DistributionConfig.WebACLId", "web_acls", "waf_protection"),
+        ("DistributionConfig.ViewerCertificate.ACMCertificateArn", "certificates", "certificate"),
+    ],
+}
 
 
 # ============================================================================
@@ -176,6 +239,12 @@ def _short(arn: str) -> str:
     return tail.split("/")[-1] if "/" in tail else tail
 
 
+def _dns(name: Any) -> str:
+    """Comparable DNS name: lower case, no trailing dot, no ``dualstack.`` prefix."""
+    text = str(name).lower().rstrip(".")
+    return text[len("dualstack.") :] if text.startswith("dualstack.") else text
+
+
 class _Index:
     """Lookup tables from ids/names/ARNs to collected specs."""
 
@@ -186,9 +255,44 @@ class _Index:
         self.tables: dict[str, ResourceSpec] = {}
         self.table_names: list[tuple[str, ResourceSpec]] = []
         self.log_groups: dict[str, ResourceSpec] = {}
+        # Network, load balancing and edge types (Req 14.2, 14.3), keyed by id or ARN.
+        self.subnets: dict[str, ResourceSpec] = {}
+        self.internet_gateways: dict[str, ResourceSpec] = {}
+        self.nat_gateways: dict[str, ResourceSpec] = {}
+        self.vpc_endpoints: dict[str, ResourceSpec] = {}
+        self.load_balancers: dict[str, ResourceSpec] = {}
+        self.target_groups: dict[str, ResourceSpec] = {}
+        self.certificates: dict[str, ResourceSpec] = {}
+        self.web_acls: dict[str, ResourceSpec] = {}
+        self.buckets: dict[str, ResourceSpec] = {}
+        # Normalized DNS names of load balancers and CloudFront distributions.
+        self.lb_dns: dict[str, ResourceSpec] = {}
+        self.distribution_dns: dict[str, ResourceSpec] = {}
+        by_id = {
+            "aws_subnet": self.subnets,
+            "aws_internet_gateway": self.internet_gateways,
+            "aws_nat_gateway": self.nat_gateways,
+            "aws_vpc_endpoint": self.vpc_endpoints,
+        }
+        by_arn = {
+            "aws_lb": self.load_balancers,
+            "aws_lb_target_group": self.target_groups,
+            "aws_acm_certificate": self.certificates,
+            "aws_wafv2_web_acl": self.web_acls,
+        }
         for spec in specs:
             s = spec.specifications or {}
             kind = _type(spec)
+            if kind in by_id:
+                by_id[kind][resource_id(spec)] = spec
+            elif kind in by_arn:
+                by_arn[kind][spec.arn] = spec
+            if kind == "aws_lb" and isinstance(s.get("DNSName"), str):
+                self.lb_dns[_dns(s["DNSName"])] = spec
+            elif kind == "aws_cloudfront_distribution" and isinstance(s.get("DomainName"), str):
+                self.distribution_dns[_dns(s["DomainName"])] = spec
+            elif kind == "aws_s3_bucket":
+                self.buckets[resource_id(spec)] = spec
             if kind == "aws_vpc" and isinstance(s.get("VpcId"), str):
                 self.vpcs[s["VpcId"]] = spec
             elif kind == "aws_security_group" and isinstance(s.get("GroupId"), str):
@@ -248,6 +352,12 @@ class AnalysisEngine:
                 "aws_security_group": ("VpcId",),
                 "aws_lambda_function": ("VpcConfig", "VpcId"),
                 "aws_db_instance": ("DBSubnetGroup", "VpcId"),
+                "aws_subnet": ("VpcId",),
+                "aws_route_table": ("VpcId",),
+                "aws_nat_gateway": ("VpcId",),
+                "aws_vpc_endpoint": ("VpcId",),
+                "aws_lb": ("VpcId",),
+                "aws_lb_target_group": ("VpcId",),
             }.get(kind)
             if vpc_paths:
                 vpc_id = _get(s, *vpc_paths)
@@ -319,8 +429,58 @@ class AnalysisEngine:
 
             if kind == "aws_lambda_function":
                 self._lambda_relationships(spec, index, add)
+            self._reference_relationships(spec, kind, index, add)
+            if kind == "aws_cloudfront_distribution":
+                self._origin_relationships(spec, index, add)
+            elif kind == "aws_route53_zone":
+                self._alias_relationships(spec, index, add)
 
         return list(found.values())
+
+    @staticmethod
+    def _reference_relationships(spec: ResourceSpec, kind: str, index: _Index, add: Any) -> None:
+        """Id / ARN references of _REFERENCE_RELATIONSHIPS (Req 14.2, 14.3)."""
+        for pattern, table, relationship in _REFERENCE_RELATIONSHIPS.get(kind, []):
+            targets: dict[str, ResourceSpec] = getattr(index, table)
+            for path, value in iter_property_paths(spec.specifications, pattern):
+                if isinstance(value, str) and value in targets:
+                    add(
+                        spec,
+                        targets[value],
+                        relationship,
+                        CONFIDENCE[relationship],
+                        [cite(spec, path)],
+                    )
+
+    @staticmethod
+    def _origin_relationships(spec: ResourceSpec, index: _Index, add: Any) -> None:
+        """CloudFront origins: S3 bucket by origin domain, load balancer by DNS name."""
+        pattern = "DistributionConfig.Origins.Items[].DomainName"
+        for path, domain in iter_property_paths(spec.specifications, pattern):
+            if not isinstance(domain, str):
+                continue
+            bucket = index.buckets.get(s3_bucket_from_domain(domain) or "")
+            if bucket is not None:
+                citations = [cite(spec, path), cite(bucket, "specifications.Name")]
+                add(spec, bucket, "cdn_origin", CONFIDENCE["cdn_origin"], citations)
+            lb = index.lb_dns.get(_dns(domain))
+            if lb is not None:
+                citations = [cite(spec, path), cite(lb, "specifications.DNSName")]
+                add(spec, lb, "cdn_origin", CONFIDENCE["cdn_origin"], citations)
+
+    @staticmethod
+    def _alias_relationships(spec: ResourceSpec, index: _Index, add: Any) -> None:
+        """Route 53 alias records pointing at a CloudFront distribution or load balancer."""
+        pattern = "ResourceRecordSets[].AliasTarget.DNSName"
+        for path, dns_name in iter_property_paths(spec.specifications, pattern):
+            name = _dns(dns_name)
+            for target, target_path in (
+                (index.distribution_dns.get(name), "specifications.DomainName"),
+                (index.lb_dns.get(name), "specifications.DNSName"),
+            ):
+                if target is not None:
+                    citations = [cite(spec, path), cite(target, target_path)]
+                    add(spec, target, "dns_alias", CONFIDENCE["dns_alias"], citations)
 
     @staticmethod
     def _lambda_relationships(spec: ResourceSpec, index: _Index, add: Any) -> None:
@@ -605,12 +765,7 @@ class AnalysisEngine:
         patterns = self.detect_patterns(specs, relationships)
         findings = self.flag_suspicious_patterns(specs)
         undetectable = [
-            {
-                "pattern": pattern,
-                "reason": f"{service} is not a Supported_Resource_Type; the pattern cannot be "
-                "detected from collected data.",
-            }
-            for pattern, service in UNDETECTABLE_PATTERNS
+            {"pattern": pattern, "reason": reason} for pattern, reason in UNDETECTABLE_PATTERNS
         ]
         report = AnalysisReport(
             relationships=relationships,

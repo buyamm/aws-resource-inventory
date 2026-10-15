@@ -8,7 +8,7 @@
 | ARN               | arn:aws:lambda:us-east-1:123456789012:function:order-processor |
 | Region            | us-east-1                                                      |
 | Account ID        | 123456789012                                                   |
-| Collected At      | 2026-10-14T16:28:57Z                                           |
+| Collected At      | 2026-10-15T16:01:57Z                                           |
 | Collector Version | 0.1.0                                                          |
 
 
@@ -16,13 +16,13 @@
 
 | Configuration Key | Value                                                          |
 | ----------------- | -------------------------------------------------------------- |
-| CodeSha256        | BDtH4Huf9CMc3iLRdqn8DhDGsQxETljhj6P7Pox3VMw=                   |
+| CodeSha256        | waOhCdKJrCL2WZOuy/VNi88bTRKaUrp+2whtIFlUFf8=                   |
 | CodeSize          | 164                                                            |
 | Description       |                                                                |
 | FunctionArn       | arn:aws:lambda:us-east-1:123456789012:function:order-processor |
 | FunctionName      | order-processor                                                |
 | Handler           | handler.handler                                                |
-| LastModified      | 2026-10-14T16:28:56.804755000Z                                 |
+| LastModified      | 2026-10-15T16:01:56.987439000Z                                 |
 | LastUpdateStatus  | Successful                                                     |
 | MemorySize        | 256                                                            |
 | PackageType       | Zip                                                            |

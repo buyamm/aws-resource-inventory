@@ -375,7 +375,7 @@ def pytest_configure(config):
 
 
 # ============================================================================
-# Sample account (all ten Supported_Resource_Types) inside moto
+# Sample account (every Supported_Resource_Type) inside moto
 # ============================================================================
 
 
@@ -383,11 +383,16 @@ def pytest_configure(config):
 def moto_all_services():
     """Start moto mocks for every service the inventory touches."""
     from moto import (
+        mock_acm,
+        mock_cloudfront,
+        mock_elbv2,
         mock_logs,
         mock_rds,
         mock_resourcegroupstaggingapi,
+        mock_route53,
         mock_stepfunctions,
         mock_sts,
+        mock_wafv2,
     )
 
     mocks = [
@@ -401,6 +406,11 @@ def moto_all_services():
         mock_dynamodb(),
         mock_sts(),
         mock_resourcegroupstaggingapi(),
+        mock_elbv2(),
+        mock_cloudfront(),
+        mock_route53(),
+        mock_acm(),
+        mock_wafv2(),
     ]
     for m in mocks:
         m.start()

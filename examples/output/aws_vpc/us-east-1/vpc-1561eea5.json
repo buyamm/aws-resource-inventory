@@ -1,0 +1,40 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-1561eea5",
+  "generated_at": "2026-10-15T16:01:58.115386Z",
+  "metadata": {
+    "api_version": "2016-11-15",
+    "checksum": "507efbbe65975416900a566c80d9235960dccfcc600418158dac715ab2bf945b",
+    "collected_at": "2026-10-15T16:01:57Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_vpc",
+  "specifications": {
+    "CidrBlock": "10.0.0.0/16",
+    "CidrBlockAssociationSet": [
+      {
+        "AssociationId": "vpc-cidr-assoc-1445e8d5",
+        "CidrBlock": "10.0.0.0/16",
+        "CidrBlockState": {
+          "State": "associated"
+        }
+      }
+    ],
+    "DhcpOptionsId": "default",
+    "EnableDnsHostnames": false,
+    "EnableDnsSupport": true,
+    "InstanceTenancy": "default",
+    "Ipv6CidrBlockAssociationSet": [],
+    "IsDefault": false,
+    "OwnerId": "123456789012",
+    "State": "available",
+    "Tags": [
+      {
+        "Key": "Name",
+        "Value": "orders-vpc"
+      }
+    ],
+    "VpcId": "vpc-1561eea5"
+  }
+}

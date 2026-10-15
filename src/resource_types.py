@@ -1,15 +1,19 @@
 """
 Resource Type Registry
 
-Single source of truth for the ten Supported_Resource_Types: canonical ids
+Single source of truth for the Supported_Resource_Types: canonical ids
 (= Terraform AWS provider resource type names), accepted aliases, AWS service,
-scope, the Specifications field that holds the resource id, and draw.io styles.
+scope, the Specifications field that holds the resource id, ARN layout and
+draw.io styles.
 
 Requirements Coverage:
 - Requirement 1.3: Supported resource types (EC2, VPC, Security Groups, Lambda, RDS,
   CloudWatch log groups, Step Functions, DynamoDB, S3, IAM roles)
 - Requirement 3.2: File naming and directory layout of per-resource output files
 - Requirement 6.4: AWS stencil styles for diagrams
+- Requirement 14.1: Subnets, route tables, internet/NAT gateways, VPC endpoints,
+  CloudFront distributions, load balancers, listeners, target groups, Route 53 zones,
+  ACM certificates and WAFv2 web ACLs
 """
 
 from __future__ import annotations
@@ -33,6 +37,33 @@ def _aws4_style(res_icon: str, fill_color: str) -> str:
     return f"{_DRAWIO_BASE_STYLE}resIcon=mxgraph.aws4.{res_icon};fillColor={fill_color};"
 
 
+def _aws4_shape(shape: str, fill_color: str) -> str:
+    """Resource-level stencil (standalone shape, no service frame)."""
+    return (
+        "sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;"
+        "dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;"
+        f"fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.{shape};"
+        f"fillColor={fill_color};"
+    )
+
+
+def _aws4_group(stroke_color: str) -> str:
+    """Group stencil (subnets are containers in AWS diagrams)."""
+    return (
+        "points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],"
+        "[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;"
+        "gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;container=1;"
+        "pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;"
+        f"grIcon=mxgraph.aws4.group_security_group;grStroke=0;strokeColor={stroke_color};"
+        f"fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor={stroke_color};"
+        "dashed=0;"
+    )
+
+
+NETWORK_COLOR = "#8C4FFF"
+SECURITY_COLOR = "#DD344C"
+
+
 @dataclass(frozen=True)
 class ResourceTypeInfo:
     """Static description of one Supported_Resource_Type."""
@@ -45,6 +76,8 @@ class ResourceTypeInfo:
     drawio_style: str
     arn_service: str = ""
     arn_resource: str = ""  # resource part of the ARN with "{id}" for the resource id
+    # Regex the resource id parsed from an ARN must match in full ("" = anything).
+    id_pattern: str = ""
 
     @property
     def terraform_type(self) -> str:
@@ -155,8 +188,141 @@ REGISTRY: dict[str, ResourceTypeInfo] = {
             arn_service="iam",
             arn_resource="role/{id}",
         ),
+        # Network, edge and load balancing (Requirement 14.1). An empty id_field means
+        # the resource id is taken from the ARN (see resource_id()).
+        ResourceTypeInfo(
+            "aws_subnet",
+            "ec2",
+            "regional",
+            "SubnetId",
+            ("subnet",),
+            _aws4_group("#147EBA"),
+            arn_service="ec2",
+            arn_resource="subnet/{id}",
+        ),
+        ResourceTypeInfo(
+            "aws_route_table",
+            "ec2",
+            "regional",
+            "RouteTableId",
+            ("route_table",),
+            _aws4_shape("router", NETWORK_COLOR),
+            arn_service="ec2",
+            arn_resource="route-table/{id}",
+        ),
+        ResourceTypeInfo(
+            "aws_internet_gateway",
+            "ec2",
+            "regional",
+            "InternetGatewayId",
+            ("internet_gateway",),
+            _aws4_shape("internet_gateway", NETWORK_COLOR),
+            arn_service="ec2",
+            arn_resource="internet-gateway/{id}",
+        ),
+        ResourceTypeInfo(
+            "aws_nat_gateway",
+            "ec2",
+            "regional",
+            "NatGatewayId",
+            ("nat_gateway",),
+            _aws4_shape("nat_gateway", NETWORK_COLOR),
+            arn_service="ec2",
+            arn_resource="natgateway/{id}",
+        ),
+        ResourceTypeInfo(
+            "aws_vpc_endpoint",
+            "ec2",
+            "regional",
+            "VpcEndpointId",
+            ("vpc_endpoint",),
+            _aws4_shape("endpoints", NETWORK_COLOR),
+            arn_service="ec2",
+            arn_resource="vpc-endpoint/{id}",
+        ),
+        ResourceTypeInfo(
+            "aws_cloudfront_distribution",
+            "cloudfront",
+            "global",
+            "Id",
+            ("cloudfront", "cloudfront_distribution"),
+            _aws4_style("cloudfront", NETWORK_COLOR),
+            arn_service="cloudfront",
+            arn_resource="distribution/{id}",
+        ),
+        ResourceTypeInfo(
+            "aws_lb",
+            "elbv2",
+            "regional",
+            "",
+            ("aws_alb", "alb", "load_balancer"),
+            _aws4_shape("application_load_balancer", NETWORK_COLOR),
+            arn_service="elasticloadbalancing",
+            arn_resource="loadbalancer/{id}",
+            id_pattern=r"(app|net|gwy)/[^/]+/[^/]+",
+        ),
+        ResourceTypeInfo(
+            "aws_lb_listener",
+            "elbv2",
+            "regional",
+            "",
+            ("aws_alb_listener", "listener"),
+            _aws4_style("elastic_load_balancing", NETWORK_COLOR),
+            arn_service="elasticloadbalancing",
+            arn_resource="listener/{id}",
+            id_pattern=r"(app|net|gwy)/[^/]+/[^/]+/[^/]+",
+        ),
+        ResourceTypeInfo(
+            "aws_lb_target_group",
+            "elbv2",
+            "regional",
+            "",
+            ("aws_alb_target_group", "target_group"),
+            _aws4_style("elastic_load_balancing", NETWORK_COLOR),
+            arn_service="elasticloadbalancing",
+            arn_resource="targetgroup/{id}",
+            id_pattern=r"[^/]+/[^/]+",
+        ),
+        ResourceTypeInfo(
+            "aws_route53_zone",
+            "route53",
+            "global",
+            "",
+            ("route53", "route53_zone", "hosted_zone"),
+            _aws4_shape("route_53_hosted_zone", NETWORK_COLOR),
+            arn_service="route53",
+            arn_resource="hostedzone/{id}",
+        ),
+        ResourceTypeInfo(
+            "aws_acm_certificate",
+            "acm",
+            "regional",
+            "",
+            ("acm", "acm_certificate", "certificate"),
+            _aws4_style("certificate_manager_3", SECURITY_COLOR),
+            arn_service="acm",
+            arn_resource="certificate/{id}",
+        ),
+        # CloudFront-scope web ACLs ("global/webacl/...", endpoint us-east-1) get the
+        # region "global"; REGIONAL ones keep their region ("regional/webacl/...").
+        ResourceTypeInfo(
+            "aws_wafv2_web_acl",
+            "wafv2",
+            "regional",
+            "",
+            ("waf", "wafv2", "web_acl"),
+            _aws4_style("waf", SECURITY_COLOR),
+            arn_service="wafv2",
+            arn_resource="regional/webacl/{id}",
+            id_pattern=r"[^/]+/[^/]+",
+        ),
     )
 }
+
+_WAF_GLOBAL_PREFIX = "global/webacl/"
+# S3 origin domains: <bucket>.s3.amazonaws.com, <bucket>.s3.<region>.amazonaws.com,
+# <bucket>.s3-website-<region>.amazonaws.com, <bucket>.s3-website.<region>.amazonaws.com
+_S3_DOMAIN = re.compile(r"^(?P<bucket>.+?)\.s3(?:-website)?(?:[.-][a-z0-9-]+)*\.amazonaws\.com$")
 
 _ALIASES: dict[str, str] = {
     name: info.type_id for info in REGISTRY.values() for name in (info.type_id, *info.aliases)
@@ -174,8 +340,10 @@ def build_arn(type_id: str, resource_id: str, region: str, account_id: str) -> s
     """ARN of a resource in the format discovery records (global types carry no region)."""
     info = REGISTRY[type_id]
     resource = info.arn_resource.format(id=resource_id)
-    if info.service == "s3":
-        return f"arn:aws:s3:::{resource}"
+    if info.service in ("s3", "route53"):
+        return f"arn:aws:{info.arn_service}:::{resource}"
+    if type_id == "aws_wafv2_web_acl" and region == GLOBAL_REGION:
+        return f"arn:aws:wafv2:us-east-1:{account_id}:{_WAF_GLOBAL_PREFIX}{resource_id}"
     if info.scope == "global":
         return f"arn:aws:{info.arn_service}::{account_id}:{resource}"
     return f"arn:aws:{info.arn_service}:{region}:{account_id}:{resource}"
@@ -184,13 +352,16 @@ def build_arn(type_id: str, resource_id: str, region: str, account_id: str) -> s
 def parse_arn(arn: str) -> tuple[str, str, str] | None:
     """(type_id, resource_id, region) of a Supported_Resource_Type ARN, else None.
 
-    IAM role ids drop the path; log group ids drop a trailing ``:*``; S3 object ARNs
-    and unsupported resource kinds return None.
+    IAM role ids drop the path; log group ids drop a trailing ``:*``; CloudFront-scope
+    WAF web ACLs map to region ``global``; S3 object ARNs and unsupported resource kinds
+    (classic load balancers, listener rules, ...) return None.
     """
     parts = arn.split(":", 5)
     if len(parts) != 6 or parts[0] != "arn":
         return None
     service, region, resource = parts[2], parts[3], parts[5]
+    if service == "wafv2" and resource.startswith(_WAF_GLOBAL_PREFIX):
+        resource, region = "regional/webacl/" + resource[len(_WAF_GLOBAL_PREFIX) :], GLOBAL_REGION
     for info in REGISTRY.values():
         prefix = info.arn_resource.split("{id}")[0]
         if info.arn_service != service or not resource.startswith(prefix):
@@ -202,10 +373,16 @@ def parse_arn(arn: str) -> tuple[str, str, str] | None:
             raw_id = raw_id.split("/")[-1]
         elif info.type_id == "aws_s3_bucket" and "/" in raw_id:
             return None
-        if not raw_id:
+        if not raw_id or (info.id_pattern and not re.fullmatch(info.id_pattern, raw_id)):
             return None
         return info.type_id, raw_id, GLOBAL_REGION if info.scope == "global" else region
     return None
+
+
+def s3_bucket_from_domain(domain: str) -> str | None:
+    """Bucket name of an S3 REST or website endpoint domain (CloudFront origins), else None."""
+    match = _S3_DOMAIN.match(domain.lower().rstrip("."))
+    return match.group("bucket") if match else None
 
 
 def arn_resource_segment(arn: str) -> str:
@@ -215,12 +392,20 @@ def arn_resource_segment(arn: str) -> str:
 
 
 def resource_id(spec: ResourceSpec) -> str:
-    """The resource id of a spec (Specifications id field, else the ARN's last segment)."""
+    """The resource id of a spec: its Specifications id field, else the id in its ARN.
+
+    Types without an id field (load balancers, listeners, target groups, Route 53 zones,
+    ACM certificates, WAF web ACLs) use the id parse_arn() reads from the ARN, e.g.
+    ``app/web-alb/50dc6c495c0c9188``; anything else falls back to the ARN's last segment.
+    """
     info = REGISTRY.get(canonical_type(spec.resource_type) or "")
     if info is not None:
-        value = (spec.specifications or {}).get(info.id_field)
+        value = (spec.specifications or {}).get(info.id_field) if info.id_field else None
         if isinstance(value, str) and value:
             return value
+        parsed = parse_arn(spec.arn)
+        if parsed is not None and parsed[0] == info.type_id:
+            return parsed[1]
     return arn_resource_segment(spec.arn)
 
 

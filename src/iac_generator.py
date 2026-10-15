@@ -14,6 +14,7 @@ Requirements Coverage:
   plan verification decided by `terraform plan -detailed-exitcode` exit code only
 - Requirement 7.6: verify_state.sh
 - Requirement 7.7: Traceability comments (spec file, ARN, region)
+- Requirement 14.1: Mappings for the network, edge and load-balancing types
 """
 
 from __future__ import annotations
@@ -531,6 +532,670 @@ def _map_iam_role(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
     return m
 
 
+# ============================================================================
+# Network, edge and load balancing (Requirement 14.1)
+# ============================================================================
+
+
+def _items(*pairs: tuple[str, Any]) -> list[Item]:
+    """Block items without absent values (None, "", [] and {} are not emitted)."""
+    return [(k, v) for k, v in pairs if v is not None and v != "" and v != [] and v != {}]
+
+
+def _quantity_items(value: Any) -> list[Any]:
+    """``Items`` of CloudFront's ``{"Quantity": n, "Items": [...]}`` lists."""
+    return _list(_dict(value).get("Items"))
+
+
+def _attributes(value: Any) -> dict[str, str]:
+    """ELB ``[{"Key": k, "Value": v}]`` attributes as a dict."""
+    return {
+        str(a["Key"]): str(a.get("Value", ""))
+        for a in _list(value)
+        if isinstance(a, dict) and "Key" in a
+    }
+
+
+def _int(value: Any) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _bool(value: Any) -> bool | None:
+    return {"true": True, "false": False}.get(str(value).lower()) if value is not None else None
+
+
+def _map_subnet(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    m = Mapping(import_id=resource_id(spec))
+    m.arg("vpc_id", s.get("VpcId"), "VpcId")
+    m.arg("cidr_block", s.get("CidrBlock"), "CidrBlock")
+    m.arg("availability_zone", s.get("AvailabilityZone"), "AvailabilityZone")
+    m.arg("map_public_ip_on_launch", s.get("MapPublicIpOnLaunch"), "MapPublicIpOnLaunch")
+    m.arg(
+        "assign_ipv6_address_on_creation",
+        s.get("AssignIpv6AddressOnCreation"),
+        "AssignIpv6AddressOnCreation",
+    )
+    ipv6 = [
+        a.get("Ipv6CidrBlock")
+        for a in _list(s.get("Ipv6CidrBlockAssociationSet"))
+        if isinstance(a, dict)
+        and _dict(a.get("Ipv6CidrBlockState")).get("State", "associated") == "associated"
+    ]
+    m.arg("ipv6_cidr_block", ipv6[0] if ipv6 else None, "Ipv6CidrBlockAssociationSet")
+    m.arg("tags", _tags(s.get("Tags")), "Tags")
+    m.mapped.update({"SubnetId", "SubnetArn"})
+    return m
+
+
+# Route fields -> Terraform route arguments (a vpce- GatewayId is a GWLB endpoint).
+_ROUTE_TARGETS = (
+    ("NatGatewayId", "nat_gateway_id"),
+    ("TransitGatewayId", "transit_gateway_id"),
+    ("VpcPeeringConnectionId", "vpc_peering_connection_id"),
+    ("EgressOnlyInternetGatewayId", "egress_only_gateway_id"),
+    ("CarrierGatewayId", "carrier_gateway_id"),
+    ("LocalGatewayId", "local_gateway_id"),
+    ("CoreNetworkArn", "core_network_arn"),
+)
+
+
+def _route_block(route: dict[str, Any]) -> Block | None:
+    gateway = str(route.get("GatewayId") or "")
+    if gateway == "local" or route.get("Origin") == "EnableVgwRoutePropagation":
+        return None
+    if gateway.startswith("vpce-") and route.get("DestinationPrefixListId"):
+        return None  # gateway endpoint route, managed by aws_vpc_endpoint.route_table_ids
+    items = _items(
+        ("cidr_block", route.get("DestinationCidrBlock")),
+        ("ipv6_cidr_block", route.get("DestinationIpv6CidrBlock")),
+        ("destination_prefix_list_id", route.get("DestinationPrefixListId")),
+    )
+    if gateway.startswith("vpce-"):
+        items.append(("vpc_endpoint_id", gateway))
+    elif gateway:
+        items.append(("gateway_id", gateway))
+    items += _items(*((tf, route.get(aws)) for aws, tf in _ROUTE_TARGETS))
+    if not any(isinstance(i, tuple) and i[0].endswith(("_id", "_arn")) for i in items):
+        items += _items(("network_interface_id", route.get("NetworkInterfaceId")))
+    return Block("route", items)
+
+
+def _map_route_table(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    route_table_id = resource_id(spec)
+    m = Mapping(import_id=route_table_id)
+    m.arg("vpc_id", s.get("VpcId"), "VpcId")
+    for route in _list(s.get("Routes")):
+        block = _route_block(route) if isinstance(route, dict) else None
+        if block is not None:
+            m.block(block)
+    m.mapped.add("Routes")
+    vgws = [g.get("GatewayId") for g in _list(s.get("PropagatingVgws")) if isinstance(g, dict)]
+    m.arg("propagating_vgws", [g for g in vgws if g], "PropagatingVgws")
+    m.arg("tags", _tags(s.get("Tags")), "Tags")
+    ref = Raw(f"aws_route_table.{name}.id")
+    for association in _list(s.get("Associations")):
+        if not isinstance(association, dict) or association.get("Main"):
+            continue
+        target = association.get("SubnetId") or association.get("GatewayId")
+        if not target:
+            continue
+        argument = "subnet_id" if association.get("SubnetId") else "gateway_id"
+        m.companions.append(
+            TfResource(
+                "aws_route_table_association",
+                _companion_name(name, str(target)),
+                [(argument, target), ("route_table_id", ref)],
+                f"{target}/{route_table_id}",
+            )
+        )
+    m.mapped.update({"RouteTableId", "Associations"})
+    return m
+
+
+def _map_internet_gateway(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    m = Mapping(import_id=resource_id(spec))
+    vpcs = [a.get("VpcId") for a in _list(s.get("Attachments")) if isinstance(a, dict)]
+    m.arg("vpc_id", vpcs[0] if vpcs else None, "Attachments")
+    m.arg("tags", _tags(s.get("Tags")), "Tags")
+    m.mapped.add("InternetGatewayId")
+    return m
+
+
+def _map_nat_gateway(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    m = Mapping(import_id=resource_id(spec))
+    m.arg("subnet_id", s.get("SubnetId"), "SubnetId")
+    connectivity = s.get("ConnectivityType")
+    m.arg(
+        "connectivity_type",
+        connectivity if connectivity in ("public", "private") else None,
+        "ConnectivityType",
+    )
+    addresses = [a for a in _list(s.get("NatGatewayAddresses")) if isinstance(a, dict)]
+    primary = addresses[0] if addresses else {}
+    m.arg("allocation_id", primary.get("AllocationId"), "NatGatewayAddresses")
+    m.arg("private_ip", primary.get("PrivateIp"))
+    m.arg("tags", _tags(s.get("Tags")), "Tags")
+    m.mapped.update({"NatGatewayId", "VpcId"})
+    return m
+
+
+def _map_vpc_endpoint(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    m = Mapping(import_id=resource_id(spec))
+    m.arg("vpc_id", s.get("VpcId"), "VpcId")
+    m.arg("service_name", s.get("ServiceName"), "ServiceName")
+    endpoint_type = s.get("VpcEndpointType")
+    m.arg("vpc_endpoint_type", endpoint_type, "VpcEndpointType")
+    m.arg("route_table_ids", _list(s.get("RouteTableIds")), "RouteTableIds")
+    m.arg("subnet_ids", _list(s.get("SubnetIds")), "SubnetIds")
+    groups = [g.get("GroupId") for g in _list(s.get("Groups")) if isinstance(g, dict)]
+    m.arg("security_group_ids", [g for g in groups if g], "Groups")
+    if endpoint_type == "Interface":
+        m.arg("private_dns_enabled", s.get("PrivateDnsEnabled"), "PrivateDnsEnabled")
+    m.arg("ip_address_type", s.get("IpAddressType"), "IpAddressType")
+    m.arg("policy", _json_doc(s.get("PolicyDocument")), "PolicyDocument")
+    m.arg("tags", _tags(s.get("Tags")), "Tags")
+    m.mapped.add("VpcEndpointId")
+    return m
+
+
+def _map_lb(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    m = Mapping(import_id=str(s.get("LoadBalancerArn") or spec.arn))
+    m.arg("name", s.get("LoadBalancerName"), "LoadBalancerName")
+    scheme = s.get("Scheme")
+    m.arg("internal", scheme == "internal" if scheme else None, "Scheme")
+    m.arg("load_balancer_type", s.get("Type"), "Type")
+    subnets = [z.get("SubnetId") for z in _list(s.get("AvailabilityZones")) if isinstance(z, dict)]
+    m.arg("subnets", [z for z in subnets if z], "AvailabilityZones")
+    m.arg("security_groups", _list(s.get("SecurityGroups")), "SecurityGroups")
+    m.arg("ip_address_type", s.get("IpAddressType"), "IpAddressType")
+    attributes = _attributes(s.get("Attributes"))
+    m.arg(
+        "enable_deletion_protection",
+        _bool(attributes.get("deletion_protection.enabled")),
+        "Attributes",
+    )
+    m.arg("idle_timeout", _int(attributes.get("idle_timeout.timeout_seconds")))
+    m.arg("enable_http2", _bool(attributes.get("routing.http2.enabled")))
+    m.arg(
+        "drop_invalid_header_fields",
+        _bool(attributes.get("routing.http.drop_invalid_header_fields.enabled")),
+    )
+    if _bool(attributes.get("access_logs.s3.enabled")):
+        m.block(
+            Block(
+                "access_logs",
+                _items(
+                    ("bucket", attributes.get("access_logs.s3.bucket")),
+                    ("prefix", attributes.get("access_logs.s3.prefix")),
+                    ("enabled", True),
+                ),
+            )
+        )
+    m.arg("tags", _tags(s.get("Tags")), "Tags")
+    m.mapped.update({"LoadBalancerArn", "VpcId"})
+    return m
+
+
+def _default_action(action: dict[str, Any]) -> Block:
+    kind = action.get("Type")
+    items = _items(("type", kind), ("order", action.get("Order")))
+    forward = _dict(action.get("ForwardConfig"))
+    groups = [g for g in _list(forward.get("TargetGroups")) if isinstance(g, dict)]
+    if kind == "forward" and len(groups) > 1:
+        targets: list[Item] = [
+            Block(
+                "target_group",
+                _items(("arn", g.get("TargetGroupArn")), ("weight", g.get("Weight"))),
+            )
+            for g in groups
+        ]
+        stickiness = _dict(forward.get("TargetGroupStickinessConfig"))
+        if stickiness:
+            targets.append(
+                Block(
+                    "stickiness",
+                    _items(
+                        ("enabled", stickiness.get("Enabled")),
+                        ("duration", stickiness.get("DurationSeconds")),
+                    ),
+                )
+            )
+        items.append(Block("forward", targets))
+    elif kind == "forward":
+        arn = action.get("TargetGroupArn") or (groups[0].get("TargetGroupArn") if groups else None)
+        items += _items(("target_group_arn", arn))
+    redirect = _dict(action.get("RedirectConfig"))
+    if redirect:
+        items.append(
+            Block(
+                "redirect",
+                _items(
+                    ("host", redirect.get("Host")),
+                    ("path", redirect.get("Path")),
+                    ("port", redirect.get("Port")),
+                    ("protocol", redirect.get("Protocol")),
+                    ("query", redirect.get("Query")),
+                    ("status_code", redirect.get("StatusCode")),
+                ),
+            )
+        )
+    fixed = _dict(action.get("FixedResponseConfig"))
+    if fixed:
+        items.append(
+            Block(
+                "fixed_response",
+                _items(
+                    ("content_type", fixed.get("ContentType")),
+                    ("message_body", fixed.get("MessageBody")),
+                    ("status_code", fixed.get("StatusCode")),
+                ),
+            )
+        )
+    return Block("default_action", items)
+
+
+def _map_lb_listener(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    m = Mapping(import_id=str(s.get("ListenerArn") or spec.arn))
+    m.arg("load_balancer_arn", s.get("LoadBalancerArn"), "LoadBalancerArn")
+    m.arg("port", s.get("Port"), "Port")
+    m.arg("protocol", s.get("Protocol"), "Protocol")
+    m.arg("ssl_policy", s.get("SslPolicy"), "SslPolicy")
+    certificates = [c for c in _list(s.get("Certificates")) if isinstance(c, dict)]
+    default_certificate = next(
+        (c for c in certificates if c.get("IsDefault") is not False),
+        certificates[0] if certificates else {},
+    )
+    m.arg("certificate_arn", default_certificate.get("CertificateArn"), "Certificates")
+    alpn = _list(s.get("AlpnPolicy"))
+    m.arg("alpn_policy", alpn[0] if alpn else None, "AlpnPolicy")
+    for action in _list(s.get("DefaultActions")):
+        if isinstance(action, dict):
+            m.block(_default_action(action), "DefaultActions")
+    m.arg("tags", _tags(s.get("Tags")), "Tags")
+    m.mapped.add("ListenerArn")
+    return m
+
+
+def _map_lb_target_group(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    m = Mapping(import_id=str(s.get("TargetGroupArn") or spec.arn))
+    m.arg("name", s.get("TargetGroupName"), "TargetGroupName")
+    m.arg("port", s.get("Port"), "Port")
+    m.arg("protocol", s.get("Protocol"), "Protocol")
+    m.arg("protocol_version", s.get("ProtocolVersion"), "ProtocolVersion")
+    m.arg("vpc_id", s.get("VpcId"), "VpcId")
+    m.arg("target_type", s.get("TargetType"), "TargetType")
+    m.arg("ip_address_type", s.get("IpAddressType"), "IpAddressType")
+    matcher = _dict(s.get("Matcher"))
+    health = _items(
+        ("enabled", s.get("HealthCheckEnabled")),
+        ("path", s.get("HealthCheckPath")),
+        ("port", s.get("HealthCheckPort")),
+        ("protocol", s.get("HealthCheckProtocol")),
+        ("interval", s.get("HealthCheckIntervalSeconds")),
+        ("timeout", s.get("HealthCheckTimeoutSeconds")),
+        ("healthy_threshold", s.get("HealthyThresholdCount")),
+        ("unhealthy_threshold", s.get("UnhealthyThresholdCount")),
+        ("matcher", matcher.get("HttpCode") or matcher.get("GrpcCode")),
+    )
+    if health:
+        m.block(Block("health_check", health))
+    m.mapped.update(
+        {
+            "HealthCheckEnabled",
+            "HealthCheckPath",
+            "HealthCheckPort",
+            "HealthCheckProtocol",
+            "HealthCheckIntervalSeconds",
+            "HealthCheckTimeoutSeconds",
+            "HealthyThresholdCount",
+            "UnhealthyThresholdCount",
+            "Matcher",
+        }
+    )
+    attributes = _attributes(s.get("Attributes"))
+    m.arg(
+        "deregistration_delay", attributes.get("deregistration_delay.timeout_seconds"), "Attributes"
+    )
+    m.arg("slow_start", _int(attributes.get("slow_start.duration_seconds")))
+    m.arg("load_balancing_algorithm_type", attributes.get("load_balancing.algorithm.type"))
+    if _bool(attributes.get("stickiness.enabled")):
+        m.block(
+            Block(
+                "stickiness",
+                _items(
+                    ("type", attributes.get("stickiness.type")),
+                    ("enabled", True),
+                    (
+                        "cookie_duration",
+                        _int(attributes.get("stickiness.lb_cookie.duration_seconds")),
+                    ),
+                ),
+            )
+        )
+    m.arg("tags", _tags(s.get("Tags")), "Tags")
+    m.mapped.add("TargetGroupArn")
+    return m
+
+
+def _cache_behavior(behavior: dict[str, Any], block_name: str) -> Block:
+    methods = _dict(behavior.get("AllowedMethods"))
+    items = _items(
+        ("path_pattern", behavior.get("PathPattern")),
+        ("target_origin_id", behavior.get("TargetOriginId")),
+        ("viewer_protocol_policy", behavior.get("ViewerProtocolPolicy")),
+        ("allowed_methods", _list(methods.get("Items"))),
+        ("cached_methods", _quantity_items(methods.get("CachedMethods"))),
+        ("compress", behavior.get("Compress")),
+        ("cache_policy_id", behavior.get("CachePolicyId")),
+        ("origin_request_policy_id", behavior.get("OriginRequestPolicyId")),
+        ("response_headers_policy_id", behavior.get("ResponseHeadersPolicyId")),
+        ("min_ttl", behavior.get("MinTTL")),
+        ("default_ttl", behavior.get("DefaultTTL")),
+        ("max_ttl", behavior.get("MaxTTL")),
+    )
+    forwarded = _dict(behavior.get("ForwardedValues"))
+    if forwarded and not behavior.get("CachePolicyId"):
+        cookies = _dict(forwarded.get("Cookies"))
+        items.append(
+            Block(
+                "forwarded_values",
+                _items(
+                    ("query_string", forwarded.get("QueryString")),
+                    ("headers", _quantity_items(forwarded.get("Headers"))),
+                    (
+                        "query_string_cache_keys",
+                        _quantity_items(forwarded.get("QueryStringCacheKeys")),
+                    ),
+                )
+                + [
+                    Block(
+                        "cookies",
+                        _items(
+                            ("forward", cookies.get("Forward")),
+                            ("whitelisted_names", _quantity_items(cookies.get("WhitelistedNames"))),
+                        ),
+                    )
+                ],
+            )
+        )
+    for association in _quantity_items(behavior.get("LambdaFunctionAssociations")):
+        items.append(
+            Block(
+                "lambda_function_association",
+                _items(
+                    ("event_type", association.get("EventType")),
+                    ("lambda_arn", association.get("LambdaFunctionARN")),
+                    ("include_body", association.get("IncludeBody")),
+                ),
+            )
+        )
+    for association in _quantity_items(behavior.get("FunctionAssociations")):
+        items.append(
+            Block(
+                "function_association",
+                _items(
+                    ("event_type", association.get("EventType")),
+                    ("function_arn", association.get("FunctionARN")),
+                ),
+            )
+        )
+    return Block(block_name, items)
+
+
+def _origin(origin: dict[str, Any]) -> Block:
+    items = _items(
+        ("domain_name", origin.get("DomainName")),
+        ("origin_id", origin.get("Id")),
+        ("origin_path", origin.get("OriginPath")),
+        ("origin_access_control_id", origin.get("OriginAccessControlId")),
+        ("connection_attempts", origin.get("ConnectionAttempts")),
+        ("connection_timeout", origin.get("ConnectionTimeout")),
+    )
+    for header in _quantity_items(origin.get("CustomHeaders")):
+        items.append(
+            Block(
+                "custom_header",
+                _items(("name", header.get("HeaderName")), ("value", header.get("HeaderValue"))),
+            )
+        )
+    if "S3OriginConfig" in origin:
+        identity = _dict(origin.get("S3OriginConfig")).get("OriginAccessIdentity", "")
+        items.append(Block("s3_origin_config", [("origin_access_identity", identity)]))
+    custom = _dict(origin.get("CustomOriginConfig"))
+    if custom:
+        custom_items = _items(
+            ("http_port", custom.get("HTTPPort")),
+            ("https_port", custom.get("HTTPSPort")),
+            ("origin_protocol_policy", custom.get("OriginProtocolPolicy")),
+        )
+        if "OriginSslProtocols" in custom:  # required argument, emitted even when empty
+            custom_items.append(
+                ("origin_ssl_protocols", _quantity_items(custom["OriginSslProtocols"]))
+            )
+        custom_items += _items(
+            ("origin_read_timeout", custom.get("OriginReadTimeout")),
+            ("origin_keepalive_timeout", custom.get("OriginKeepaliveTimeout")),
+        )
+        items.append(Block("custom_origin_config", custom_items))
+    return Block("origin", items)
+
+
+def _map_cloudfront_distribution(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    m = Mapping(import_id=resource_id(spec))
+    config = _dict(s.get("DistributionConfig"))
+    m.arg("enabled", config.get("Enabled"), "DistributionConfig")
+    m.arg("aliases", _quantity_items(config.get("Aliases")))
+    m.arg("comment", config.get("Comment") or None)
+    m.arg("default_root_object", config.get("DefaultRootObject") or None)
+    m.arg("price_class", config.get("PriceClass"))
+    m.arg("http_version", config.get("HttpVersion"))
+    m.arg("is_ipv6_enabled", config.get("IsIPV6Enabled"))
+    m.arg("web_acl_id", config.get("WebACLId") or None)
+    for origin in _quantity_items(config.get("Origins")):
+        if isinstance(origin, dict):
+            m.block(_origin(origin))
+    default = _dict(config.get("DefaultCacheBehavior"))
+    if default:
+        m.block(_cache_behavior(default, "default_cache_behavior"))
+    for behavior in _quantity_items(config.get("CacheBehaviors")):
+        if isinstance(behavior, dict):
+            m.block(_cache_behavior(behavior, "ordered_cache_behavior"))
+    for response in _quantity_items(config.get("CustomErrorResponses")):
+        m.block(
+            Block(
+                "custom_error_response",
+                _items(
+                    ("error_code", response.get("ErrorCode")),
+                    ("response_code", _int(response.get("ResponseCode"))),
+                    ("response_page_path", response.get("ResponsePagePath")),
+                    ("error_caching_min_ttl", response.get("ErrorCachingMinTTL")),
+                ),
+            )
+        )
+    logging = _dict(config.get("Logging"))
+    if logging.get("Enabled"):
+        m.block(
+            Block(
+                "logging_config",
+                _items(
+                    ("bucket", logging.get("Bucket")),
+                    ("prefix", logging.get("Prefix")),
+                    ("include_cookies", logging.get("IncludeCookies")),
+                ),
+            )
+        )
+    geo = _dict(_dict(config.get("Restrictions")).get("GeoRestriction"))
+    if geo:
+        m.block(
+            Block(
+                "restrictions",
+                [
+                    Block(
+                        "geo_restriction",
+                        _items(
+                            ("restriction_type", geo.get("RestrictionType")),
+                            ("locations", _list(geo.get("Items"))),
+                        ),
+                    )
+                ],
+            )
+        )
+    certificate = _dict(config.get("ViewerCertificate"))
+    if certificate.get("ACMCertificateArn") or certificate.get("IAMCertificateId"):
+        m.block(
+            Block(
+                "viewer_certificate",
+                _items(
+                    ("acm_certificate_arn", certificate.get("ACMCertificateArn")),
+                    ("iam_certificate_id", certificate.get("IAMCertificateId")),
+                    ("ssl_support_method", certificate.get("SSLSupportMethod")),
+                    ("minimum_protocol_version", certificate.get("MinimumProtocolVersion")),
+                ),
+            )
+        )
+    elif certificate:
+        m.block(Block("viewer_certificate", [("cloudfront_default_certificate", True)]))
+    m.arg("tags", _tags(s.get("Tags")), "Tags")
+    m.mapped.update({"Id", "ARN"})
+    return m
+
+
+def _record(record: dict[str, Any], zone_ref: Raw) -> list[Item]:
+    alias = _dict(record.get("AliasTarget"))
+    items: list[Item] = [
+        ("zone_id", zone_ref),
+        ("name", str(record.get("Name", "")).rstrip(".")),
+        ("type", record.get("Type")),
+    ]
+    items += _items(("set_identifier", record.get("SetIdentifier")))
+    if alias:
+        items.append(
+            Block(
+                "alias",
+                _items(
+                    ("name", alias.get("DNSName")),
+                    ("zone_id", alias.get("HostedZoneId")),
+                    ("evaluate_target_health", alias.get("EvaluateTargetHealth")),
+                ),
+            )
+        )
+    else:
+        values = [
+            r.get("Value") for r in _list(record.get("ResourceRecords")) if isinstance(r, dict)
+        ]
+        items += _items(("ttl", record.get("TTL")), ("records", [v for v in values if v]))
+    if record.get("Weight") is not None:
+        items.append(Block("weighted_routing_policy", [("weight", record["Weight"])]))
+    items += _items(("health_check_id", record.get("HealthCheckId")))
+    return items
+
+
+def _map_route53_zone(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    zone_id = resource_id(spec)
+    zone_name = str(s.get("Name") or "").rstrip(".")
+    m = Mapping(import_id=zone_id)
+    m.arg("name", zone_name or None, "Name")
+    config = _dict(s.get("Config"))
+    m.arg("comment", config.get("Comment") or None, "Config")
+    for vpc in _list(s.get("VPCs")):
+        if isinstance(vpc, dict):
+            m.block(
+                Block(
+                    "vpc",
+                    _items(("vpc_id", vpc.get("VPCId")), ("vpc_region", vpc.get("VPCRegion"))),
+                ),
+                "VPCs",
+            )
+    m.arg("tags", _tags(s.get("Tags")), "Tags")
+    zone_ref = Raw(f"aws_route53_zone.{name}.zone_id")
+    for record in _list(s.get("ResourceRecordSets")):
+        if not isinstance(record, dict):
+            continue
+        record_name = str(record.get("Name", "")).rstrip(".")
+        record_type = str(record.get("Type", ""))
+        if record_name == zone_name and record_type in ("NS", "SOA"):
+            continue  # created and owned by the hosted zone itself
+        suffix = f"{record_name}_{record_type}"
+        if record.get("SetIdentifier"):
+            suffix += f"_{record['SetIdentifier']}"
+        m.companions.append(
+            TfResource(
+                "aws_route53_record",
+                _companion_name(name, suffix.replace(".", "_")),
+                _record(record, zone_ref),
+                f"{zone_id}_{suffix}",
+            )
+        )
+    m.mapped.update({"Id", "ResourceRecordSets"})
+    return m
+
+
+def _map_acm_certificate(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    m = Mapping(import_id=str(s.get("CertificateArn") or spec.arn))
+    if s.get("Type") == "IMPORTED":
+        # The private key is never readable through the API.
+        m.items.append(("# IMPORTED certificate: set certificate_body and private_key", None))
+        m.ignore_changes += ["certificate_body", "private_key", "certificate_chain"]
+    else:
+        m.arg("domain_name", s.get("DomainName"), "DomainName")
+        m.arg(
+            "subject_alternative_names",
+            _list(s.get("SubjectAlternativeNames")),
+            "SubjectAlternativeNames",
+        )
+        methods = [
+            o.get("ValidationMethod")
+            for o in _list(s.get("DomainValidationOptions"))
+            if isinstance(o, dict) and o.get("ValidationMethod")
+        ]
+        m.arg("validation_method", methods[0] if methods else None, "DomainValidationOptions")
+        m.arg("key_algorithm", s.get("KeyAlgorithm"), "KeyAlgorithm")
+        preference = _dict(s.get("Options")).get("CertificateTransparencyLoggingPreference")
+        if preference:
+            m.block(
+                Block("options", [("certificate_transparency_logging_preference", preference)]),
+                "Options",
+            )
+    m.arg("tags", _tags(s.get("Tags")), "Tags")
+    m.mapped.update({"CertificateArn", "Type"})
+    return m
+
+
+def _map_wafv2_web_acl(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    scope = "CLOUDFRONT" if spec.region == GLOBAL_REGION else "REGIONAL"
+    acl_name = str(s.get("Name") or "")
+    m = Mapping(import_id=f"{s.get('Id', '')}/{acl_name}/{scope}")
+    m.arg("name", acl_name or None, "Name")
+    m.arg("scope", scope)
+    m.arg("description", s.get("Description") or None, "Description")
+    action = _dict(s.get("DefaultAction"))
+    kind = "allow" if "Allow" in action else "block" if "Block" in action else None
+    if kind:
+        m.block(Block("default_action", [Block(kind, [])]), "DefaultAction")
+    visibility = _dict(s.get("VisibilityConfig"))
+    if visibility:
+        m.block(
+            Block(
+                "visibility_config",
+                _items(
+                    ("cloudwatch_metrics_enabled", visibility.get("CloudWatchMetricsEnabled")),
+                    ("metric_name", visibility.get("MetricName")),
+                    ("sampled_requests_enabled", visibility.get("SampledRequestsEnabled")),
+                ),
+            ),
+            "VisibilityConfig",
+        )
+    if _list(s.get("Rules")):
+        # Rule statements are not mapped; keep them out of the plan.
+        m.ignore_changes.append("rule")
+    m.arg("tags", _tags(s.get("Tags")), "Tags")
+    m.mapped.update({"Id", "ARN"})
+    return m
+
+
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]*$")
 
 
@@ -554,6 +1219,18 @@ MAPPERS: dict[str, Callable[[dict[str, Any], str, ResourceSpec], Mapping]] = {
     "aws_dynamodb_table": _map_dynamodb,
     "aws_s3_bucket": _map_s3_bucket,
     "aws_iam_role": _map_iam_role,
+    "aws_subnet": _map_subnet,
+    "aws_route_table": _map_route_table,
+    "aws_internet_gateway": _map_internet_gateway,
+    "aws_nat_gateway": _map_nat_gateway,
+    "aws_vpc_endpoint": _map_vpc_endpoint,
+    "aws_lb": _map_lb,
+    "aws_lb_listener": _map_lb_listener,
+    "aws_lb_target_group": _map_lb_target_group,
+    "aws_cloudfront_distribution": _map_cloudfront_distribution,
+    "aws_route53_zone": _map_route53_zone,
+    "aws_acm_certificate": _map_acm_certificate,
+    "aws_wafv2_web_acl": _map_wafv2_web_acl,
 }
 
 

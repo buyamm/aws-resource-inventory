@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:dynamodb:us-east-1:123456789012:table/orders",
-  "generated_at": "2026-10-14T16:28:57.348959Z",
+  "generated_at": "2026-10-15T16:01:58.115386Z",
   "metadata": {
     "api_version": "2012-08-10",
-    "checksum": "00bfd6d2f6784aa4b5893e2f36c1220abc7047b3c7b754084dc03323d0e45e2d",
-    "collected_at": "2026-10-14T16:28:57Z",
+    "checksum": "392c8d77dbb7964d5b588a9aaa94843cfe34a9c40ed313800b2f00b393d3fe97",
+    "collected_at": "2026-10-15T16:01:58Z",
     "collector_version": "0.1.0"
   },
   "region": "us-east-1",
@@ -20,7 +20,7 @@
     "BillingModeSummary": {
       "BillingMode": "PAY_PER_REQUEST"
     },
-    "CreationDateTime": "2026-10-14T23:28:56.796319+07:00",
+    "CreationDateTime": "2026-10-15T23:01:56.977657+07:00",
     "GlobalSecondaryIndexes": [],
     "ItemCount": 0,
     "KeySchema": [

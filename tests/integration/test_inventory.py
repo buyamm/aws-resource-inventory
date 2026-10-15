@@ -42,8 +42,12 @@ def test_inventory_sets_region_and_account_req_3_3(sample_account):
     result = InventoryCollector(inv_session, account_id="123456789012").collect_all(resources)
     for spec in result.specs:
         assert spec.account_id == "123456789012"
+        # CloudFront-scope web ACLs are global like CloudFront itself (Req 14.1).
+        cloudfront_acl = ":global/webacl/" in spec.arn
         expected_region = (
-            "global" if REGISTRY[spec.resource_type].scope == "global" else "us-east-1"
+            "global"
+            if REGISTRY[spec.resource_type].scope == "global" or cloudfront_acl
+            else "us-east-1"
         )
         assert spec.region == expected_region
         assert "unknown" not in spec.arn

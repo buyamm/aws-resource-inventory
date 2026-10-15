@@ -8,8 +8,9 @@ Requirements Coverage:
 - Requirement 13.2: Regions = regions holding seeds unless ``--region`` is given;
   global types are seeded from ``us-east-1``
 - Requirement 13.3: References inside collected specs pull in the resources they name
-- Requirement 13.4: Default VPC, its default security group and service-linked roles
-  are excluded unless referenced or ``--include-defaults`` is given
+- Requirement 13.4: Default VPC, its default security group, default subnets, its route
+  tables and internet gateway, and service-linked roles are excluded unless referenced
+  or ``--include-defaults`` is given
 - Requirement 13.5: The scope is recorded in discovery.json, manifest.json and
   collection_report.json
 """
@@ -17,16 +18,22 @@ Requirements Coverage:
 from __future__ import annotations
 
 import logging
-import re
 import threading
 from collections.abc import Callable, Iterable, Iterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, NamedTuple
 
 from src.discovery import DiscoveredResource, DiscoveryError
+from src.integrity import iter_property_paths
 from src.parser import ResourceSpec
-from src.resource_types import GLOBAL_REGION, REGISTRY, build_arn, parse_arn
+from src.resource_types import (
+    GLOBAL_REGION,
+    REGISTRY,
+    build_arn,
+    parse_arn,
+    s3_bucket_from_domain,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -184,12 +191,12 @@ class TagScopedDiscovery:
         return DiscoveredResource(
             resource_type=type_id,
             resource_id=resource_id,
-            # Rebuilt so seeds and closure targets share one ARN format (the tagging
-            # API may omit the account id of EC2 ARNs).
+            # EC2 ARNs are rebuilt so seeds and closure targets share one ARN format (the
+            # tagging API may omit their account id); other ARNs are kept as returned.
             arn=(
-                arn
-                if type_id == "aws_iam_role"
-                else build_arn(type_id, resource_id, region, self.account_id)
+                build_arn(type_id, resource_id, region, self.account_id)
+                if REGISTRY[type_id].service == "ec2"
+                else arn
             ),
             region=region,
             tags=tags,
@@ -231,7 +238,9 @@ def is_service_linked_role(resource: DiscoveredResource) -> bool:
 def exclude_defaults(
     resources: list[DiscoveredResource], include_defaults: bool = False
 ) -> tuple[list[DiscoveredResource], list[DiscoveredResource]]:
-    """Split into (kept, excluded): default VPCs, their default SG, service-linked roles."""
+    """Split into (kept, excluded) account defaults: default VPCs with their default SG,
+    default subnets (``DefaultForAz``), route tables and internet gateway, and
+    service-linked roles."""
     if include_defaults:
         return list(resources), []
     default_vpcs = {
@@ -240,18 +249,22 @@ def exclude_defaults(
         if r.resource_type == "aws_vpc" and r.attributes.get("IsDefault") is True
     }
 
+    def in_default_vpc(resource: DiscoveredResource) -> bool:
+        return (resource.region, resource.attributes.get("VpcId")) in default_vpcs
+
     def is_default(resource: DiscoveredResource) -> bool:
-        if resource.resource_type == "aws_vpc":
+        kind = resource.resource_type
+        if kind == "aws_vpc":
             return (resource.region, resource.resource_id) in default_vpcs
-        if resource.resource_type == "aws_security_group":
-            return (
-                resource.attributes.get("GroupName") == "default"
-                and (
-                    resource.region,
-                    resource.attributes.get("VpcId"),
-                )
-                in default_vpcs
-            )
+        if kind == "aws_security_group":
+            return resource.attributes.get("GroupName") == "default" and in_default_vpc(resource)
+        if kind == "aws_subnet":
+            return resource.attributes.get("DefaultForAz") is True
+        if kind == "aws_route_table":
+            return in_default_vpc(resource)
+        if kind == "aws_internet_gateway":
+            vpcs = resource.attributes.get("VpcIds") or []
+            return bool(vpcs) and all((resource.region, v) in default_vpcs for v in vpcs)
         return is_service_linked_role(resource)
 
     kept = [r for r in resources if not is_default(r)]
@@ -263,60 +276,101 @@ def exclude_defaults(
 # Reference rules for the dependency closure (Requirement 13.3)
 # ============================================================================
 
-# source type -> [(Specifications path, target type)]; "[]" walks every list element.
-# Values are resource ids, names or ARNs; anything parse_arn rejects is ignored.
-REFERENCE_RULES: dict[str, list[tuple[str, str]]] = {
+
+class Rule(NamedTuple):
+    """``path`` in the source Specifications names a ``target`` resource.
+
+    ``resolve`` maps the raw value to the target's id/name/ARN, or None when the value
+    does not name such a resource (e.g. a route to ``local``, a non-S3 origin domain).
+    """
+
+    path: str
+    target: str
+    resolve: Callable[[str], str | None] | None = None
+
+
+def _prefixed(prefix: str) -> Callable[[str], str | None]:
+    return lambda value: value if value.startswith(prefix) else None
+
+
+# source type -> rules; "[]" walks every list element. Values are resource ids, names or
+# ARNs; anything parse_arn rejects is ignored.
+REFERENCE_RULES: dict[str, list[Rule]] = {
     "aws_instance": [
-        ("VpcId", "aws_vpc"),
-        ("SecurityGroups[].GroupId", "aws_security_group"),
+        Rule("VpcId", "aws_vpc"),
+        Rule("SubnetId", "aws_subnet"),
+        Rule("SecurityGroups[].GroupId", "aws_security_group"),
     ],
     "aws_security_group": [
-        ("VpcId", "aws_vpc"),
-        ("IpPermissions[].UserIdGroupPairs[].GroupId", "aws_security_group"),
-        ("IpPermissionsEgress[].UserIdGroupPairs[].GroupId", "aws_security_group"),
+        Rule("VpcId", "aws_vpc"),
+        Rule("IpPermissions[].UserIdGroupPairs[].GroupId", "aws_security_group"),
+        Rule("IpPermissionsEgress[].UserIdGroupPairs[].GroupId", "aws_security_group"),
     ],
     "aws_lambda_function": [
-        ("Role", "aws_iam_role"),
-        ("VpcConfig.VpcId", "aws_vpc"),
-        ("VpcConfig.SecurityGroupIds[]", "aws_security_group"),
-        ("LoggingConfig.LogGroup", "aws_cloudwatch_log_group"),
+        Rule("Role", "aws_iam_role"),
+        Rule("VpcConfig.VpcId", "aws_vpc"),
+        Rule("VpcConfig.SubnetIds[]", "aws_subnet"),
+        Rule("VpcConfig.SecurityGroupIds[]", "aws_security_group"),
+        Rule("LoggingConfig.LogGroup", "aws_cloudwatch_log_group"),
     ],
     "aws_db_instance": [
-        ("VpcSecurityGroups[].VpcSecurityGroupId", "aws_security_group"),
-        ("DBSubnetGroup.VpcId", "aws_vpc"),
-        ("MonitoringRoleArn", "aws_iam_role"),
-        ("AssociatedRoles[].RoleArn", "aws_iam_role"),
+        Rule("VpcSecurityGroups[].VpcSecurityGroupId", "aws_security_group"),
+        Rule("DBSubnetGroup.VpcId", "aws_vpc"),
+        Rule("DBSubnetGroup.Subnets[].SubnetIdentifier", "aws_subnet"),
+        Rule("MonitoringRoleArn", "aws_iam_role"),
+        Rule("AssociatedRoles[].RoleArn", "aws_iam_role"),
     ],
     "aws_sfn_state_machine": [
-        ("roleArn", "aws_iam_role"),
-        (
+        Rule("roleArn", "aws_iam_role"),
+        Rule(
             "loggingConfiguration.destinations[].cloudWatchLogsLogGroup.logGroupArn",
             "aws_cloudwatch_log_group",
         ),
     ],
+    "aws_subnet": [Rule("VpcId", "aws_vpc")],
+    "aws_route_table": [
+        Rule("VpcId", "aws_vpc"),
+        Rule("Associations[].SubnetId", "aws_subnet"),
+        Rule("Routes[].GatewayId", "aws_internet_gateway", _prefixed("igw-")),
+        Rule("Routes[].GatewayId", "aws_vpc_endpoint", _prefixed("vpce-")),
+        Rule("Routes[].NatGatewayId", "aws_nat_gateway"),
+    ],
+    "aws_internet_gateway": [Rule("Attachments[].VpcId", "aws_vpc")],
+    "aws_nat_gateway": [Rule("VpcId", "aws_vpc"), Rule("SubnetId", "aws_subnet")],
+    "aws_vpc_endpoint": [
+        Rule("VpcId", "aws_vpc"),
+        Rule("RouteTableIds[]", "aws_route_table"),
+        Rule("SubnetIds[]", "aws_subnet"),
+        Rule("Groups[].GroupId", "aws_security_group"),
+    ],
+    "aws_lb": [
+        Rule("VpcId", "aws_vpc"),
+        Rule("AvailabilityZones[].SubnetId", "aws_subnet"),
+        Rule("SecurityGroups[]", "aws_security_group"),
+        Rule("Listeners[].ListenerArn", "aws_lb_listener"),
+    ],
+    "aws_lb_listener": [
+        Rule("LoadBalancerArn", "aws_lb"),
+        Rule("Certificates[].CertificateArn", "aws_acm_certificate"),
+        Rule("DefaultActions[].TargetGroupArn", "aws_lb_target_group"),
+        Rule("DefaultActions[].ForwardConfig.TargetGroups[].TargetGroupArn", "aws_lb_target_group"),
+    ],
+    "aws_lb_target_group": [
+        Rule("VpcId", "aws_vpc"),
+        Rule("LoadBalancerArns[]", "aws_lb"),
+    ],
+    # Load balancer origins are named by DNS name only, which does not identify an ARN;
+    # they are matched offline by the Analysis_Engine (cdn_origin), not followed here.
+    "aws_cloudfront_distribution": [
+        Rule(
+            "DistributionConfig.Origins.Items[].DomainName",
+            "aws_s3_bucket",
+            s3_bucket_from_domain,
+        ),
+        Rule("DistributionConfig.WebACLId", "aws_wafv2_web_acl"),
+        Rule("DistributionConfig.ViewerCertificate.ACMCertificateArn", "aws_acm_certificate"),
+    ],
 }
-
-_SEGMENT = re.compile(r"^([^\[\]]+)((?:\[\])*)$")
-
-
-def _walk(value: Any, segments: list[str], path: str) -> Iterator[tuple[str, Any]]:
-    if not segments:
-        yield path, value
-        return
-    match = _SEGMENT.match(segments[0])
-    if match is None or not isinstance(value, dict) or match.group(1) not in value:
-        return
-    key, lists = match.group(1), match.group(2).count("[]")
-    items: list[tuple[str, Any]] = [(f"{path}.{key}", value[key])]
-    for _ in range(lists):
-        items = [
-            (f"{p}[{i}]", element)
-            for p, v in items
-            if isinstance(v, list)
-            for i, element in enumerate(v)
-        ]
-    for item_path, item in items:
-        yield from _walk(item, segments[1:], item_path)
 
 
 def _target(
@@ -342,11 +396,14 @@ def _target(
 def extract_references(spec: ResourceSpec, account_id: str) -> list[DiscoveredResource]:
     """Resources named by ``spec``, one per target ARN, each with its ``referenced_by``."""
     targets: dict[str, DiscoveredResource] = {}
-    for rule_path, target_type in REFERENCE_RULES.get(spec.resource_type, []):
-        for path, value in _walk(spec.specifications or {}, rule_path.split("."), "specifications"):
+    for rule in REFERENCE_RULES.get(spec.resource_type, []):
+        for path, value in iter_property_paths(spec.specifications, rule.path):
             if not isinstance(value, str) or not value:
                 continue
-            target = _target(target_type, value, spec, account_id or spec.account_id)
+            resolved = rule.resolve(value) if rule.resolve else value
+            if not resolved:
+                continue
+            target = _target(rule.target, resolved, spec, account_id or spec.account_id)
             if target is None or target.arn == spec.arn:
                 continue
             entry = targets.setdefault(target.arn, target)

@@ -1,0 +1,33 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-e27d9033",
+  "generated_at": "2026-10-15T16:01:58.115386Z",
+  "metadata": {
+    "api_version": "2016-11-15",
+    "checksum": "d12085d49a4c1b2fbe4af8ae54aec98a4228747a1c285ec80e4068315b487231",
+    "collected_at": "2026-10-15T16:01:58Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_internet_gateway",
+  "specifications": {
+    "Attachments": [
+      {
+        "State": "available",
+        "VpcId": "vpc-1561eea5"
+      }
+    ],
+    "InternetGatewayId": "igw-e27d9033",
+    "OwnerId": "123456789012",
+    "Tags": [
+      {
+        "Key": "Name",
+        "Value": "storefront-igw"
+      },
+      {
+        "Key": "service",
+        "Value": "storefront"
+      }
+    ]
+  }
+}

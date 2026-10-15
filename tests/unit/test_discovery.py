@@ -27,6 +27,8 @@ Requirements Coverage:
   is inaccessible
 - Requirement 1.5: Discovery completes within 5 minutes for up to 1000
   resources
+- Requirement 14.1: Network, edge and load-balancing types (listeners per load
+  balancer, CloudFront/Route 53/CloudFront-scope WAF discovered once from us-east-1)
 """
 
 import time
@@ -62,6 +64,17 @@ def _empty_client():
     client.list_tables.return_value = {"TableNames": []}
     client.list_buckets.return_value = {"Buckets": []}
     client.list_roles.return_value = {"Roles": []}
+    client.describe_subnets.return_value = {"Subnets": []}
+    client.describe_route_tables.return_value = {"RouteTables": []}
+    client.describe_internet_gateways.return_value = {"InternetGateways": []}
+    client.describe_nat_gateways.return_value = {"NatGateways": []}
+    client.describe_vpc_endpoints.return_value = {"VpcEndpoints": []}
+    client.describe_load_balancers.return_value = {"LoadBalancers": []}
+    client.describe_target_groups.return_value = {"TargetGroups": []}
+    client.list_certificates.return_value = {"CertificateSummaryList": []}
+    client.list_web_acls.return_value = {"WebACLs": []}
+    client.list_distributions.return_value = {"DistributionList": {"Quantity": 0}}
+    client.list_hosted_zones.return_value = {"HostedZones": []}
     return client
 
 
@@ -424,5 +437,121 @@ def test_discovery_follows_pagination_req_1_5():
     names = sorted(r.resource_id for r in resources if r.resource_type == "aws_lambda_function")
     assert names == ["f1", "f2"]
     region_client.get_paginator.assert_called_with("list_functions")
-    # 8 regional list operations (lambda counted per page: 2) + 2 global = 11 calls
-    assert discovery.get_api_calls() == 11
+    # 17 regional list operations (lambda counted per page: 2) + 5 global = 23 calls
+    assert discovery.get_api_calls() == 23
+
+
+# ===========================================================================
+# Task 28: network, edge and load-balancing types (Requirement 14.1)
+# ===========================================================================
+
+ACCOUNT = "123456789012"
+LB_ARN = f"arn:aws:elasticloadbalancing:us-east-1:{ACCOUNT}:loadbalancer/app/web/abc"
+LISTENER_ARN = f"arn:aws:elasticloadbalancing:us-east-1:{ACCOUNT}:listener/app/web/abc/def"
+TG_ARN = f"arn:aws:elasticloadbalancing:us-east-1:{ACCOUNT}:targetgroup/web-tg/123"
+CERT_ARN = f"arn:aws:acm:us-east-1:{ACCOUNT}:certificate/uuid-1"
+WAF_REGIONAL_ARN = f"arn:aws:wafv2:us-east-1:{ACCOUNT}:regional/webacl/api/uuid-2"
+WAF_CF_ARN = f"arn:aws:wafv2:us-east-1:{ACCOUNT}:global/webacl/edge/uuid-3"
+
+
+def test_discovery_network_edge_and_load_balancer_types_req_14_1():
+    regional = _empty_client()
+    regional.describe_subnets.return_value = {
+        "Subnets": [
+            {"SubnetId": "subnet-1", "VpcId": "vpc-1", "DefaultForAz": True, "Tags": []},
+        ]
+    }
+    regional.describe_route_tables.return_value = {
+        "RouteTables": [{"RouteTableId": "rtb-1", "VpcId": "vpc-1"}]
+    }
+    regional.describe_internet_gateways.return_value = {
+        "InternetGateways": [{"InternetGatewayId": "igw-1", "Attachments": [{"VpcId": "vpc-1"}]}]
+    }
+    regional.describe_nat_gateways.return_value = {
+        "NatGateways": [
+            {"NatGatewayId": "nat-1", "State": "available"},
+            {"NatGatewayId": "nat-old", "State": "deleted"},
+        ]
+    }
+    regional.describe_vpc_endpoints.return_value = {"VpcEndpoints": [{"VpcEndpointId": "vpce-1"}]}
+    regional.describe_load_balancers.return_value = {
+        "LoadBalancers": [{"LoadBalancerArn": LB_ARN, "LoadBalancerName": "web"}]
+    }
+    regional.describe_listeners.return_value = {"Listeners": [{"ListenerArn": LISTENER_ARN}]}
+    regional.describe_target_groups.return_value = {"TargetGroups": [{"TargetGroupArn": TG_ARN}]}
+    regional.list_certificates.return_value = {
+        "CertificateSummaryList": [{"CertificateArn": CERT_ARN}]
+    }
+
+    def web_acls(Scope: str, **_):  # noqa: N803 - boto3 parameter name
+        arn = WAF_CF_ARN if Scope == "CLOUDFRONT" else WAF_REGIONAL_ARN
+        return {"WebACLs": [{"ARN": arn}]}
+
+    regional.list_web_acls.side_effect = web_acls
+
+    edge = _empty_client()
+    edge.list_distributions.return_value = {
+        "DistributionList": {"Items": [{"Id": "E1", "ARN": "ignored"}]}
+    }
+    edge.list_hosted_zones.return_value = {"HostedZones": [{"Id": "/hostedzone/Z1"}]}
+    edge.list_web_acls.side_effect = web_acls
+
+    services = ("ec2", "elbv2", "acm", "wafv2")
+    session = _make_session(
+        {"us-east-1": dict.fromkeys(services, regional)},
+        global_client={"cloudfront": edge, "route53": edge},
+    )
+    discovery = ResourceDiscovery(session, regions=["us-east-1"], account_id=ACCOUNT)
+    found = {
+        (r.resource_type, r.resource_id, r.region, r.arn): r
+        for r in discovery.discover_all_resources()
+    }
+    assert discovery.get_errors() == []
+
+    expected = {
+        ("aws_subnet", "subnet-1", "us-east-1", f"arn:aws:ec2:us-east-1:{ACCOUNT}:subnet/subnet-1"),
+        (
+            "aws_route_table",
+            "rtb-1",
+            "us-east-1",
+            f"arn:aws:ec2:us-east-1:{ACCOUNT}:route-table/rtb-1",
+        ),
+        (
+            "aws_internet_gateway",
+            "igw-1",
+            "us-east-1",
+            f"arn:aws:ec2:us-east-1:{ACCOUNT}:internet-gateway/igw-1",
+        ),
+        (
+            "aws_nat_gateway",
+            "nat-1",
+            "us-east-1",
+            f"arn:aws:ec2:us-east-1:{ACCOUNT}:natgateway/nat-1",
+        ),
+        (
+            "aws_vpc_endpoint",
+            "vpce-1",
+            "us-east-1",
+            f"arn:aws:ec2:us-east-1:{ACCOUNT}:vpc-endpoint/vpce-1",
+        ),
+        ("aws_lb", "app/web/abc", "us-east-1", LB_ARN),
+        ("aws_lb_listener", "app/web/abc/def", "us-east-1", LISTENER_ARN),
+        ("aws_lb_target_group", "web-tg/123", "us-east-1", TG_ARN),
+        ("aws_acm_certificate", "uuid-1", "us-east-1", CERT_ARN),
+        ("aws_wafv2_web_acl", "api/uuid-2", "us-east-1", WAF_REGIONAL_ARN),
+        ("aws_wafv2_web_acl", "edge/uuid-3", "global", WAF_CF_ARN),
+        (
+            "aws_cloudfront_distribution",
+            "E1",
+            "global",
+            f"arn:aws:cloudfront::{ACCOUNT}:distribution/E1",
+        ),
+        ("aws_route53_zone", "Z1", "global", "arn:aws:route53:::hostedzone/Z1"),
+    }
+    assert set(found) == expected
+    regional.describe_listeners.assert_called_with(LoadBalancerArn=LB_ARN)
+
+    attributes = {key[0]: r.attributes for key, r in found.items()}
+    assert attributes["aws_subnet"] == {"VpcId": "vpc-1", "DefaultForAz": True}
+    assert attributes["aws_route_table"] == {"VpcId": "vpc-1"}
+    assert attributes["aws_internet_gateway"] == {"VpcIds": ["vpc-1"]}

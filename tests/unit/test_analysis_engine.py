@@ -8,6 +8,8 @@ Requirements Coverage:
 - Requirement 6.5: Rule-defined confidence scores and citations
 - Requirement 6.6: Suspicious configuration findings
 - Requirement 8.1 / 8.2 / 8.5: Every statement cited; citations resolve against specs
+- Requirement 14.2: Network and load-balancing relationships
+- Requirement 14.3: Edge relationships (CloudFront origins, WAF, ACM, Route 53 aliases)
 """
 
 from __future__ import annotations
@@ -286,8 +288,16 @@ class TestAnalysisEnginePatterns:
             "S3 + CloudFront",
             "EC2 + Load Balancer",
         }
-        assert all(
-            "not a Supported_Resource_Type" in u["reason"] for u in report.undetectable_patterns
+        reasons = {u["pattern"]: u["reason"] for u in report.undetectable_patterns}
+        assert (
+            "API Gateway is not a Supported_Resource_Type"
+            in reasons["API Gateway + Lambda + DynamoDB"]
+        )
+        # CloudFront and ELB are supported now: the reasons must not claim otherwise.
+        assert "DescribeTargetHealth" in reasons["EC2 + Load Balancer"]
+        assert "cdn_origin" in reasons["S3 + CloudFront"]
+        assert not any(
+            "CloudFront is not" in r or "Load Balancing is not" in r for r in reasons.values()
         )
 
 
@@ -519,3 +529,225 @@ def test_property_citations_resolve_req_8_5(env, open_port, include_role):
         assert resolve_property_path(document, citation.property_path) == citation.evidence_value
         assert citation.source_checksum == spec.metadata.checksum
         assert citation.spec_file == spec_relpath(spec)
+
+
+# ----------------------------------------------------------------------------
+# Network, load-balancing and edge relationships (Req 14.2, 14.3)
+# ----------------------------------------------------------------------------
+
+EC2 = f"arn:aws:ec2:us-east-1:{ACCOUNT}"
+ELB = f"arn:aws:elasticloadbalancing:us-east-1:{ACCOUNT}"
+LB_ARN = f"{ELB}:loadbalancer/app/web-alb/abc"
+LISTENER_ARN = f"{ELB}:listener/app/web-alb/abc/def"
+TG_ARN = f"{ELB}:targetgroup/web-tg/123"
+CERT_ARN = f"arn:aws:acm:us-east-1:{ACCOUNT}:certificate/uuid-1"
+WAF_ARN = f"arn:aws:wafv2:us-east-1:{ACCOUNT}:global/webacl/web-acl/uuid-2"
+CF_ARN = f"arn:aws:cloudfront::{ACCOUNT}:distribution/E1"
+ZONE_ARN = "arn:aws:route53:::hostedzone/Z1"
+BUCKET_ARN = "arn:aws:s3:::static-site"
+LB_DNS = "web-alb-1.us-east-1.elb.amazonaws.com"
+CF_DNS = "d111111abcdef8.cloudfront.net"
+
+
+@pytest.fixture
+def web_stack_specs() -> list[ResourceSpec]:
+    return [
+        _spec("aws_vpc", f"{EC2}:vpc/vpc-1", {"VpcId": "vpc-1"}),
+        _spec("aws_subnet", f"{EC2}:subnet/subnet-a", {"SubnetId": "subnet-a", "VpcId": "vpc-1"}),
+        _spec("aws_subnet", f"{EC2}:subnet/subnet-b", {"SubnetId": "subnet-b", "VpcId": "vpc-1"}),
+        _spec(
+            "aws_route_table",
+            f"{EC2}:route-table/rtb-public",
+            {
+                "RouteTableId": "rtb-public",
+                "VpcId": "vpc-1",
+                "Routes": [
+                    {"DestinationCidrBlock": "10.0.0.0/16", "GatewayId": "local"},
+                    {"DestinationCidrBlock": "0.0.0.0/0", "GatewayId": "igw-1"},
+                ],
+                "Associations": [{"Main": True}, {"Main": False, "SubnetId": "subnet-a"}],
+            },
+        ),
+        _spec(
+            "aws_route_table",
+            f"{EC2}:route-table/rtb-private",
+            {
+                "RouteTableId": "rtb-private",
+                "VpcId": "vpc-1",
+                "Routes": [
+                    {"DestinationCidrBlock": "0.0.0.0/0", "NatGatewayId": "nat-1"},
+                    {"DestinationPrefixListId": "pl-1", "GatewayId": "vpce-1"},
+                ],
+                "Associations": [],
+            },
+        ),
+        _spec(
+            "aws_internet_gateway",
+            f"{EC2}:internet-gateway/igw-1",
+            {"InternetGatewayId": "igw-1", "Attachments": [{"VpcId": "vpc-1"}]},
+        ),
+        _spec(
+            "aws_nat_gateway",
+            f"{EC2}:natgateway/nat-1",
+            {"NatGatewayId": "nat-1", "SubnetId": "subnet-a", "VpcId": "vpc-1"},
+        ),
+        _spec(
+            "aws_vpc_endpoint",
+            f"{EC2}:vpc-endpoint/vpce-1",
+            {"VpcEndpointId": "vpce-1", "VpcId": "vpc-1"},
+        ),
+        _spec("aws_security_group", f"{EC2}:security-group/sg-alb", {"GroupId": "sg-alb"}),
+        _spec(
+            "aws_instance",
+            f"{EC2}:instance/i-1",
+            {"InstanceId": "i-1", "SubnetId": "subnet-b"},
+        ),
+        _spec(
+            "aws_lb",
+            LB_ARN,
+            {
+                "LoadBalancerArn": LB_ARN,
+                "DNSName": LB_DNS,
+                "VpcId": "vpc-1",
+                "AvailabilityZones": [{"SubnetId": "subnet-a"}, {"SubnetId": "subnet-b"}],
+                "SecurityGroups": ["sg-alb"],
+            },
+        ),
+        _spec(
+            "aws_lb_listener",
+            LISTENER_ARN,
+            {
+                "ListenerArn": LISTENER_ARN,
+                "LoadBalancerArn": LB_ARN,
+                "Certificates": [{"CertificateArn": CERT_ARN}],
+                "DefaultActions": [{"Type": "forward", "TargetGroupArn": TG_ARN}],
+            },
+        ),
+        _spec(
+            "aws_lb_target_group",
+            TG_ARN,
+            {"TargetGroupArn": TG_ARN, "VpcId": "vpc-1", "LoadBalancerArns": [LB_ARN]},
+        ),
+        _spec("aws_acm_certificate", CERT_ARN, {"CertificateArn": CERT_ARN}),
+        _spec("aws_wafv2_web_acl", WAF_ARN, {"ARN": WAF_ARN, "Name": "web-acl"}, region="global"),
+        _spec("aws_s3_bucket", BUCKET_ARN, {"Name": "static-site"}, region="global"),
+        _spec(
+            "aws_cloudfront_distribution",
+            CF_ARN,
+            {
+                "Id": "E1",
+                "DomainName": CF_DNS,
+                "DistributionConfig": {
+                    "Origins": {
+                        "Items": [
+                            {"Id": "s3", "DomainName": "static-site.s3.us-east-1.amazonaws.com"},
+                            {"Id": "alb", "DomainName": LB_DNS},
+                            {"Id": "other", "DomainName": "api.example.com"},
+                        ]
+                    },
+                    "WebACLId": WAF_ARN,
+                    "ViewerCertificate": {"ACMCertificateArn": CERT_ARN},
+                },
+            },
+            region="global",
+        ),
+        _spec(
+            "aws_route53_zone",
+            ZONE_ARN,
+            {
+                "Id": "/hostedzone/Z1",
+                "Name": "example.com.",
+                "ResourceRecordSets": [
+                    {"Name": "example.com.", "Type": "NS", "ResourceRecords": []},
+                    {
+                        "Name": "shop.example.com.",
+                        "Type": "A",
+                        "AliasTarget": {"DNSName": CF_DNS.upper() + "."},
+                    },
+                    {
+                        "Name": "api.example.com.",
+                        "Type": "A",
+                        "AliasTarget": {"DNSName": f"dualstack.{LB_DNS}."},
+                    },
+                ],
+            },
+            region="global",
+        ),
+    ]
+
+
+class TestAnalysisEngineNetworkEdge:
+    def test_analysis_engine_network_relationships_req_14_2(self, web_stack_specs):
+        rels = AnalysisEngine().identify_relationships(web_stack_specs)
+        found = {(r.from_arn, r.to_arn, r.relationship_type) for r in rels}
+        vpc = f"{EC2}:vpc/vpc-1"
+        subnet_a, subnet_b = f"{EC2}:subnet/subnet-a", f"{EC2}:subnet/subnet-b"
+        expected = {
+            (subnet_a, vpc, "vpc_connection"),
+            (f"{EC2}:route-table/rtb-public", vpc, "vpc_connection"),
+            (f"{EC2}:route-table/rtb-public", subnet_a, "route_table_association"),
+            (f"{EC2}:route-table/rtb-public", f"{EC2}:internet-gateway/igw-1", "route_target"),
+            (f"{EC2}:route-table/rtb-private", f"{EC2}:natgateway/nat-1", "route_target"),
+            (f"{EC2}:route-table/rtb-private", f"{EC2}:vpc-endpoint/vpce-1", "route_target"),
+            (f"{EC2}:internet-gateway/igw-1", vpc, "vpc_connection"),
+            (f"{EC2}:natgateway/nat-1", subnet_a, "subnet_placement"),
+            (f"{EC2}:vpc-endpoint/vpce-1", vpc, "vpc_connection"),
+            (f"{EC2}:instance/i-1", subnet_b, "subnet_placement"),
+            (LB_ARN, subnet_a, "subnet_placement"),
+            (LB_ARN, subnet_b, "subnet_placement"),
+            (LB_ARN, f"{EC2}:security-group/sg-alb", "security_group"),
+            (LB_ARN, vpc, "vpc_connection"),
+            (LISTENER_ARN, LB_ARN, "lb_listener"),
+            (LISTENER_ARN, TG_ARN, "forwards_to"),
+            (LISTENER_ARN, CERT_ARN, "certificate"),
+            (TG_ARN, vpc, "vpc_connection"),
+        }
+        assert expected <= found
+        by_key = {(r.from_arn, r.to_arn, r.relationship_type): r for r in rels}
+        association = by_key[(f"{EC2}:route-table/rtb-public", subnet_a, "route_table_association")]
+        assert association.citations[0].property_path == ("specifications.Associations[1].SubnetId")
+        forward = by_key[(LISTENER_ARN, TG_ARN, "forwards_to")]
+        assert forward.citations[0].property_path == (
+            "specifications.DefaultActions[0].TargetGroupArn"
+        )
+        assert all(r.confidence == 1.0 for r in rels if r.relationship_type != "security_group")
+
+    def test_analysis_engine_edge_relationships_req_14_3(self, web_stack_specs):
+        rels = AnalysisEngine().identify_relationships(web_stack_specs)
+        by_key = {(r.from_arn, r.to_arn, r.relationship_type): r for r in rels}
+        edge = {k for k in by_key if k[0] in (CF_ARN, ZONE_ARN)}
+        assert edge == {
+            (CF_ARN, BUCKET_ARN, "cdn_origin"),
+            (CF_ARN, LB_ARN, "cdn_origin"),
+            (CF_ARN, WAF_ARN, "waf_protection"),
+            (CF_ARN, CERT_ARN, "certificate"),
+            (ZONE_ARN, CF_ARN, "dns_alias"),
+            (ZONE_ARN, LB_ARN, "dns_alias"),
+        }
+        origin = by_key[(CF_ARN, LB_ARN, "cdn_origin")]
+        assert [c.property_path for c in origin.citations] == [
+            "specifications.DistributionConfig.Origins.Items[1].DomainName",
+            "specifications.DNSName",
+        ]
+        alias = by_key[(ZONE_ARN, CF_ARN, "dns_alias")]
+        assert [c.property_path for c in alias.citations] == [
+            "specifications.ResourceRecordSets[1].AliasTarget.DNSName",
+            "specifications.DomainName",
+        ]
+        assert by_key[(CF_ARN, BUCKET_ARN, "cdn_origin")].citations[0].evidence_value == (
+            "static-site.s3.us-east-1.amazonaws.com"
+        )
+
+    def test_analysis_engine_network_edge_citations_resolve_req_8_5(self, web_stack_specs):
+        sealed = seal_specs(web_stack_specs, DataSanitizer())
+        documents = {spec_relpath(s): {"specifications": s.specifications} for s in sealed}
+        checksums = {spec_relpath(s): s.metadata.checksum for s in sealed}
+        rels = AnalysisEngine().identify_relationships(sealed)
+        assert rels
+        for rel in rels:
+            for citation in rel.citations:
+                assert citation.source_checksum == checksums[citation.spec_file]
+                assert (
+                    resolve_property_path(documents[citation.spec_file], citation.property_path)
+                    == citation.evidence_value
+                )

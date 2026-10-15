@@ -156,3 +156,169 @@ def test_integration_collector_iam_role_spec_req_2_1(sample_account):
     }
     assert specs["AttachedPolicies"] == []
     assert specs["InlinePolicies"]["too-broad"]["Statement"][0]["Action"] == "*"
+
+
+# ============================================================================
+# Network, edge and load-balancing types (Requirement 14.1)
+# ============================================================================
+
+
+def _collect_clean(session, service, resource_type, resource_id, arn, region=REGION):
+    spec, collector = _collect(session, service, resource_type, resource_id, arn, region)
+    assert collector.get_errors() == [], [(e.operation, e.detail) for e in collector.get_errors()]
+    return spec
+
+
+def test_integration_collector_subnet_spec_req_14_1(sample_account):
+    session, ids = sample_account
+    subnet_id = ids.public_subnet_ids[0]
+    arn = f"arn:aws:ec2:{REGION}:{ACCOUNT}:subnet/{subnet_id}"
+    spec = _collect_clean(session, "ec2", "aws_subnet", subnet_id, arn)
+    s = spec.specifications
+    assert s["SubnetId"] == subnet_id
+    assert s["VpcId"] == ids.vpc_id
+    assert s["CidrBlock"] == "10.0.10.0/24"
+    assert s["AvailabilityZone"] == "us-east-1a"
+    assert s["DefaultForAz"] is False
+    assert {"Key": "Name", "Value": "storefront-public-a"} in s["Tags"]
+
+
+def test_integration_collector_route_table_spec_req_14_1(sample_account):
+    session, ids = sample_account
+    rtb = ids.public_route_table_id
+    arn = f"arn:aws:ec2:{REGION}:{ACCOUNT}:route-table/{rtb}"
+    spec = _collect_clean(session, "ec2", "aws_route_table", rtb, arn)
+    s = spec.specifications
+    assert s["RouteTableId"] == rtb and s["VpcId"] == ids.vpc_id
+    assert any(r.get("GatewayId") == ids.internet_gateway_id for r in s["Routes"])
+    assert {a["SubnetId"] for a in s["Associations"] if "SubnetId" in a} == set(
+        ids.public_subnet_ids
+    )
+
+
+def test_integration_collector_internet_gateway_spec_req_14_1(sample_account):
+    session, ids = sample_account
+    igw = ids.internet_gateway_id
+    arn = f"arn:aws:ec2:{REGION}:{ACCOUNT}:internet-gateway/{igw}"
+    spec = _collect_clean(session, "ec2", "aws_internet_gateway", igw, arn)
+    assert spec.specifications["InternetGatewayId"] == igw
+    assert spec.specifications["Attachments"][0]["VpcId"] == ids.vpc_id
+
+
+def test_integration_collector_nat_gateway_spec_req_14_1(sample_account):
+    session, ids = sample_account
+    nat = ids.nat_gateway_id
+    arn = f"arn:aws:ec2:{REGION}:{ACCOUNT}:natgateway/{nat}"
+    spec = _collect_clean(session, "ec2", "aws_nat_gateway", nat, arn)
+    assert spec.specifications["NatGatewayId"] == nat
+    assert spec.specifications["SubnetId"] == ids.public_subnet_ids[0]
+    assert spec.specifications["NatGatewayAddresses"][0]["AllocationId"]
+
+
+def test_integration_collector_vpc_endpoint_spec_req_14_1(sample_account):
+    session, ids = sample_account
+    vpce = ids.vpc_endpoint_id
+    arn = f"arn:aws:ec2:{REGION}:{ACCOUNT}:vpc-endpoint/{vpce}"
+    spec = _collect_clean(session, "ec2", "aws_vpc_endpoint", vpce, arn)
+    s = spec.specifications
+    assert s["VpcEndpointId"] == vpce
+    assert s["ServiceName"] == f"com.amazonaws.{REGION}.s3"
+    assert s["RouteTableIds"] == [ids.private_route_table_id]
+
+
+def test_integration_collector_load_balancer_spec_req_14_1(sample_account):
+    session, ids = sample_account
+    raw_id = ids.alb_arn.split(":loadbalancer/")[1]
+    spec = _collect_clean(session, "elbv2", "aws_lb", raw_id, ids.alb_arn)
+    s = spec.specifications
+    assert s["LoadBalancerArn"] == ids.alb_arn
+    assert s["LoadBalancerName"] == "storefront-alb"
+    assert s["Scheme"] == "internet-facing"
+    assert {z["SubnetId"] for z in s["AvailabilityZones"]} == set(ids.public_subnet_ids)
+    assert s["SecurityGroups"] == [ids.alb_security_group_id]
+    assert any(a["Key"] == "deletion_protection.enabled" for a in s["Attributes"])
+    assert {"Key": "service", "Value": "storefront"} in s["Tags"]
+    assert [listener["ListenerArn"] for listener in s["Listeners"]] == [ids.listener_arn]
+
+
+def test_integration_collector_listener_spec_req_14_1(sample_account):
+    session, ids = sample_account
+    raw_id = ids.listener_arn.split(":listener/")[1]
+    spec = _collect_clean(session, "elbv2", "aws_lb_listener", raw_id, ids.listener_arn)
+    s = spec.specifications
+    assert s["ListenerArn"] == ids.listener_arn
+    assert s["LoadBalancerArn"] == ids.alb_arn
+    assert s["Port"] == 443 and s["Protocol"] == "HTTPS"
+    assert s["Certificates"][0]["CertificateArn"] == ids.certificate_arn
+    assert s["DefaultActions"][0]["TargetGroupArn"] == ids.target_group_arn
+
+
+def test_integration_collector_target_group_spec_req_14_1(sample_account):
+    session, ids = sample_account
+    raw_id = ids.target_group_arn.split(":targetgroup/")[1]
+    spec = _collect_clean(session, "elbv2", "aws_lb_target_group", raw_id, ids.target_group_arn)
+    s = spec.specifications
+    assert s["TargetGroupName"] == "storefront-tg"
+    assert s["VpcId"] == ids.vpc_id
+    assert s["LoadBalancerArns"] == [ids.alb_arn]
+    assert any(a["Key"] == "deregistration_delay.timeout_seconds" for a in s["Attributes"])
+    assert "Tags" in s
+
+
+def test_integration_collector_cloudfront_distribution_spec_req_14_1(sample_account):
+    session, ids = sample_account
+    arn = f"arn:aws:cloudfront::{ACCOUNT}:distribution/{ids.distribution_id}"
+    spec = _collect_clean(
+        session, "cloudfront", "aws_cloudfront_distribution", ids.distribution_id, arn, "global"
+    )
+    s = spec.specifications
+    assert s["Id"] == ids.distribution_id
+    assert s["DomainName"].endswith(".cloudfront.net")
+    config = s["DistributionConfig"]
+    assert {o["Id"] for o in config["Origins"]["Items"]} == {"static-s3", "web-alb"}
+    assert config["WebACLId"] == ids.web_acl_arn
+    # moto 4.x ignores ViewerCertificate.ACMCertificateArn; the certificate reference
+    # is covered by the analysis and scope unit tests.
+    assert "ViewerCertificate" in config
+    assert config["Aliases"]["Items"] == ["shop.example.com"]
+    assert {"Key": "service", "Value": "storefront"} in s["Tags"]
+    # Distributions only: no edge-location or IP-range data is collected (Req 14.1).
+    assert set(spec.raw_response) == {"GetDistribution", "ListTagsForResource"}
+
+
+def test_integration_collector_route53_zone_spec_req_14_1(sample_account):
+    session, ids = sample_account
+    arn = f"arn:aws:route53:::hostedzone/{ids.hosted_zone_id}"
+    spec = _collect_clean(session, "route53", "aws_route53_zone", ids.hosted_zone_id, arn, "global")
+    s = spec.specifications
+    assert s["Id"] == f"/hostedzone/{ids.hosted_zone_id}"
+    assert s["Name"] == "example.com."
+    aliases = {
+        r["Name"]: r["AliasTarget"]["DNSName"]
+        for r in s["ResourceRecordSets"]
+        if "AliasTarget" in r
+    }
+    assert set(aliases) == {"shop.example.com.", "api.example.com."}
+    assert {"Key": "service", "Value": "storefront"} in s["Tags"]
+
+
+def test_integration_collector_acm_certificate_spec_req_14_1(sample_account):
+    session, ids = sample_account
+    raw_id = ids.certificate_arn.split(":certificate/")[1]
+    spec = _collect_clean(session, "acm", "aws_acm_certificate", raw_id, ids.certificate_arn)
+    s = spec.specifications
+    assert s["CertificateArn"] == ids.certificate_arn
+    assert s["DomainName"] == "shop.example.com"
+    assert {"Key": "service", "Value": "storefront"} in s["Tags"]
+
+
+def test_integration_collector_wafv2_web_acl_spec_req_14_1(sample_account):
+    session, ids = sample_account
+    raw_id = ids.web_acl_arn.split("/webacl/")[1]
+    spec = _collect_clean(session, "wafv2", "aws_wafv2_web_acl", raw_id, ids.web_acl_arn, "global")
+    s = spec.specifications
+    assert s["Name"] == "storefront-waf"
+    assert s["ARN"] == ids.web_acl_arn
+    assert "DefaultAction" in s and "VisibilityConfig" in s
+    assert {"Key": "service", "Value": "storefront"} in s["Tags"]
+    assert "LockToken" not in s

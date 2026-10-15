@@ -736,3 +736,436 @@ def test_iac_empty_values_count_as_mapped_req_7_3():
     block = IaCGenerator().generate_resource_block(spec)
     assert "# unmapped: Description" not in block and "# unmapped: Layers" not in block
     assert "description =" not in block
+
+
+# ============================================================================
+# Network, edge and load-balancing types (Requirements 7.3, 7.4, 14.1)
+# ============================================================================
+
+EC2_ARN = f"arn:aws:ec2:us-east-1:{ACCOUNT}"
+ELB_ARN = f"arn:aws:elasticloadbalancing:us-east-1:{ACCOUNT}"
+LB_ARN = f"{ELB_ARN}:loadbalancer/app/web-alb/abc"
+LISTENER_ARN = f"{ELB_ARN}:listener/app/web-alb/abc/def"
+TG_ARN = f"{ELB_ARN}:targetgroup/web-tg/123"
+CERT_ARN = f"arn:aws:acm:us-east-1:{ACCOUNT}:certificate/uuid-1"
+WAF_ARN = f"arn:aws:wafv2:us-east-1:{ACCOUNT}:global/webacl/web-acl/uuid-2"
+TAGS = [{"Key": "service", "Value": "shop"}]
+
+SUBNET = _s(
+    "aws_subnet",
+    f"{EC2_ARN}:subnet/subnet-a",
+    {
+        "SubnetId": "subnet-a",
+        "VpcId": "vpc-1",
+        "CidrBlock": "10.0.10.0/24",
+        "AvailabilityZone": "us-east-1a",
+        "MapPublicIpOnLaunch": True,
+        "DefaultForAz": False,
+        "Tags": TAGS,
+    },
+)
+ROUTE_TABLE = _s(
+    "aws_route_table",
+    f"{EC2_ARN}:route-table/rtb-1",
+    {
+        "RouteTableId": "rtb-1",
+        "VpcId": "vpc-1",
+        "Routes": [
+            {
+                "DestinationCidrBlock": "10.0.0.0/16",
+                "GatewayId": "local",
+                "Origin": "CreateRouteTable",
+            },
+            {"DestinationCidrBlock": "0.0.0.0/0", "GatewayId": "igw-1", "Origin": "CreateRoute"},
+            {
+                "DestinationCidrBlock": "10.9.0.0/16",
+                "NatGatewayId": "nat-1",
+                "Origin": "CreateRoute",
+            },
+            {"DestinationPrefixListId": "pl-1", "GatewayId": "vpce-1", "Origin": "CreateRoute"},
+        ],
+        "Associations": [
+            {"Main": True, "RouteTableAssociationId": "rtbassoc-main"},
+            {"Main": False, "SubnetId": "subnet-a", "RouteTableAssociationId": "rtbassoc-1"},
+        ],
+        "Tags": TAGS,
+    },
+)
+INTERNET_GATEWAY = _s(
+    "aws_internet_gateway",
+    f"{EC2_ARN}:internet-gateway/igw-1",
+    {"InternetGatewayId": "igw-1", "Attachments": [{"VpcId": "vpc-1"}], "Tags": TAGS},
+)
+NAT_GATEWAY = _s(
+    "aws_nat_gateway",
+    f"{EC2_ARN}:natgateway/nat-1",
+    {
+        "NatGatewayId": "nat-1",
+        "SubnetId": "subnet-a",
+        "VpcId": "vpc-1",
+        "ConnectivityType": "public",
+        "NatGatewayAddresses": [{"AllocationId": "eipalloc-1", "PublicIp": "1.2.3.4"}],
+        "Tags": TAGS,
+    },
+)
+VPC_ENDPOINT = _s(
+    "aws_vpc_endpoint",
+    f"{EC2_ARN}:vpc-endpoint/vpce-1",
+    {
+        "VpcEndpointId": "vpce-1",
+        "VpcId": "vpc-1",
+        "ServiceName": "com.amazonaws.us-east-1.s3",
+        "VpcEndpointType": "Gateway",
+        "RouteTableIds": ["rtb-1"],
+        "PolicyDocument": '{"Statement": [{"Effect": "Allow", "Principal": "*"}]}',
+        "Tags": TAGS,
+    },
+)
+LOAD_BALANCER = _s(
+    "aws_lb",
+    LB_ARN,
+    {
+        "LoadBalancerArn": LB_ARN,
+        "LoadBalancerName": "web-alb",
+        "Scheme": "internet-facing",
+        "Type": "application",
+        "IpAddressType": "ipv4",
+        "AvailabilityZones": [{"SubnetId": "subnet-a"}, {"SubnetId": "subnet-b"}],
+        "SecurityGroups": ["sg-alb"],
+        "Attributes": [
+            {"Key": "deletion_protection.enabled", "Value": "true"},
+            {"Key": "idle_timeout.timeout_seconds", "Value": "60"},
+        ],
+        "Listeners": [{"ListenerArn": LISTENER_ARN}],
+        "Tags": TAGS,
+    },
+)
+LISTENER = _s(
+    "aws_lb_listener",
+    LISTENER_ARN,
+    {
+        "ListenerArn": LISTENER_ARN,
+        "LoadBalancerArn": LB_ARN,
+        "Port": 443,
+        "Protocol": "HTTPS",
+        "SslPolicy": "ELBSecurityPolicy-2016-08",
+        "Certificates": [{"CertificateArn": CERT_ARN}],
+        "DefaultActions": [{"Type": "forward", "TargetGroupArn": TG_ARN, "Order": 1}],
+    },
+)
+TARGET_GROUP = _s(
+    "aws_lb_target_group",
+    TG_ARN,
+    {
+        "TargetGroupArn": TG_ARN,
+        "TargetGroupName": "web-tg",
+        "Protocol": "HTTP",
+        "Port": 80,
+        "VpcId": "vpc-1",
+        "TargetType": "ip",
+        "HealthCheckEnabled": True,
+        "HealthCheckPath": "/health",
+        "HealthCheckProtocol": "HTTP",
+        "HealthCheckPort": "traffic-port",
+        "HealthCheckIntervalSeconds": 30,
+        "HealthCheckTimeoutSeconds": 5,
+        "HealthyThresholdCount": 5,
+        "UnhealthyThresholdCount": 2,
+        "Matcher": {"HttpCode": "200"},
+        "Attributes": [{"Key": "deregistration_delay.timeout_seconds", "Value": "30"}],
+        "Tags": TAGS,
+    },
+)
+DISTRIBUTION = _s(
+    "aws_cloudfront_distribution",
+    f"arn:aws:cloudfront::{ACCOUNT}:distribution/E1",
+    {
+        "Id": "E1",
+        "DomainName": "d1.cloudfront.net",
+        "DistributionConfig": {
+            "Aliases": {"Quantity": 1, "Items": ["shop.example.com"]},
+            "Comment": "shop",
+            "Enabled": True,
+            "PriceClass": "PriceClass_100",
+            "HttpVersion": "http2",
+            "IsIPV6Enabled": True,
+            "DefaultRootObject": "index.html",
+            "WebACLId": WAF_ARN,
+            "Origins": {
+                "Quantity": 2,
+                "Items": [
+                    {
+                        "Id": "static-s3",
+                        "DomainName": "static.s3.us-east-1.amazonaws.com",
+                        "OriginPath": "",
+                        "S3OriginConfig": {"OriginAccessIdentity": ""},
+                    },
+                    {
+                        "Id": "web-alb",
+                        "DomainName": "web-alb-1.us-east-1.elb.amazonaws.com",
+                        "OriginPath": "",
+                        "CustomOriginConfig": {
+                            "HTTPPort": 80,
+                            "HTTPSPort": 443,
+                            "OriginProtocolPolicy": "https-only",
+                            "OriginSslProtocols": {"Quantity": 1, "Items": ["TLSv1.2"]},
+                        },
+                    },
+                ],
+            },
+            "DefaultCacheBehavior": {
+                "TargetOriginId": "web-alb",
+                "ViewerProtocolPolicy": "redirect-to-https",
+                "AllowedMethods": {
+                    "Quantity": 2,
+                    "Items": ["GET", "HEAD"],
+                    "CachedMethods": {"Quantity": 2, "Items": ["GET", "HEAD"]},
+                },
+                "Compress": True,
+                "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+            },
+            "CacheBehaviors": {
+                "Quantity": 1,
+                "Items": [
+                    {
+                        "PathPattern": "/static/*",
+                        "TargetOriginId": "static-s3",
+                        "ViewerProtocolPolicy": "redirect-to-https",
+                        "ForwardedValues": {"QueryString": False, "Cookies": {"Forward": "none"}},
+                        "MinTTL": 0,
+                    }
+                ],
+            },
+            "Restrictions": {"GeoRestriction": {"RestrictionType": "none", "Quantity": 0}},
+            "ViewerCertificate": {
+                "ACMCertificateArn": CERT_ARN,
+                "SSLSupportMethod": "sni-only",
+                "MinimumProtocolVersion": "TLSv1.2_2021",
+            },
+        },
+        "Tags": TAGS,
+    },
+    region="global",
+)
+ZONE = _s(
+    "aws_route53_zone",
+    "arn:aws:route53:::hostedzone/Z1",
+    {
+        "Id": "/hostedzone/Z1",
+        "Name": "example.com.",
+        "Config": {"Comment": "public zone", "PrivateZone": False},
+        "ResourceRecordSets": [
+            {"Name": "example.com.", "Type": "NS", "TTL": 172800, "ResourceRecords": []},
+            {"Name": "example.com.", "Type": "SOA", "TTL": 900, "ResourceRecords": []},
+            {
+                "Name": "shop.example.com.",
+                "Type": "A",
+                "AliasTarget": {
+                    "HostedZoneId": "Z2FDTNDATAQYW2",
+                    "DNSName": "d1.cloudfront.net.",
+                    "EvaluateTargetHealth": False,
+                },
+            },
+            {
+                "Name": "www.example.com.",
+                "Type": "CNAME",
+                "TTL": 300,
+                "ResourceRecords": [{"Value": "shop.example.com"}],
+            },
+        ],
+        "Tags": TAGS,
+    },
+    region="global",
+)
+CERTIFICATE = _s(
+    "aws_acm_certificate",
+    CERT_ARN,
+    {
+        "CertificateArn": CERT_ARN,
+        "DomainName": "shop.example.com",
+        "SubjectAlternativeNames": ["shop.example.com", "www.example.com"],
+        "Type": "AMAZON_ISSUED",
+        "KeyAlgorithm": "RSA_2048",
+        "DomainValidationOptions": [{"DomainName": "shop.example.com", "ValidationMethod": "DNS"}],
+        "Tags": TAGS,
+    },
+)
+WEB_ACL = _s(
+    "aws_wafv2_web_acl",
+    WAF_ARN,
+    {
+        "Name": "web-acl",
+        "Id": "uuid-2",
+        "ARN": WAF_ARN,
+        "Description": "edge",
+        "DefaultAction": {"Allow": {}},
+        "Rules": [{"Name": "rate", "Priority": 1}],
+        "VisibilityConfig": {
+            "SampledRequestsEnabled": True,
+            "CloudWatchMetricsEnabled": True,
+            "MetricName": "web-acl",
+        },
+        "Tags": TAGS,
+    },
+    region="global",
+)
+NETWORK_EDGE = [
+    SUBNET,
+    ROUTE_TABLE,
+    INTERNET_GATEWAY,
+    NAT_GATEWAY,
+    VPC_ENDPOINT,
+    LOAD_BALANCER,
+    LISTENER,
+    TARGET_GROUP,
+    DISTRIBUTION,
+    ZONE,
+    CERTIFICATE,
+    WEB_ACL,
+]
+
+
+def _block(body, name):
+    value = body[name]
+    return _unquote(value[0] if isinstance(value, list) else value)
+
+
+class TestIaCNetworkEdgeMappings:
+    def test_iac_network_types_map_arguments_req_7_3(self):
+        subnet = _body(SUBNET)
+        assert _arg(subnet, "vpc_id") == "vpc-1"
+        assert _arg(subnet, "cidr_block") == "10.0.10.0/24"
+        assert _arg(subnet, "availability_zone") == "us-east-1a"
+        assert _arg(subnet, "map_public_ip_on_launch") is True
+        assert _arg(subnet, "tags") == {"service": "shop"}
+
+        routes = _body(ROUTE_TABLE)
+        assert _arg(routes, "vpc_id") == "vpc-1"
+        # The local route and the gateway endpoint route are managed by AWS / the endpoint.
+        assert [_unquote(r) for r in routes["route"]] == [
+            {"cidr_block": "0.0.0.0/0", "gateway_id": "igw-1"},
+            {"cidr_block": "10.9.0.0/16", "nat_gateway_id": "nat-1"},
+        ]
+        association = _body(ROUTE_TABLE, "aws_route_table_association")
+        assert _arg(association, "subnet_id") == "subnet-a"
+        assert _arg(association, "route_table_id") == "${aws_route_table.rtb-1.id}"
+
+        assert _arg(_body(INTERNET_GATEWAY), "vpc_id") == "vpc-1"
+        nat = _body(NAT_GATEWAY)
+        assert _arg(nat, "subnet_id") == "subnet-a"
+        assert _arg(nat, "allocation_id") == "eipalloc-1"
+        assert _arg(nat, "connectivity_type") == "public"
+
+        endpoint = _body(VPC_ENDPOINT)
+        assert _arg(endpoint, "service_name") == "com.amazonaws.us-east-1.s3"
+        assert _arg(endpoint, "vpc_endpoint_type") == "Gateway"
+        assert _arg(endpoint, "route_table_ids") == ["rtb-1"]
+        assert _json_arg(endpoint, "policy")["Statement"][0]["Effect"] == "Allow"
+
+    def test_iac_load_balancer_types_map_arguments_req_7_3(self):
+        lb = _body(LOAD_BALANCER)
+        assert _arg(lb, "name") == "web-alb"
+        assert _arg(lb, "internal") is False
+        assert _arg(lb, "load_balancer_type") == "application"
+        assert _arg(lb, "subnets") == ["subnet-a", "subnet-b"]
+        assert _arg(lb, "security_groups") == ["sg-alb"]
+        assert _arg(lb, "enable_deletion_protection") is True
+        assert _arg(lb, "idle_timeout") == 60
+
+        listener = _body(LISTENER)
+        assert _arg(listener, "load_balancer_arn") == LB_ARN
+        assert _arg(listener, "port") == 443
+        assert _arg(listener, "protocol") == "HTTPS"
+        assert _arg(listener, "certificate_arn") == CERT_ARN
+        assert _block(listener, "default_action") == {
+            "type": "forward",
+            "target_group_arn": TG_ARN,
+            "order": 1,
+        }
+
+        tg = _body(TARGET_GROUP)
+        assert _arg(tg, "name") == "web-tg"
+        assert _arg(tg, "target_type") == "ip"
+        assert _arg(tg, "deregistration_delay") == "30"
+        health = _block(tg, "health_check")
+        assert health["path"] == "/health" and health["matcher"] == "200"
+
+    def test_iac_edge_types_map_arguments_req_7_3(self):
+        cf = _body(DISTRIBUTION)
+        assert _arg(cf, "enabled") is True
+        assert _arg(cf, "aliases") == ["shop.example.com"]
+        assert _arg(cf, "web_acl_id") == WAF_ARN
+        origins = [_unquote(o) for o in cf["origin"]]
+        assert [o["origin_id"] for o in origins] == ["static-s3", "web-alb"]
+        assert "s3_origin_config" in origins[0]
+        custom = origins[1]["custom_origin_config"]
+        custom = custom[0] if isinstance(custom, list) else custom
+        assert custom["origin_protocol_policy"] == "https-only"
+        assert custom["origin_ssl_protocols"] == ["TLSv1.2"]
+        default = _block(cf, "default_cache_behavior")
+        assert default["target_origin_id"] == "web-alb"
+        assert default["cache_policy_id"] == "658327ea-f89d-4fab-a63d-7e88639e58f6"
+        ordered = _block(cf, "ordered_cache_behavior")
+        assert ordered["path_pattern"] == "/static/*"
+        assert "forwarded_values" in ordered
+        certificate = _block(cf, "viewer_certificate")
+        assert certificate["acm_certificate_arn"] == CERT_ARN
+        assert "restrictions" in cf
+
+        zone = _body(ZONE)
+        assert _arg(zone, "name") == "example.com"
+        assert _arg(zone, "comment") == "public zone"
+        records = _resources(IaCGenerator().generate_resource_block(ZONE))
+        record_bodies = {n: b for (t, n), b in records.items() if t == "aws_route53_record"}
+        # Apex NS and SOA records belong to the zone itself.
+        assert sorted(record_bodies) == ["Z1_shop_example_com_A", "Z1_www_example_com_CNAME"]
+        alias = _block(record_bodies["Z1_shop_example_com_A"], "alias")
+        assert alias["name"] == "d1.cloudfront.net."
+        assert _arg(record_bodies["Z1_www_example_com_CNAME"], "records") == ["shop.example.com"]
+
+        cert = _body(CERTIFICATE)
+        assert _arg(cert, "domain_name") == "shop.example.com"
+        assert _arg(cert, "subject_alternative_names") == ["shop.example.com", "www.example.com"]
+        assert _arg(cert, "validation_method") == "DNS"
+
+        acl = _body(WEB_ACL)
+        assert _arg(acl, "scope") == "CLOUDFRONT"
+        assert "allow" in _block(acl, "default_action")
+        assert _block(acl, "visibility_config")["metric_name"] == "web-acl"
+        # WAF rules are not mapped; they are kept out of the plan.
+        assert "rule" in str(_unquote(acl["lifecycle"][0])["ignore_changes"])
+        assert "# unmapped: Rules" in IaCGenerator().generate_resource_block(WEB_ACL)
+
+    def test_iac_network_edge_import_ids_req_7_4(self):
+        script = IaCGenerator().generate_import_script(NETWORK_EDGE).replace("'", "")
+        east, glob = "module.us_east_1.", "module.global."
+        expected = [
+            (east + "aws_subnet.subnet-a", "subnet-a"),
+            (east + "aws_route_table.rtb-1", "rtb-1"),
+            (east + "aws_route_table_association.rtb-1_subnet-a", "subnet-a/rtb-1"),
+            (east + "aws_internet_gateway.igw-1", "igw-1"),
+            (east + "aws_nat_gateway.nat-1", "nat-1"),
+            (east + "aws_vpc_endpoint.vpce-1", "vpce-1"),
+            (east + "aws_lb.app_web-alb_abc", LB_ARN),
+            (east + "aws_lb_listener.app_web-alb_abc_def", LISTENER_ARN),
+            (east + "aws_lb_target_group.web-tg_123", TG_ARN),
+            (east + "aws_acm_certificate.uuid-1", CERT_ARN),
+            (glob + "aws_cloudfront_distribution.E1", "E1"),
+            (glob + "aws_route53_zone.Z1", "Z1"),
+            (glob + "aws_route53_record.Z1_shop_example_com_A", "Z1_shop.example.com_A"),
+            (glob + "aws_route53_record.Z1_www_example_com_CNAME", "Z1_www.example.com_CNAME"),
+            (glob + "aws_wafv2_web_acl.web-acl_uuid-2", "uuid-2/web-acl/CLOUDFRONT"),
+        ]
+        for address, import_id in expected:
+            assert f"terraform import {address} {import_id}" in script, address
+        assert script.count("terraform import ") == len(expected)
+
+    def test_iac_network_edge_files_parse_as_hcl_req_7_2(self, tmp_path):
+        files = IaCGenerator().generate_terraform(NETWORK_EDGE, target_dir=tmp_path)
+        assert "global/aws_cloudfront_distribution.tf" in files
+        assert "us-east-1/aws_lb_listener.tf" in files
+        for rel, text in files.items():
+            if rel.endswith(".tf"):
+                hcl2.loads(text)
+            if rel.endswith(".tf") and "/" in rel and not rel.endswith("versions.tf"):
+                assert "# unmapped: Tags" not in text, rel

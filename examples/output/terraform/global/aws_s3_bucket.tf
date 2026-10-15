@@ -20,3 +20,17 @@ resource "aws_s3_bucket_versioning" "orders-public-assets" {
     status = "Enabled"
   }
 }
+
+# Resource: aws_s3_bucket.storefront-static
+# Source specification: aws_s3_bucket/global/storefront-static.json
+# ARN: arn:aws:s3:::storefront-static
+# Region: global
+# mapped: Name, bucket-tagging
+# unmapped: bucket-acl
+# unmapped: bucket-versioning
+resource "aws_s3_bucket" "storefront-static" {
+  bucket = "storefront-static"
+  tags = {
+    "service" = "storefront"
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188",
+  "generated_at": "2026-10-15T16:01:58.115386Z",
+  "metadata": {
+    "api_version": "2015-12-01",
+    "checksum": "b9e0fb318bffe2a700c559e62bf7e015f973bf51b4fb18dd84edc654727d385a",
+    "collected_at": "2026-10-15T16:01:58Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_lb_target_group",
+  "specifications": {
+    "Attributes": [
+      {
+        "Key": "deregistration_delay.timeout_seconds",
+        "Value": "300"
+      },
+      {
+        "Key": "stickiness.enabled",
+        "Value": "false"
+      },
+      {
+        "Key": "load_balancing.algorithm.type",
+        "Value": "round_robin"
+      },
+      {
+        "Key": "load_balancing.cross_zone.enabled",
+        "Value": "use_load_balancer_configuration"
+      },
+      {
+        "Key": "slow_start.duration_seconds",
+        "Value": "0"
+      },
+      {
+        "Key": "waf.fail_open.enabled",
+        "Value": "false"
+      },
+      {
+        "Key": "stickiness.type",
+        "Value": "lb_cookie"
+      }
+    ],
+    "HealthCheckEnabled": true,
+    "HealthCheckIntervalSeconds": 30,
+    "HealthCheckPath": "/health",
+    "HealthCheckPort": "traffic-port",
+    "HealthCheckProtocol": "HTTP",
+    "HealthCheckTimeoutSeconds": 5,
+    "HealthyThresholdCount": 5,
+    "IpAddressType": "ipv4",
+    "LoadBalancerArns": [
+      "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188"
+    ],
+    "Matcher": {
+      "HttpCode": "200"
+    },
+    "Port": 80,
+    "Protocol": "HTTP",
+    "ProtocolVersion": "HTTP1",
+    "Tags": [
+      {
+        "Key": "service",
+        "Value": "storefront"
+      }
+    ],
+    "TargetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188",
+    "TargetGroupName": "storefront-tg",
+    "TargetType": "ip",
+    "UnhealthyThresholdCount": 2,
+    "VpcId": "vpc-1561eea5"
+  }
+}

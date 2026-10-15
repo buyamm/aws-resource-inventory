@@ -176,6 +176,28 @@ class TestMCPServerCachedData:
         response = mcp.handle_request("list-resources", {"region": "global"})
         assert [item["arn"] for item in response["data"]] == [ROLE_ARN]
 
+    def test_mcp_server_network_edge_aliases_req_14_1(self, tmp_path):
+        lb_arn = f"arn:aws:elasticloadbalancing:us-east-1:{ACCOUNT}:loadbalancer/app/web/abc"
+        cf_arn = f"arn:aws:cloudfront::{ACCOUNT}:distribution/E1"
+        root = _write_cache(
+            tmp_path / "out",
+            [
+                _spec("aws_lb", lb_arn, {"LoadBalancerArn": lb_arn, "LoadBalancerName": "web"}),
+                _spec("aws_cloudfront_distribution", cf_arn, {"Id": "E1"}, region="global"),
+            ],
+        )
+        server = MCPServer(cache_dir=str(root))
+        for alias in ("alb", "aws_alb", "load_balancer", "AWS_LB"):
+            response = server.handle_request("list-resources", {"resource_type": alias})
+            assert response["status"] == "ok", response
+            assert [(i["arn"], i["resource_id"], i["spec_file"]) for i in response["data"]] == [
+                (lb_arn, "app/web/abc", "aws_lb/us-east-1/app_web_abc.json")
+            ]
+        response = server.handle_request("list-resources", {"resource_type": "cloudfront"})
+        assert [i["spec_file"] for i in response["data"]] == [
+            "aws_cloudfront_distribution/global/E1.json"
+        ]
+
     def test_mcp_server_get_resource_spec_from_cache_req_5_3(self, mcp, cache_dir):
         with mock.patch("boto3.client") as mock_client:
             response = mcp.handle_request("get-resource-spec", {"arn": FUNCTION_ARN})

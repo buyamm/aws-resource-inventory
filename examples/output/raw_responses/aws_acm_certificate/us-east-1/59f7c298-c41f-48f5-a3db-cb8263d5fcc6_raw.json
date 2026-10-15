@@ -1,0 +1,79 @@
+{
+  "DescribeCertificate": {
+    "Certificate": {
+      "CertificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/59f7c298-c41f-48f5-a3db-cb8263d5fcc6",
+      "CreatedAt": "2026-10-15T16:01:57.207985+07:00",
+      "DomainName": "shop.example.com",
+      "DomainValidationOptions": [
+        {
+          "DomainName": "api.example.com",
+          "ResourceRecord": {
+            "Name": "_d930b28be6c5927595552b219965053e.api.example.com.",
+            "Type": "CNAME",
+            "Value": "_c9edd76ee4a0e2a74388032f3861cc50.ykybfrwcxw.acm-validations.aws."
+          },
+          "ValidationDomain": "api.example.com",
+          "ValidationMethod": "DNS",
+          "ValidationStatus": "PENDING_VALIDATION"
+        },
+        {
+          "DomainName": "shop.example.com",
+          "ResourceRecord": {
+            "Name": "_d930b28be6c5927595552b219965053e.shop.example.com.",
+            "Type": "CNAME",
+            "Value": "_c9edd76ee4a0e2a74388032f3861cc50.ykybfrwcxw.acm-validations.aws."
+          },
+          "ValidationDomain": "shop.example.com",
+          "ValidationMethod": "DNS",
+          "ValidationStatus": "PENDING_VALIDATION"
+        }
+      ],
+      "ExtendedKeyUsages": [],
+      "InUseBy": [],
+      "IssuedAt": "2026-10-15T16:01:57.207985+07:00",
+      "Issuer": "Amazon",
+      "KeyAlgorithm": "RSA_2048",
+      "NotAfter": "2027-10-15T16:01:57+07:00",
+      "NotBefore": "2026-10-15T16:01:57+07:00",
+      "Options": {
+        "CertificateTransparencyLoggingPreference": "ENABLED"
+      },
+      "RenewalEligibility": "INELIGIBLE",
+      "Serial": "67421154526262129659220035070403335987261677817",
+      "SignatureAlgorithm": "SHA512WITHRSA",
+      "Status": "PENDING_VALIDATION",
+      "Subject": "CN=shop.example.com",
+      "SubjectAlternativeNames": [
+        "api.example.com",
+        "shop.example.com"
+      ],
+      "Type": "AMAZON_ISSUED"
+    },
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Thu, 15 Oct 2026 23:01:58 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RetryAttempts": 0
+    }
+  },
+  "ListTagsForCertificate": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Thu, 15 Oct 2026 23:01:58 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RetryAttempts": 0
+    },
+    "Tags": [
+      {
+        "Key": "service",
+        "Value": "storefront"
+      }
+    ]
+  }
+}
