@@ -79,8 +79,15 @@
         "iam:GetRole",
         "iam:ListAttachedRolePolicies",
         "iam:ListRolePolicies",
-        "iam:GetRolePolicy"
+        "iam:GetRolePolicy",
+        "iam:ListRoleTags"
       ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ProjectTagScopeOnlyWithProjectTagOption",
+      "Effect": "Allow",
+      "Action": ["tag:GetResources"],
       "Resource": "*"
     }
   ]

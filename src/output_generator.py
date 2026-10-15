@@ -387,8 +387,9 @@ class OutputGenerator:
         started_at: str,
         finished_at: str,
         specs: list[ResourceSpec],
+        scope: dict[str, Any] | None = None,
     ) -> Path:
-        """Write manifest.json describing the collection run (Requirement 3.3)."""
+        """Write manifest.json describing the collection run (Requirements 3.3, 13.5)."""
         counts: dict[str, int] = {}
         for spec in specs:
             counts[spec.resource_type] = counts.get(spec.resource_type, 0) + 1
@@ -401,6 +402,8 @@ class OutputGenerator:
             "total_resources": len(specs),
             "resource_counts": dict(sorted(counts.items())),
         }
+        if scope is not None:
+            manifest["scope"] = self.sanitizer.sanitize(scope)
         path = self.output_dir / "manifest.json"
         path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
         self._register_written_file(path)

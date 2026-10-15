@@ -230,7 +230,9 @@ def run(args: argparse.Namespace, output_dir: Path) -> dict[str, Any]:
     injector = LatencyInjector(args.latency_ms / 1000)
     with mocked_aws():
         build_account(boto3.Session(region_name="us-east-1"), regions, regional, glob)
-        collect = ["--log-level", "ERROR", "--no-color", "collect", "--output-dir", str(output_dir)]
+        # --include-defaults: the default VPCs/SGs count towards --resources.
+        collect = ["--log-level", "ERROR", "--no-color", "collect", "--include-defaults"]
+        collect += ["--output-dir", str(output_dir)]
         for region in regions:
             collect += ["--region", region]
         with injector.active():

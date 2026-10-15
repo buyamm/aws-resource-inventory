@@ -44,6 +44,7 @@ Binding scope decisions are listed in requirements.md §"Scope decisions". In sh
 | `src/parser.py` | `ResourceSpec`, `SpecMetadata`, `Result`, `ParseError`, `ResourceParser` (parse/print JSON). |
 | `src/sanitizer.py` | `DataSanitizer`: structure-preserving redaction with a redaction log. |
 | `src/discovery.py` | `ResourceDiscovery`: concurrent per-region listing with pagination; `DiscoveredResource`, `DiscoveryError`. |
+| `src/scope.py` | Project scope (Req 13): `TagScopedDiscovery`, `exclude_defaults()`, reference rules + `extract_references()` for the dependency closure, `scope_document()`. |
 | `src/collector.py` | `SpecCollector`: per-type spec collection for one boto3 client, retry/backoff, error classification, API call counting. |
 | `src/inventory.py` | `InventoryCollector`: turns `DiscoveredResource`s into `ResourceSpec`s (one SpecCollector per service+region), `CollectionError`, `CollectionResult`. |
 | `src/integrity.py` | Canonical JSON, Spec_Checksum, `seal_specs()`, citation path resolution, `verify_output_dir()`. |
@@ -122,6 +123,8 @@ Other models:
 @dataclass
 class DiscoveredResource:            # src/discovery.py
     resource_type: str; resource_id: str; arn: str; region: str; tags: dict[str, str]
+    attributes: dict[str, Any]       # IsDefault (VPC), GroupName/VpcId (SG), Path (IAM role) — Req 13.4
+    referenced_by: list[str]         # "<arn>#<property path>" for closure-added resources — Req 13.3
 
 @dataclass
 class DiscoveryError:                # src/discovery.py
@@ -164,6 +167,7 @@ class Citation:                      # src/analysis_engine.py (Req 8.2)
 - `resource_id(spec: ResourceSpec) -> str`: the id from the "Resource id" column of requirements.md, read from Specifications, falling back to the last ARN segment (after the last `/` or `:`).
 - `file_id(resource_id: str) -> str`: `re.sub(r"[^A-Za-z0-9_.-]", "_", id).strip("_") or "resource"`.
 - `spec_relpath(spec) -> str`: `f"{resource_type}/{region}/{file_id}.json"` (posix, relative to Output_Dir).
+- `build_arn(type_id, resource_id, region, account_id) -> str` / `parse_arn(arn) -> (type_id, resource_id, region) | None`: driven by the `arn_service` / `arn_resource` registry fields (e.g. `ec2` + `security-group/{id}`). `parse_arn` drops IAM role paths and the `:*` log group suffix, maps S3/IAM to region `"global"`, and returns None for unsupported kinds (subnets, S3 objects).
 
 Every module that needs a type name, file name or id uses these functions; no module hard-codes alternative type names.
 
@@ -217,9 +221,31 @@ class InventoryCollector:
 
 Groups resources by (service, client region), creates one client + `SpecCollector` per group, and collects resources concurrently (`max_workers`). Each result gets `region` and `account_id` from discovery/STS — never `"unknown"`.
 
+`collect_all(resources, follow_references=True)` runs the dependency closure (Req 13.3) in waves: after each wave, `scope.extract_references()` is applied to the new specs; targets whose identity `(resource_type, region, resource_id)` is not yet known form the next wave (sorted by ARN; `referenced_by` merged when several specs name the same target). Identity, not the ARN string, is compared because discovery may build EC2 ARNs without the account id. `CollectionResult.referenced` lists the closure-added resources.
+
 ### Discovery pagination
 
 `ResourceDiscovery` uses `client.get_paginator(method)` when `client.can_paginate(method)` is true, else a single call. `get_api_calls()` reports the number of list calls made.
+
+## Project scope (`src/scope.py`, Req 13)
+
+**Seeds.** Without `--project-tag`, `ResourceDiscovery` lists every resource of the supported types. With it, `TagScopedDiscovery(session, tags, regions, max_workers, progress_callback, account_id)` (same interface: `discover_all_resources`, `get_regions`, `get_api_calls`, `get_errors`) calls `resourcegroupstaggingapi.get_resources(TagFilters=[{"Key": k, "Values": [v]}, ...])` (paginated) in every queried region — enabled regions, or `--region` plus `us-east-1` restricted to global types — and maps each ARN with `parse_arn` (unsupported ARNs are ignored; seed ARNs are rebuilt with `build_arn` so they match closure ARNs). IAM roles come from `iam.list_roles` + `iam.list_role_tags` per role. A failing region is a `DiscoveryError(region, "tagging", message)`. `seed_regions(resources, requested)` returns `--region` values when given, else the sorted regions of regional seeds.
+
+**Default exclusion.** `exclude_defaults(resources, include_defaults=False) -> (kept, excluded)`: a VPC with `attributes.IsDefault`, a security group named `default` whose `VpcId` is such a VPC (same region), and an IAM role whose path starts with `/aws-service-role/`. Tag-seeded resources carry no list attributes, so only the role rule can apply to them. Subnets of the default VPC join this rule when `aws_subnet` is supported (Task 28).
+
+**Reference rules** (`REFERENCE_RULES`, source type → `(Specifications path, target type)`; `[]` walks list elements). Values may be ids, names or ARNs; an ARN that `parse_arn` does not map to the target type is ignored; ids/names are resolved in the source spec's region (`global` for IAM/S3).
+
+| Source | Path | Target |
+|---|---|---|
+| `aws_instance` | `VpcId`, `SecurityGroups[].GroupId` | VPC, SG |
+| `aws_security_group` | `VpcId`, `IpPermissions[].UserIdGroupPairs[].GroupId`, `IpPermissionsEgress[].UserIdGroupPairs[].GroupId` | VPC, SG |
+| `aws_lambda_function` | `Role`, `VpcConfig.VpcId`, `VpcConfig.SecurityGroupIds[]`, `LoggingConfig.LogGroup` | role, VPC, SG, log group |
+| `aws_db_instance` | `VpcSecurityGroups[].VpcSecurityGroupId`, `DBSubnetGroup.VpcId`, `MonitoringRoleArn`, `AssociatedRoles[].RoleArn` | SG, VPC, role |
+| `aws_sfn_state_machine` | `roleArn`, `loggingConfiguration.destinations[].cloudWatchLogsLogGroup.logGroupArn` | role, log group |
+
+Tasks 28–29 add rules for the new types (subnets, target groups, CloudFront origins, ECS task roles, ...). `referenced_by` entries use the concrete path, e.g. `arn:...:instance/i-1#specifications.SecurityGroups[0].GroupId`.
+
+**Scope record.** `scope_document(config, regions, seeds, excluded, referenced=None)` builds the `scope` block of Req 13.5; `excluded_defaults` omits ARNs the closure pulled back. `collect` reports `resources_discovered = seeds + referenced` in the metrics. `scripts/benchmark.py` passes `--include-defaults` because moto's default VPCs/SGs count towards its resource budget.
 
 ## Integrity (`src/integrity.py`)
 
@@ -248,7 +274,7 @@ def verify_output_dir(output_dir) -> VerificationReport       # Req 8.3 / 8.4
 
 ```
 <Output_Dir>/
-├── manifest.json                     # account_id, regions, started_at, finished_at, tool version, resource counts
+├── manifest.json                     # account_id, regions, started_at, finished_at, tool version, resource counts, scope (Req 13.5)
 ├── resources.json  resources.md      # aggregates (Req 3.1)
 ├── <canonical_type>/<region>/<file_id>.json|.md   # per-resource (Req 3.2) — the MCP cache
 ├── raw_responses/<canonical_type>/<region>/<file_id>_raw.json   # sanitized raw responses (Req 3.6)
@@ -366,7 +392,7 @@ Entry point `aws-inventory = "src.cli:main"`. Global options: `--log-level [DEBU
 
 | Command | Options | Online? | Writes |
 |---|---|---|---|
-| `discover` | `--region` (repeatable), `--profile`, `--role-arn`, `--external-id`, `--output-dir` (default `./output`) | yes | `discovery.json` |
+| `discover` | `--region` (repeatable), `--project-tag KEY=VALUE` (repeatable, AND), `--include-defaults`, `--profile`, `--role-arn`, `--external-id`, `--output-dir` (default `./output`) | yes | `discovery.json` |
 | `collect` | same as discover + `--max-workers` (default 10) | yes | everything in "Output directory layout" up to `summary_report.md`, plus checksums |
 | `analyze` | `--output-dir`, `--validate-diagram` | no | `analysis/`, `diagrams/`, checksums |
 | `generate-iac` | `--output-dir`, `--terraform-dir` | no | `terraform/`, checksums |

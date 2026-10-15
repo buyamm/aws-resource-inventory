@@ -364,6 +364,7 @@ IAM_ACTION_OVERRIDES = {
     "s3:GetBucketEncryption": "s3:GetEncryptionConfiguration",
     "s3:GetBucketLifecycleConfiguration": "s3:GetLifecycleConfiguration",
     "s3:ListBuckets": "s3:ListAllMyBuckets",
+    "tagging:GetResources": "tag:GetResources",
 }
 
 
@@ -378,9 +379,56 @@ def test_cli_api_calls_covered_by_iam_policy_req_9_4(runner, tmp_path, sample_ac
 
     with patch.object(BaseClient, "_make_api_call", record):
         result = _collect(runner, tmp_path / "out", "--role-arn", "arn:aws:iam::1:role/r")
-    assert result.exit_code == 0, result.output
+        assert result.exit_code == 0, result.output
+        result = _collect(runner, tmp_path / "scoped", "--project-tag", "team=orders")
+        assert result.exit_code == 0, result.output
+    assert "tag:GetResources" in calls
 
     policy_path = Path(__file__).resolve().parents[2] / "docs" / "iam-policy.json"
     policy = json.loads(policy_path.read_text(encoding="utf-8"))
     allowed = {a for s in policy["Statement"] for a in s["Action"]}
     assert sorted(calls - allowed) == []
+
+
+def test_cli_collect_project_tag_option_req_13_1(runner, tmp_path, sample_account):
+    for bad in ("team", "=orders"):
+        result = runner.invoke(
+            cli, ["collect", "--project-tag", bad, "--output-dir", str(tmp_path)]
+        )
+        assert result.exit_code == 2
+        assert "KEY=VALUE" in result.output
+
+    out = tmp_path / "out"
+    result = _collect(runner, out, "--project-tag", "team=orders", "--include-defaults")
+    assert result.exit_code == 0, result.output
+    manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["scope"]["project_tags"] == {"team": "orders"}
+    assert manifest["scope"]["include_defaults"] is True
+    # team=orders is on S3, logs, RDS, Lambda (moto's tagging API); closure adds the
+    # Lambda role and the RDS security group with its VPC. The untagged instance stays out.
+    counts = manifest["resource_counts"]
+    assert "aws_instance" not in counts
+    assert counts["aws_iam_role"] == 1
+    assert counts["aws_security_group"] == 1 and counts["aws_vpc"] == 1
+
+    result = runner.invoke(
+        cli,
+        [
+            "discover",
+            "--region",
+            "us-east-1",
+            "--project-tag",
+            "team=orders",
+            "--output-dir",
+            str(tmp_path / "disc"),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    data = json.loads((tmp_path / "disc" / "discovery.json").read_text(encoding="utf-8"))
+    assert data["scope"]["mode"] == "project_tag"
+    assert {r["resource_type"] for r in data["resources"]} == {
+        "aws_s3_bucket",
+        "aws_cloudwatch_log_group",
+        "aws_db_instance",
+        "aws_lambda_function",
+    }

@@ -382,7 +382,13 @@ def pytest_configure(config):
 @pytest.fixture
 def moto_all_services():
     """Start moto mocks for every service the inventory touches."""
-    from moto import mock_logs, mock_rds, mock_stepfunctions, mock_sts
+    from moto import (
+        mock_logs,
+        mock_rds,
+        mock_resourcegroupstaggingapi,
+        mock_stepfunctions,
+        mock_sts,
+    )
 
     mocks = [
         mock_ec2(),
@@ -394,6 +400,7 @@ def moto_all_services():
         mock_rds(),
         mock_dynamodb(),
         mock_sts(),
+        mock_resourcegroupstaggingapi(),
     ]
     for m in mocks:
         m.start()

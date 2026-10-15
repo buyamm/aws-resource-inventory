@@ -80,7 +80,7 @@ Lists resources of the supported types and writes `<output-dir>/discovery.json`.
 aws-inventory discover --region us-east-1 --region eu-west-1 --profile prod
 ```
 
-Options: `--region` (repeatable; default: every region enabled for the account), `--profile`, `--role-arn`, `--external-id`, `--output-dir` (default `./output`).
+Options: `--region` (repeatable; default: every region enabled for the account), `--project-tag KEY=VALUE`, `--include-defaults`, `--profile`, `--role-arn`, `--external-id`, `--output-dir` (default `./output`).
 
 ### collect
 
@@ -92,6 +92,12 @@ aws-inventory collect --profile audit --role-arn arn:aws:iam::123456789012:role/
 ```
 
 Options: same as `discover`, plus `--max-workers` (default 10, concurrent regions and resources). With `--role-arn`, the tool calls `sts:AssumeRole` (session name `aws-resource-inventory`) and uses the temporary credentials for every later call.
+
+**Project scope.** `--project-tag KEY=VALUE` (repeatable; a resource must carry every tag) starts from the tagged resources only (`tag:GetResources`; IAM roles via `iam:ListRoleTags`). Without `--region`, all enabled regions are searched and the regions holding tagged resources become the run's regions. With or without project tags, the tool then follows references inside the collected specs (VPC, security groups, IAM roles, log groups, ...) and collects what they point to, so untagged dependencies are not lost. Default VPCs, their `default` security group and service-linked roles (`/aws-service-role/`) are skipped unless something references them; `--include-defaults` keeps them. The scope (tags, regions, excluded defaults, and which spec referenced each added resource) is recorded in `manifest.json` and `collection_report.json`.
+
+```bash
+aws-inventory collect --project-tag service=shop --project-tag environment=prod --output-dir ./shop
+```
 
 Main outputs (full layout in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#output_dir-layout)):
 

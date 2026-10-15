@@ -205,3 +205,15 @@ Aliases accepted on input (CLI filters, MCP parameters) and normalized to the ca
 3. WHEN a throttling error carries a `Retry-After` HTTP header, THE CLI_Tool SHALL wait that many seconds before the next attempt instead of the backoff delay.
 4. THE CLI_Tool SHALL write `<Output_Dir>/collection_report.json` listing every attempted operation with status `success` or `failed`, the discovery and collection errors, the phase timings and metrics of Requirement 10.
 5. WHEN a run completes with at least one discovery or collection error, THE CLI_Tool SHALL print a failure summary and exit with code 1. Exit code 0 means no errors; exit code 2 means the run could not start (invalid arguments, no credentials, assume-role failure).
+
+### Requirement 13: Project Scope
+
+**User Story:** As an infrastructure engineer taking over one project in a shared account, I want to collect only that project's resources and everything they depend on, so that account defaults and other projects do not drown the inventory.
+
+#### Acceptance Criteria
+
+1. WHEN `discover` or `collect` is given one or more `--project-tag KEY=VALUE` options, THE CLI_Tool SHALL seed discovery only with resources carrying every given tag (AND), found through `tag:GetResources(TagFilters)` per region and, for IAM roles (not returned by the tagging API), through `iam:ListRoles` + `iam:ListRoleTags`. A malformed value (no `=`, empty key or value, repeated key) SHALL exit with code 2.
+2. WITHOUT `--region`, the tagging API SHALL be queried in every enabled region and the run's regions SHALL be the regions holding regional seeds; WITH `--region`, exactly those regions are queried and recorded. `us-east-1` SHALL always be queried, and when it was not requested only global-type resources are taken from it.
+3. AFTER collecting the seeds, THE Resource_Inventory_System SHALL follow the resource references inside the collected Specifications (design.md §"Project scope", reference rules) and collect every referenced Supported_Resource_Type not yet collected, repeating until no new resource appears. Each resource added this way SHALL record `referenced_by` entries `<source arn>#<property path>` (citation path grammar). The closure runs with and without `--project-tag`.
+4. BY DEFAULT (with or without `--project-tag`), THE Resource_Inventory_System SHALL exclude account defaults from the seeds: default VPCs, the `default` security group of a default VPC, and service-linked IAM roles (path `/aws-service-role/`). An excluded resource SHALL still be collected when a collected spec references it. `--include-defaults` SHALL disable the exclusion.
+5. THE CLI_Tool SHALL record a `scope` block `{mode ("project_tag" | "account"), project_tags, include_defaults, regions, seed_resources, excluded_defaults (ARNs not pulled back), referenced: [{arn, resource_type, referenced_by}]}` in `manifest.json` and `collection_report.json`, and the same block (without `referenced` for `discover`) in `discovery.json`.

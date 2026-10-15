@@ -436,12 +436,13 @@ Findings from the first live run (account `monetkit-prod`): without `--region` t
   - [x] 26.3 Add Tasks 27–32 below
   - Commit: `chore(skills): vendor diagram and Terraform skills, plan Phase 2 (Task 26)`
 
-- [ ] 27. Project scope: `--project-tag` seed + dependency closure
-  - [ ] 27.1 Tests (RED): `test_scope_seeds_from_tagging_api_req_13_1`, `test_scope_infers_regions_from_seed_req_13_2`, `test_scope_closure_pulls_referenced_resources_req_13_3`, `test_scope_excludes_default_vpc_and_service_linked_roles_req_13_4`, `test_scope_recorded_in_manifest_req_13_5`, `test_cli_collect_project_tag_option_req_13_1`
-  - [ ] 27.2 `src/scope.py` (GREEN): seed via `resourcegroupstaggingapi.get_resources(TagFilters)` per region + `us-east-1` for global types; IAM roles via `list_roles` + `list_role_tags`; regions = regions with seeds unless `--region` given
-  - [ ] 27.3 Closure in `InventoryCollector`: follow references in collected specs (VpcId, SubnetId(s), SecurityGroups, role ARNs, CloudFront origins, target groups, log groups) until no new resource; record `referenced by <arn>#<path>`
-  - [ ] 27.4 Default exclusion (also without `--project-tag`): default VPC and its subnets/default SG, `aws-service-role/` roles — kept only when referenced; `--include-defaults` restores them
-  - [ ] 27.5 CLI `--project-tag KEY=VALUE` (repeatable, AND) and `--include-defaults` on `discover`/`collect`; `scope` block in `manifest.json` and `collection_report.json`; `tag:GetResources` in `docs/iam-policy.json`
+- [x] 27. Project scope: `--project-tag` seed + dependency closure
+  - [x] 27.1 Tests (RED): `test_scope_seeds_from_tagging_api_req_13_1`, `test_scope_infers_regions_from_seed_req_13_2`, `test_scope_closure_pulls_referenced_resources_req_13_3`, `test_scope_excludes_default_vpc_and_service_linked_roles_req_13_4`, `test_scope_recorded_in_manifest_req_13_5`, `test_cli_collect_project_tag_option_req_13_1`
+  - [x] 27.2 `src/scope.py` (GREEN): seed via `resourcegroupstaggingapi.get_resources(TagFilters)` per region + `us-east-1` for global types; IAM roles via `list_roles` + `list_role_tags`; regions = regions with seeds unless `--region` given
+  - [x] 27.3 Closure in `InventoryCollector`: follow references in collected specs (VpcId, SubnetId(s), SecurityGroups, role ARNs, CloudFront origins, target groups, log groups) until no new resource; record `referenced by <arn>#<path>`
+  - [x] 27.4 Default exclusion (also without `--project-tag`): default VPC and its subnets/default SG, `aws-service-role/` roles — kept only when referenced; `--include-defaults` restores them
+  - [x] 27.5 CLI `--project-tag KEY=VALUE` (repeatable, AND) and `--include-defaults` on `discover`/`collect`; `scope` block in `manifest.json` and `collection_report.json`; `tag:GetResources` in `docs/iam-policy.json`
+  - `ResourceTypeInfo.arn_service`/`arn_resource` + `build_arn`/`parse_arn`; closure dedups on `(type, region, id)` because discovery may build EC2 ARNs without the account id; `scripts/benchmark.py` passes `--include-defaults`. Rules exist for the ten current types only; subnet, CloudFront origin and target-group rules and default-VPC subnet exclusion are added with those types in Tasks 28–29
   - _Requirements: 13.1–13.5 (new)_
   - Commit: `feat(scope): project tag scoping with dependency closure (Task 27)`
 
@@ -450,6 +451,7 @@ Findings from the first live run (account `monetkit-prod`): without `--region` t
   - [ ] 28.2 CloudFront: distributions only (`list_distributions` + `get_distribution_config`, global, client in `us-east-1`) — origins, behaviors, aliases, WAF/ACM ids; never edge locations or IP ranges
   - [ ] 28.3 Relationships with citations: subnet→VPC, route table→subnet/IGW/NAT, NAT→subnet, LB→subnets/SGs, listener→LB/TG/cert, CloudFront→origin (S3/LB), CloudFront→WAF/ACM, Route53 alias→CloudFront/LB
   - [ ] 28.4 IAM policy, `sample_account.py`, MCP alias list
+  - [ ] 28.5 `scope.REFERENCE_RULES` for the new types (instance/Lambda/RDS `SubnetId(s)`, LB subnets/SGs, listener→TG/cert, CloudFront origins/WAF/ACM) and default-VPC subnets (`DefaultForAz`) in `exclude_defaults` — _Req 13.3, 13.4_
   - _Requirements: 1.3 (extended), 14.1–14.3 (new)_
   - Commit: `feat(collect): network, edge and load balancer resource types (Task 28)`
 
@@ -457,6 +459,7 @@ Findings from the first live run (account `monetkit-prod`): without `--region` t
   - [ ] 29.1 `aws_ecs_cluster`, `aws_ecs_service`, `aws_ecs_task_definition` (revisions in use only), `aws_ecr_repository`, `aws_autoscaling_group`, `aws_launch_template`, `aws_elasticache_replication_group`, `aws_sqs_queue`, `aws_sns_topic`, `aws_cloudwatch_event_rule`, `aws_scheduler_schedule` (tests first)
   - [ ] 29.2 Relationships: cluster→service→task definition→roles/log group/ECR image, TG→ECS service/ASG, ASG→launch template/subnets, ElastiCache/RDS→subnets/SGs, rule/schedule→target
   - [ ] 29.3 Patterns: "Web app: CloudFront + ALB + ECS", "Static site: S3 + CloudFront"; shrink `UNDETECTABLE_PATTERNS`
+  - [ ] 29.4 `scope.REFERENCE_RULES` for the new types (ECS service→cluster/task definition/TG, task definition→roles/log group, ASG→launch template/subnets/TG, ElastiCache→SGs) — _Req 13.3_
   - _Requirements: 1.3 (extended), 6.2 (extended), 14.4 (new)_
   - Commit: `feat(collect): compute and data resource types (Task 29)`
 

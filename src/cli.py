@@ -11,6 +11,8 @@ Requirements Coverage:
 - Requirement 10.1, 10.2, 10.5: Phase timings, run metrics, time savings printed after collect
 - Requirement 12.4: ``collection_report.json`` lists every attempted operation
 - Requirement 12.5: Exit codes 0 (ok), 1 (completed with errors), 2 (could not start)
+- Requirement 13.1-13.5: ``--project-tag`` / ``--include-defaults`` scoping, recorded as
+  the ``scope`` block of discovery.json, manifest.json and collection_report.json
 """
 
 from __future__ import annotations
@@ -39,6 +41,14 @@ from src.metrics import PhaseTimer, RunMetrics, files_size, time_savings
 from src.output_generator import OutputGenerator
 from src.parser import ResourceSpec
 from src.sanitizer import DataSanitizer
+from src.scope import (
+    ScopeConfig,
+    TagScopedDiscovery,
+    exclude_defaults,
+    parse_project_tags,
+    scope_document,
+    seed_regions,
+)
 
 logger = logging.getLogger("src.cli")
 
@@ -169,29 +179,57 @@ def _open_session(profile: str | None, role_arn: str | None, external_id: str | 
     return session, account_id
 
 
+Discovery = ResourceDiscovery | TagScopedDiscovery
+
+
 def _discover(
-    console: Console, session: Any, account_id: str, regions: tuple[str, ...], max_workers: int
-) -> tuple[ResourceDiscovery, list[DiscoveredResource]]:
+    console: Console,
+    session: Any,
+    account_id: str,
+    regions: tuple[str, ...],
+    max_workers: int,
+    scope: ScopeConfig,
+) -> tuple[Discovery, list[DiscoveredResource], list[DiscoveredResource]]:
+    """Discover the seed resources; returns (discovery, kept, excluded defaults)."""
+
     def progress(region: str, done: int, total: int) -> None:
         console.err(f"Discovering: {done}/{total} regions ({region})")
 
-    discovery = ResourceDiscovery(
-        session,
-        regions=list(regions) or None,
-        max_workers=max_workers,
-        progress_callback=progress,
-        account_id=account_id,
-    )
-    return discovery, discovery.discover_all_resources()
+    discovery: Discovery
+    if scope.project_tags:
+        discovery = TagScopedDiscovery(
+            session,
+            scope.project_tags,
+            regions=list(regions) or None,
+            max_workers=max_workers,
+            progress_callback=progress,
+            account_id=account_id,
+        )
+    else:
+        discovery = ResourceDiscovery(
+            session,
+            regions=list(regions) or None,
+            max_workers=max_workers,
+            progress_callback=progress,
+            account_id=account_id,
+        )
+    kept, excluded = exclude_defaults(discovery.discover_all_resources(), scope.include_defaults)
+    if excluded:
+        console.err(f"Excluded {len(excluded)} account defaults (use --include-defaults to keep)")
+    return discovery, kept, excluded
 
 
 def _discovery_document(
-    account_id: str, discovery: ResourceDiscovery, resources: list[DiscoveredResource]
+    account_id: str,
+    discovery: Discovery,
+    resources: list[DiscoveredResource],
+    scope: dict[str, Any],
 ) -> dict[str, Any]:
     return {
         "account_id": account_id,
         "regions": sorted({r.region for r in resources}),
         "api_calls": discovery.get_api_calls(),
+        "scope": scope,
         "resources": [asdict(r) for r in resources],
         "errors": [asdict(e) for e in discovery.get_errors()],
     }
@@ -216,6 +254,32 @@ region_option = click.option(
     "regions",
     multiple=True,
     help="Region to scan (repeatable). Default: every enabled region.",
+)
+
+
+def _project_tags_callback(
+    ctx: click.Context, param: click.Parameter, values: tuple[str, ...]
+) -> dict[str, str]:
+    try:
+        return parse_project_tags(values)
+    except ValueError as exc:
+        raise click.BadParameter(f"{exc} (format: KEY=VALUE)") from exc
+
+
+project_tag_option = click.option(
+    "--project-tag",
+    "project_tags",
+    multiple=True,
+    metavar="KEY=VALUE",
+    callback=_project_tags_callback,
+    help="Only resources carrying this tag (repeatable, all must match), plus the "
+    "resources they reference. Default: every resource of the supported types.",
+)
+include_defaults_option = click.option(
+    "--include-defaults",
+    is_flag=True,
+    help="Keep default VPCs, their default security groups and service-linked roles "
+    "even when nothing references them.",
 )
 profile_option = click.option("--profile", help="Named profile of the AWS credential chain.")
 role_option = click.option("--role-arn", help="Role to assume (sts:AssumeRole) before scanning.")
@@ -271,9 +335,12 @@ def cli(ctx: click.Context, log_level: str, no_color: bool) -> None:
 
 
 @cli.command(epilog="""\b
-Example:
-  aws-inventory discover --region us-east-1 --region eu-west-1 --profile prod""")
+Examples:
+  aws-inventory discover --region us-east-1 --region eu-west-1 --profile prod
+  aws-inventory discover --project-tag service=shop --project-tag environment=prod""")
 @region_option
+@project_tag_option
+@include_defaults_option
 @profile_option
 @role_option
 @external_id_option
@@ -282,6 +349,8 @@ Example:
 def discover(
     ctx: click.Context,
     regions: tuple[str, ...],
+    project_tags: dict[str, str],
+    include_defaults: bool,
     profile: str | None,
     role_arn: str | None,
     external_id: str | None,
@@ -290,9 +359,12 @@ def discover(
     """List resources of the supported types and write discovery.json."""
     console = _console(ctx)
     session, account_id = _open_session(profile, role_arn, external_id)
-    discovery, resources = _discover(console, session, account_id, regions, max_workers=10)
+    scope = ScopeConfig(project_tags, include_defaults)
+    discovery, resources, excluded = _discover(console, session, account_id, regions, 10, scope)
+    scope_block = scope_document(scope, seed_regions(resources, regions), resources, excluded)
     path = _write_json(
-        output_dir / "discovery.json", _discovery_document(account_id, discovery, resources)
+        output_dir / "discovery.json",
+        _discovery_document(account_id, discovery, resources, scope_block),
     )
     console.out(f"Discovered {len(resources)} resources in account {account_id} -> {path}")
     errors = discovery.get_errors()
@@ -344,8 +416,11 @@ def _summary_markdown(
 @cli.command(epilog="""\b
 Examples:
   aws-inventory collect --region us-east-1 --output-dir ./output
-  aws-inventory collect --profile audit --role-arn arn:aws:iam::123456789012:role/Reader""")
+  aws-inventory collect --profile audit --role-arn arn:aws:iam::123456789012:role/Reader
+  aws-inventory collect --project-tag service=shop --project-tag environment=prod""")
 @region_option
+@project_tag_option
+@include_defaults_option
 @profile_option
 @role_option
 @external_id_option
@@ -361,6 +436,8 @@ Examples:
 def collect(
     ctx: click.Context,
     regions: tuple[str, ...],
+    project_tags: dict[str, str],
+    include_defaults: bool,
     profile: str | None,
     role_arn: str | None,
     external_id: str | None,
@@ -373,8 +450,11 @@ def collect(
     session, account_id = _open_session(profile, role_arn, external_id)
     sts_calls = 2 if role_arn else 1
 
+    scope = ScopeConfig(project_tags, include_defaults)
     with timer.phase("discovery"):
-        discovery, resources = _discover(console, session, account_id, regions, max_workers)
+        discovery, resources, excluded = _discover(
+            console, session, account_id, regions, max_workers, scope
+        )
 
     step = max(1, len(resources) // 10)
 
@@ -387,6 +467,10 @@ def collect(
             session, account_id, max_workers=max_workers, progress_callback=progress
         ).collect_all(resources)
 
+    scope_block = scope_document(
+        scope, seed_regions(resources, regions), resources, excluded, result.referenced
+    )
+    in_scope = len(resources) + len(result.referenced)
     generator = OutputGenerator(output_dir)
     written: list[Path] = []
     with timer.phase("output"):
@@ -400,22 +484,23 @@ def collect(
                 timer.phases[0].started_at,
                 timer.phases[-1].ended_at,
                 result.specs,
+                scope=scope_block,
             )
         )
         _write_json(
             generator.output_dir / "discovery.json",
-            _discovery_document(account_id, discovery, resources),
+            _discovery_document(account_id, discovery, resources, scope_block),
             written,
         )
 
     metrics = RunMetrics(
-        resources_discovered=len(resources),
+        resources_discovered=in_scope,
         specs_collected=len(result.specs),
-        specs_failed=len(resources) - len(result.specs),
+        specs_failed=in_scope - len(result.specs),
         api_calls=sts_calls + discovery.get_api_calls() + result.api_calls,
         data_volume_bytes=files_size(written),
     )
-    savings = time_savings(len(resources), timer.total_duration_seconds)
+    savings = time_savings(in_scope, timer.total_duration_seconds)
     summary_path = _write_text(
         generator.output_dir / "summary_report.md",
         _summary_markdown(generator, result.specs, metrics, timer),
@@ -424,6 +509,7 @@ def collect(
     report = {
         "account_id": account_id,
         "regions": list(regions),
+        "scope": scope_block,
         "started_at": timer.phases[0].started_at,
         "finished_at": timer.phases[-1].ended_at,
         "phases": timer.to_list(),

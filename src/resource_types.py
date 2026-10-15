@@ -43,6 +43,8 @@ class ResourceTypeInfo:
     id_field: str
     aliases: tuple[str, ...]
     drawio_style: str
+    arn_service: str = ""
+    arn_resource: str = ""  # resource part of the ARN with "{id}" for the resource id
 
     @property
     def terraform_type(self) -> str:
@@ -60,6 +62,8 @@ REGISTRY: dict[str, ResourceTypeInfo] = {
             "InstanceId",
             ("aws_ec2_instance", "ec2", "ec2_instance"),
             _aws4_style("ec2", "#ED7100"),
+            arn_service="ec2",
+            arn_resource="instance/{id}",
         ),
         ResourceTypeInfo(
             "aws_vpc",
@@ -68,6 +72,8 @@ REGISTRY: dict[str, ResourceTypeInfo] = {
             "VpcId",
             ("vpc",),
             _aws4_style("vpc", "#8C4FFF"),
+            arn_service="ec2",
+            arn_resource="vpc/{id}",
         ),
         ResourceTypeInfo(
             "aws_security_group",
@@ -76,6 +82,8 @@ REGISTRY: dict[str, ResourceTypeInfo] = {
             "GroupId",
             ("security_group",),
             _aws4_style("network_firewall", "#DD344C"),
+            arn_service="ec2",
+            arn_resource="security-group/{id}",
         ),
         ResourceTypeInfo(
             "aws_lambda_function",
@@ -84,6 +92,8 @@ REGISTRY: dict[str, ResourceTypeInfo] = {
             "FunctionName",
             ("lambda", "lambda_function"),
             _aws4_style("lambda", "#ED7100"),
+            arn_service="lambda",
+            arn_resource="function:{id}",
         ),
         ResourceTypeInfo(
             "aws_db_instance",
@@ -92,6 +102,8 @@ REGISTRY: dict[str, ResourceTypeInfo] = {
             "DBInstanceIdentifier",
             ("aws_rds_instance", "rds"),
             _aws4_style("rds", "#C925D1"),
+            arn_service="rds",
+            arn_resource="db:{id}",
         ),
         ResourceTypeInfo(
             "aws_cloudwatch_log_group",
@@ -100,6 +112,8 @@ REGISTRY: dict[str, ResourceTypeInfo] = {
             "logGroupName",
             ("log_group",),
             _aws4_style("cloudwatch_2", "#E7157B"),
+            arn_service="logs",
+            arn_resource="log-group:{id}",
         ),
         ResourceTypeInfo(
             "aws_sfn_state_machine",
@@ -108,6 +122,8 @@ REGISTRY: dict[str, ResourceTypeInfo] = {
             "name",
             ("aws_step_function", "stepfunctions"),
             _aws4_style("step_functions", "#E7157B"),
+            arn_service="states",
+            arn_resource="stateMachine:{id}",
         ),
         ResourceTypeInfo(
             "aws_dynamodb_table",
@@ -116,6 +132,8 @@ REGISTRY: dict[str, ResourceTypeInfo] = {
             "TableName",
             ("dynamodb",),
             _aws4_style("dynamodb", "#C925D1"),
+            arn_service="dynamodb",
+            arn_resource="table/{id}",
         ),
         ResourceTypeInfo(
             "aws_s3_bucket",
@@ -124,6 +142,8 @@ REGISTRY: dict[str, ResourceTypeInfo] = {
             "Name",
             ("s3", "s3_bucket"),
             _aws4_style("s3", "#7AA116"),
+            arn_service="s3",
+            arn_resource="{id}",
         ),
         ResourceTypeInfo(
             "aws_iam_role",
@@ -132,6 +152,8 @@ REGISTRY: dict[str, ResourceTypeInfo] = {
             "RoleName",
             ("iam_role",),
             _aws4_style("identity_and_access_management", "#DD344C"),
+            arn_service="iam",
+            arn_resource="role/{id}",
         ),
     )
 }
@@ -146,6 +168,44 @@ def canonical_type(name: str | None) -> str | None:
     if not name:
         return None
     return _ALIASES.get(name.strip().lower())
+
+
+def build_arn(type_id: str, resource_id: str, region: str, account_id: str) -> str:
+    """ARN of a resource in the format discovery records (global types carry no region)."""
+    info = REGISTRY[type_id]
+    resource = info.arn_resource.format(id=resource_id)
+    if info.service == "s3":
+        return f"arn:aws:s3:::{resource}"
+    if info.scope == "global":
+        return f"arn:aws:{info.arn_service}::{account_id}:{resource}"
+    return f"arn:aws:{info.arn_service}:{region}:{account_id}:{resource}"
+
+
+def parse_arn(arn: str) -> tuple[str, str, str] | None:
+    """(type_id, resource_id, region) of a Supported_Resource_Type ARN, else None.
+
+    IAM role ids drop the path; log group ids drop a trailing ``:*``; S3 object ARNs
+    and unsupported resource kinds return None.
+    """
+    parts = arn.split(":", 5)
+    if len(parts) != 6 or parts[0] != "arn":
+        return None
+    service, region, resource = parts[2], parts[3], parts[5]
+    for info in REGISTRY.values():
+        prefix = info.arn_resource.split("{id}")[0]
+        if info.arn_service != service or not resource.startswith(prefix):
+            continue
+        raw_id = resource[len(prefix) :]
+        if info.type_id == "aws_cloudwatch_log_group" and raw_id.endswith(":*"):
+            raw_id = raw_id[:-2]
+        if info.type_id == "aws_iam_role":
+            raw_id = raw_id.split("/")[-1]
+        elif info.type_id == "aws_s3_bucket" and "/" in raw_id:
+            return None
+        if not raw_id:
+            return None
+        return info.type_id, raw_id, GLOBAL_REGION if info.scope == "global" else region
+    return None
 
 
 def arn_resource_segment(arn: str) -> str:

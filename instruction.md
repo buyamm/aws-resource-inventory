@@ -115,6 +115,10 @@ aws-inventory collect --region ap-southeast-1 --region us-east-1 --output-dir ./
 - `--region` lặp lại được; bỏ trống = quét mọi region đang bật của account.
 - `--profile` chọn profile AWS; `--role-arn` (+ `--external-id`) để assume role trước khi quét (session name `aws-resource-inventory`).
 - `--max-workers` (mặc định 10) = số region/resource xử lý song song. Giảm xuống nếu bị throttling.
+- `--project-tag KEY=VALUE` (lặp lại được, resource phải có **tất cả** các tag) = chỉ lấy resource của một project. Tool tìm resource có tag qua `tag:GetResources` (IAM role qua `iam:ListRoleTags`); nếu không truyền `--region` thì tìm ở mọi region đang bật và chỉ giữ các region có resource được tag. Ví dụ: `aws-inventory collect --project-tag service=shop --project-tag environment=prod`.
+- Dù có `--project-tag` hay không, tool luôn đi theo các tham chiếu trong spec đã thu thập (VPC, security group, IAM role, log group, ...) để lấy thêm resource phụ thuộc chưa được tag.
+- Mặc định bỏ qua default VPC, security group `default` của default VPC và service-linked role (`/aws-service-role/`), trừ khi có resource khác tham chiếu tới. `--include-defaults` để giữ lại tất cả.
+- Phạm vi thực tế (tag, region, resource bị loại, resource nào được thêm vì spec nào tham chiếu) được ghi vào khối `scope` trong `manifest.json` và `collection_report.json`.
 
 Cuối lệnh, tool in thời gian tiết kiệm được so với làm tay (ước tính 5 phút/resource). Ví dụ:
 
@@ -248,7 +252,7 @@ Option chung (đặt **trước** tên lệnh): `--log-level DEBUG|INFO|WARNING|
 
 | Lệnh | Option | Gọi AWS? |
 |---|---|---|
-| `aws-inventory discover` | `--region`…, `--profile`, `--role-arn`, `--external-id`, `--output-dir` | có |
+| `aws-inventory discover` | `--region`…, `--project-tag`…, `--include-defaults`, `--profile`, `--role-arn`, `--external-id`, `--output-dir` | có |
 | `aws-inventory collect` | như `discover` + `--max-workers` | có |
 | `aws-inventory analyze` | `--output-dir`, `--validate-diagram` | không |
 | `aws-inventory generate-iac` | `--output-dir`, `--terraform-dir` | không |

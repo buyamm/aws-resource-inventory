@@ -7,6 +7,8 @@ Requirements Coverage:
 - Requirement 10.2: api_calls across all collectors
 - Requirement 12.2: Failed resources become CollectionErrors; collection continues
 - Requirement 12.4: Every attempted operation is reported
+- Requirement 13.3: Dependency closure: resources referenced by collected specs are
+  collected too, until no new resource appears
 """
 
 from __future__ import annotations
@@ -21,6 +23,7 @@ from src.collector import CallStatus, OperationRecord, RetryConfig, SpecCollecto
 from src.discovery import DiscoveredResource
 from src.parser import ResourceSpec
 from src.resource_types import GLOBAL_REGION, REGISTRY
+from src.scope import extract_references
 
 GLOBAL_CLIENT_REGION = "us-east-1"
 
@@ -43,6 +46,17 @@ class CollectionResult:
     errors: list[CollectionError] = field(default_factory=list)
     operations: list[OperationRecord] = field(default_factory=list)
     api_calls: int = 0
+    # Resources added by the dependency closure, with their referenced_by (Req 13.3).
+    referenced: list[DiscoveredResource] = field(default_factory=list)
+
+    @property
+    def attempted(self) -> int:
+        """Resources whose collection was attempted (seeds + closure)."""
+        return len({op.resource_arn for op in self.operations} | {s.arn for s in self.specs})
+
+
+def _identity(resource: DiscoveredResource) -> tuple[str, str, str]:
+    return resource.resource_type, resource.region, resource.resource_id
 
 
 class InventoryCollector:
@@ -62,8 +76,41 @@ class InventoryCollector:
         self.max_workers = max_workers
         self.progress_callback = progress_callback
 
-    def collect_all(self, resources: list[DiscoveredResource]) -> CollectionResult:
+    def collect_all(
+        self, resources: list[DiscoveredResource], follow_references: bool = True
+    ) -> CollectionResult:
+        """Collect ``resources``; with ``follow_references`` also everything they reference."""
         collectors: dict[tuple[str, str], SpecCollector] = {}
+        specs: list[ResourceSpec] = []
+        referenced: list[DiscoveredResource] = []
+        # Identity, not ARN: discovery may build EC2 ARNs without the account id.
+        known = {_identity(r) for r in resources}
+        wave = list(resources)
+        while wave:
+            collected = self._collect_wave(wave, collectors)
+            specs += collected
+            if not follow_references:
+                break
+            pending: dict[tuple[str, str, str], DiscoveredResource] = {}
+            for spec in collected:
+                for target in extract_references(spec, self.account_id):
+                    key = _identity(target)
+                    if key in known:
+                        continue
+                    if key in pending:
+                        pending[key].referenced_by += target.referenced_by
+                    else:
+                        pending[key] = target
+            wave = sorted(pending.values(), key=lambda r: r.arn)
+            known.update(pending)
+            referenced += wave
+        return self._result(specs, referenced, collectors)
+
+    def _collect_wave(
+        self,
+        resources: list[DiscoveredResource],
+        collectors: dict[tuple[str, str], SpecCollector],
+    ) -> list[ResourceSpec]:
         jobs: list[tuple[SpecCollector, DiscoveredResource]] = []
         for resource in resources:
             info = REGISTRY.get(resource.resource_type)
@@ -101,8 +148,15 @@ class InventoryCollector:
 
         with ThreadPoolExecutor(max_workers=max(1, self.max_workers)) as executor:
             list(executor.map(run, range(len(jobs))))
+        return [s for s in specs if s is not None]
 
-        result = CollectionResult(specs=[s for s in specs if s is not None])
+    def _result(
+        self,
+        specs: list[ResourceSpec],
+        referenced: list[DiscoveredResource],
+        collectors: dict[tuple[str, str], SpecCollector],
+    ) -> CollectionResult:
+        result = CollectionResult(specs=specs, referenced=referenced)
         for collector in collectors.values():
             result.api_calls += collector.api_calls
             result.operations.extend(collector.operations)

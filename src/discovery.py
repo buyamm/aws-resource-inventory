@@ -46,6 +46,11 @@ class DiscoveredResource:
     region: The AWS region the resource was discovered in ("global" for
         account-wide services such as S3 and IAM).
     tags: Any tags attached to the resource, when available.
+    attributes: List-API fields used to recognise account defaults (Req 13.4):
+        ``IsDefault`` for VPCs, ``GroupName``/``VpcId`` for security groups,
+        ``Path`` for IAM roles.
+    referenced_by: ``<arn>#<property path>`` of each spec that pulled this resource
+        into the dependency closure (Req 13.3); empty for seeds.
     """
 
     resource_type: str
@@ -53,6 +58,8 @@ class DiscoveredResource:
     arn: str
     region: str
     tags: dict[str, str] = field(default_factory=dict)
+    attributes: dict[str, Any] = field(default_factory=dict)
+    referenced_by: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -106,6 +113,7 @@ def _extract_vpcs(
                 arn=f"arn:aws:ec2:{region}:{account_id}:vpc/{vpc_id}",
                 region=region,
                 tags=tags,
+                attributes={"IsDefault": bool(vpc.get("IsDefault", False))},
             )
         )
     return resources
@@ -125,6 +133,7 @@ def _extract_security_groups(
                 arn=f"arn:aws:ec2:{region}:{account_id}:security-group/{group_id}",
                 region=region,
                 tags=tags,
+                attributes={"GroupName": sg.get("GroupName", ""), "VpcId": sg.get("VpcId", "")},
             )
         )
     return resources
@@ -251,6 +260,7 @@ def _extract_iam_roles(
                 resource_id=name,
                 arn=arn,
                 region=region,
+                attributes={"Path": role.get("Path", "/")},
             )
         )
     return resources
