@@ -426,6 +426,59 @@ Tasks 1–13 were implemented against the first draft of the design. Tasks 14–
   - 340 passed, 1 skipped (opt-in live IaC test); ruff, black, mypy, bandit `-ll` clean; CI workflow on Python 3.11 runs the same gates (`tests/unit/test_ci_workflow.py`); CLI commands match README.md and instruction.md
   - Commit: `chore(checkpoint): production ready (Task 25)`
 
+## Phase 2 — project scope, wider coverage, architecture diagram, standard Terraform layout
+
+Findings from the first live run (account `monetkit-prod`): without `--region` the tool collected 106 resources, mostly default VPC/SG in 17 regions and `AWSServiceRoleFor*` roles, while only 37 carry the project tags (`service=monetkit-prod`, `environment=prod`); the real stack (CloudFront, ALB, ECS, ElastiCache, ASG, NAT) is outside the 10 supported types; the diagram is a per-region icon grid with no VPC/AZ/subnet grouping or traffic flow; Terraform is split per region instead of `modules/` + `envs/<env>/`. Each task below also updates `requirements.md` and `design.md`.
+
+- [x] 26. Vendor skills and plan Phase 2
+  - [x] 26.1 Vendor `aws-architecture-diagram`, `drawio`, `terraform-style-guide`, `refactor-module`, `terraform-search-import`, `terraform-skill` into `.claude/skills/` with upstream LICENSE files and a source/commit table (`.claude/skills/README.md`)
+  - [x] 26.2 CLAUDE.md "Skills" section: which skill to load for diagram and IaC work
+  - [x] 26.3 Add Tasks 27–32 below
+  - Commit: `chore(skills): vendor diagram and Terraform skills, plan Phase 2 (Task 26)`
+
+- [ ] 27. Project scope: `--project-tag` seed + dependency closure
+  - [ ] 27.1 Tests (RED): `test_scope_seeds_from_tagging_api_req_13_1`, `test_scope_infers_regions_from_seed_req_13_2`, `test_scope_closure_pulls_referenced_resources_req_13_3`, `test_scope_excludes_default_vpc_and_service_linked_roles_req_13_4`, `test_scope_recorded_in_manifest_req_13_5`, `test_cli_collect_project_tag_option_req_13_1`
+  - [ ] 27.2 `src/scope.py` (GREEN): seed via `resourcegroupstaggingapi.get_resources(TagFilters)` per region + `us-east-1` for global types; IAM roles via `list_roles` + `list_role_tags`; regions = regions with seeds unless `--region` given
+  - [ ] 27.3 Closure in `InventoryCollector`: follow references in collected specs (VpcId, SubnetId(s), SecurityGroups, role ARNs, CloudFront origins, target groups, log groups) until no new resource; record `referenced by <arn>#<path>`
+  - [ ] 27.4 Default exclusion (also without `--project-tag`): default VPC and its subnets/default SG, `aws-service-role/` roles — kept only when referenced; `--include-defaults` restores them
+  - [ ] 27.5 CLI `--project-tag KEY=VALUE` (repeatable, AND) and `--include-defaults` on `discover`/`collect`; `scope` block in `manifest.json` and `collection_report.json`; `tag:GetResources` in `docs/iam-policy.json`
+  - _Requirements: 13.1–13.5 (new)_
+  - Commit: `feat(scope): project tag scoping with dependency closure (Task 27)`
+
+- [ ] 28. Network, edge and load-balancing resource types
+  - [ ] 28.1 Registry entries, discovery, collection and spec schema for `aws_subnet`, `aws_route_table`, `aws_internet_gateway`, `aws_nat_gateway`, `aws_vpc_endpoint`, `aws_cloudfront_distribution`, `aws_lb`, `aws_lb_listener`, `aws_lb_target_group`, `aws_route53_zone`, `aws_acm_certificate`, `aws_wafv2_web_acl` (tests first, moto 4.x)
+  - [ ] 28.2 CloudFront: distributions only (`list_distributions` + `get_distribution_config`, global, client in `us-east-1`) — origins, behaviors, aliases, WAF/ACM ids; never edge locations or IP ranges
+  - [ ] 28.3 Relationships with citations: subnet→VPC, route table→subnet/IGW/NAT, NAT→subnet, LB→subnets/SGs, listener→LB/TG/cert, CloudFront→origin (S3/LB), CloudFront→WAF/ACM, Route53 alias→CloudFront/LB
+  - [ ] 28.4 IAM policy, `sample_account.py`, MCP alias list
+  - _Requirements: 1.3 (extended), 14.1–14.3 (new)_
+  - Commit: `feat(collect): network, edge and load balancer resource types (Task 28)`
+
+- [ ] 29. Compute and data resource types
+  - [ ] 29.1 `aws_ecs_cluster`, `aws_ecs_service`, `aws_ecs_task_definition` (revisions in use only), `aws_ecr_repository`, `aws_autoscaling_group`, `aws_launch_template`, `aws_elasticache_replication_group`, `aws_sqs_queue`, `aws_sns_topic`, `aws_cloudwatch_event_rule`, `aws_scheduler_schedule` (tests first)
+  - [ ] 29.2 Relationships: cluster→service→task definition→roles/log group/ECR image, TG→ECS service/ASG, ASG→launch template/subnets, ElastiCache/RDS→subnets/SGs, rule/schedule→target
+  - [ ] 29.3 Patterns: "Web app: CloudFront + ALB + ECS", "Static site: S3 + CloudFront"; shrink `UNDETECTABLE_PATTERNS`
+  - _Requirements: 1.3 (extended), 6.2 (extended), 14.4 (new)_
+  - Commit: `feat(collect): compute and data resource types (Task 29)`
+
+- [ ] 30. Architecture diagram (skills: `aws-architecture-diagram`, `drawio`)
+  - [ ] 30.1 Tests (RED): nested containers AWS Cloud → Region → VPC → AZ → public/private subnet with `container=1` and relative child geometry; resources placed in the subnet named by their spec; edge resources (Route53, CloudFront, WAF) left of the VPC; data-flow edges only (Users→CloudFront→ALB→ECS→RDS/ElastiCache), IAM/log relations not drawn as edges; identical resources grouped into one icon with ARNs in metadata; human labels (Name tag); verified stencil names only; deterministic output; golden file for the sample account
+  - [ ] 30.2 Rewrite `src/diagram_generator.py` (GREEN): left-to-right layered layout, 2 pages (Overview, Network detail), title block and background per the skill
+  - [ ] 30.3 `analyze --export-png`: export `architecture.drawio.png` with the draw.io desktop CLI when installed; `--validate-diagram` keeps its current behaviour
+  - _Requirements: 6.4 (revised), 15.1–15.4 (new)_
+  - Commit: `feat(diagram): AWS architecture diagram with VPC/AZ/subnet grouping and traffic flow (Task 30)`
+
+- [ ] 31. Terraform `modules/` + `envs/<env>/` layout (skills: `terraform-style-guide`, `refactor-module`, `terraform-skill`)
+  - [ ] 31.1 Tests (RED): directory snapshot; every resource exactly once in one module and once in `envs/<env>/imports.tf`; cross-references through module outputs/variables (no hard-coded VPC/subnet/SG ids where the target is managed); variables and outputs have `type`/`description`; HCL parses
+  - [ ] 31.2 Generator (GREEN): modules `network`, `edge`, `compute`, `data`, `iam`, `observability` (main.tf, variables.tf, outputs.tf, versions.tf, README.md); `envs/<env>/` (env from the `environment` tag) with main.tf, providers.tf (+ `us-east-1` alias for CloudFront/ACM, `default_tags`), backend.tf (S3, values via `-backend-config`), variables.tf, terraform.tfvars, outputs.tf, versions.tf, imports.tf (`import` blocks, TF ≥ 1.5); separate `aws_vpc_security_group_{ingress,egress}_rule` resources
+  - [ ] 31.3 Names: snake_case with the project prefix stripped; keep `# source/mapped/unmapped`, `# REDACTED` and `ignore_changes`; `verify_state.sh` runs in `envs/<env>`; opt-in live test runs `fmt -check`, `validate`, `plan`
+  - _Requirements: 7.1–7.4 (revised), 16.1–16.3 (new)_
+  - Commit: `feat(iac): Terraform modules and per-environment root with import blocks (Task 31)`
+
+- [ ] 32. Phase 2 docs, demo and checkpoint
+  - [ ] 32.1 `instruction.md`, README, `docs/ARCHITECTURE.md`, `docs/TESTING.md` (how to add a type), CLAUDE.md type list
+  - [ ] 32.2 Regenerate `examples/output/`; full suite, ruff, black, mypy, bandit clean
+  - Commit: `docs: Phase 2 guide, examples and checkpoint (Task 32)`
+
 ## Notes
 
 - TDD is mandatory: every sub-task marked (RED) is committed together with its (GREEN) implementation in the same top-level task commit, but the test must have been run and seen failing first.
@@ -446,7 +499,13 @@ Tasks 1–13 were implemented against the first draft of the design. Tasks 14–
     { "id": 5, "tasks": ["21"] },
     { "id": 6, "tasks": ["22"] },
     { "id": 7, "tasks": ["23"] },
-    { "id": 8, "tasks": ["24", "25"] }
+    { "id": 8, "tasks": ["24", "25"] },
+    { "id": 9, "tasks": ["26"] },
+    { "id": 10, "tasks": ["27"] },
+    { "id": 11, "tasks": ["28"] },
+    { "id": 12, "tasks": ["29"] },
+    { "id": 13, "tasks": ["30", "31"] },
+    { "id": 14, "tasks": ["32"] }
   ]
 }
 ```

@@ -44,3 +44,10 @@ Cross-cutting rules that span several modules:
 - TDD: write or adjust the failing test first. Test names carry the requirement id: `test_<component>_<behavior>_req_<X>_<Y>`; property tests are `test_property_..._req_<X>_<Y>`.
 - AWS mocking uses moto 4.x per-service decorators (`mock_s3`, `mock_ec2`, ...), not moto 5's `mock_aws`.
 - `instruction.md` is the Vietnamese end-user guide; keep it in sync with the real CLI.
+
+## Skills
+
+Vendored third-party skills live in `.claude/skills/` (sources, commits and licenses in `.claude/skills/README.md`). Load them before touching these areas:
+- `src/diagram_generator.py` or anything `.drawio`: `aws-architecture-diagram` (group nesting, verified `mxgraph.aws4.*` stencils, layout/edge rules, `templates/three-tier-web-app.drawio`) and `drawio` (XML rules, ELK layout, export CLI).
+- `src/iac_generator.py` or generated HCL: `terraform-style-guide` (files, naming, variable/output contracts), `refactor-module` (module interfaces), `terraform-search-import` (`import` blocks), `terraform-skill` (modules/env layout, state, security scanning).
+The skills describe hand-authored output; the generators must apply the same rules deterministically from the sealed specs (no guessed values, every element traceable to a spec).
