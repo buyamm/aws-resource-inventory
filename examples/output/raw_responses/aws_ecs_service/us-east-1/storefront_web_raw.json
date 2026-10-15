@@ -1,0 +1,56 @@
+{
+  "DescribeServices": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RetryAttempts": 0
+    },
+    "failures": [],
+    "services": [
+      {
+        "clusterArn": "arn:aws:ecs:us-east-1:123456789012:cluster/storefront",
+        "deployments": [
+          {
+            "createdAt": "2026-10-15T23:40:02.617837+07:00",
+            "desiredCount": 2,
+            "id": "ecs-svc/614225609518633782",
+            "launchType": "FARGATE",
+            "pendingCount": 2,
+            "runningCount": 0,
+            "status": "PRIMARY",
+            "taskDefinition": "arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1",
+            "updatedAt": "2026-10-15T23:40:02.617843+07:00"
+          }
+        ],
+        "desiredCount": 2,
+        "events": [],
+        "launchType": "FARGATE",
+        "loadBalancers": [
+          {
+            "containerName": "web",
+            "containerPort": 80,
+            "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188"
+          }
+        ],
+        "pendingCount": 2,
+        "runningCount": 0,
+        "schedulingStrategy": "REPLICA",
+        "serviceArn": "arn:aws:ecs:us-east-1:123456789012:service/storefront/web",
+        "serviceName": "web",
+        "serviceRegistries": [],
+        "status": "ACTIVE",
+        "tags": [
+          {
+            "key": "service",
+            "value": "storefront"
+          }
+        ],
+        "taskDefinition": "arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1"
+      }
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:iam::123456789012:role/storefront-scheduler-role",
+  "generated_at": "2026-10-15T16:40:03.851507Z",
+  "metadata": {
+    "api_version": "2010-05-08",
+    "checksum": "514e8210e0d1808abbfc5d220a0585699a1b2a40bd3529291b893585910e1e05",
+    "collected_at": "2026-10-15T16:40:03Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "global",
+  "resource_type": "aws_iam_role",
+  "specifications": {
+    "Arn": "arn:aws:iam::123456789012:role/storefront-scheduler-role",
+    "AssumeRolePolicyDocument": {
+      "Statement": [
+        {
+          "Action": "sts:AssumeRole",
+          "Effect": "Allow",
+          "Principal": {
+            "Service": "scheduler.amazonaws.com"
+          }
+        }
+      ],
+      "Version": "2012-10-17"
+    },
+    "AttachedPolicies": [],
+    "CreateDate": "2026-10-15T16:40:02.594000+00:00",
+    "InlinePolicies": {},
+    "MaxSessionDuration": 3600,
+    "Path": "/",
+    "RoleId": "AROARZPUZDIKBTYRPCPMR",
+    "RoleLastUsed": {},
+    "RoleName": "storefront-scheduler-role",
+    "Tags": [
+      {
+        "Key": "service",
+        "Value": "storefront"
+      }
+    ]
+  }
+}

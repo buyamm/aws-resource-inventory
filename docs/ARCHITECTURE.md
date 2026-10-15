@@ -116,7 +116,7 @@ Every command that writes files regenerates `checksums.sha256` at the end, so `v
 | `src/discovery.py` | Concurrent per-region listing with pagination |
 | `src/inventory.py` | Groups resources by (service, region) and drives one `SpecCollector` per group |
 | `src/collector.py` | Per-type spec collection, retry/backoff, error classification, operation log |
-| `src/resource_types.py` | Registry of the 22 supported types: ids, aliases, ARN layout, file names, draw.io styles |
+| `src/resource_types.py` | Registry of the 33 supported types: ids, aliases, ARN layout, file names, draw.io styles |
 | `src/parser.py` | `ResourceSpec`, `Result`, JSON parse/print |
 | `src/sanitizer.py` | Structure-preserving redaction |
 | `src/integrity.py` | Canonical JSON, Spec_Checksum, sealing, citation resolution, `verify_output_dir` |
@@ -129,6 +129,7 @@ Every command that writes files regenerates `checksums.sha256` at the end, so `v
 | `src/mcp_server.py` | MCP core: whitelist, parameter validation, rate limit, sanitization (no boto3) |
 | `src/mcp_stdio.py` | FastMCP stdio transport and environment sandbox |
 | `src/sample_account.py` | Sample account used by the demo and tests (moto only) |
+| `src/moto_compat.py` | ElastiCache replication groups for moto 4.x (demo, tests and benchmark only) |
 
 ## Output_Dir layout
 

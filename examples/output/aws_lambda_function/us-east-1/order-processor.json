@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:lambda:us-east-1:123456789012:function:order-processor",
-  "generated_at": "2026-10-15T16:01:58.115386Z",
+  "generated_at": "2026-10-15T16:40:03.851507Z",
   "metadata": {
     "api_version": "2015-03-31",
-    "checksum": "74e5dcbc044398f1f76abcd871fdfd16fee29baf17252123f39597f531e917d9",
-    "collected_at": "2026-10-15T16:01:57Z",
+    "checksum": "778b38320819911d2e94901fd1a19113c61806a85eed595d8425fe25af94abbd",
+    "collected_at": "2026-10-15T16:40:03Z",
     "collector_version": "0.1.0"
   },
   "region": "us-east-1",
@@ -14,7 +14,7 @@
     "Architectures": [
       "x86_64"
     ],
-    "CodeSha256": "waOhCdKJrCL2WZOuy/VNi88bTRKaUrp+2whtIFlUFf8=",
+    "CodeSha256": "bB8dektm2MaANdR9fw5rs+E0sn1aNkRalv+xIm8ygpQ=",
     "CodeSize": 164,
     "Description": "",
     "Environment": {
@@ -29,7 +29,7 @@
     "FunctionArn": "arn:aws:lambda:us-east-1:123456789012:function:order-processor",
     "FunctionName": "order-processor",
     "Handler": "handler.handler",
-    "LastModified": "2026-10-15T16:01:56.987439000Z",
+    "LastModified": "2026-10-15T16:40:02.246947000Z",
     "LastUpdateStatus": "Successful",
     "Layers": [],
     "MemorySize": 256,

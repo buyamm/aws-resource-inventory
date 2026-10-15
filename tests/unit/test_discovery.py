@@ -29,6 +29,8 @@ Requirements Coverage:
   resources
 - Requirement 14.1: Network, edge and load-balancing types (listeners per load
   balancer, CloudFront/Route 53/CloudFront-scope WAF discovered once from us-east-1)
+- Requirement 14.4: Compute and data types (ECS services per cluster, task definitions
+  in use by services, EventBridge rules per event bus)
 """
 
 import time
@@ -75,6 +77,16 @@ def _empty_client():
     client.list_web_acls.return_value = {"WebACLs": []}
     client.list_distributions.return_value = {"DistributionList": {"Quantity": 0}}
     client.list_hosted_zones.return_value = {"HostedZones": []}
+    client.list_clusters.return_value = {"clusterArns": []}
+    client.describe_repositories.return_value = {"repositories": []}
+    client.describe_auto_scaling_groups.return_value = {"AutoScalingGroups": []}
+    client.describe_launch_templates.return_value = {"LaunchTemplates": []}
+    client.describe_replication_groups.return_value = {"ReplicationGroups": []}
+    client.list_queues.return_value = {}
+    client.list_topics.return_value = {"Topics": []}
+    client.list_event_buses.return_value = {"EventBuses": [{"Name": "default"}]}
+    client.list_rules.return_value = {"Rules": []}
+    client.list_schedules.return_value = {"Schedules": []}
     return client
 
 
@@ -437,8 +449,8 @@ def test_discovery_follows_pagination_req_1_5():
     names = sorted(r.resource_id for r in resources if r.resource_type == "aws_lambda_function")
     assert names == ["f1", "f2"]
     region_client.get_paginator.assert_called_with("list_functions")
-    # 17 regional list operations (lambda counted per page: 2) + 5 global = 23 calls
-    assert discovery.get_api_calls() == 23
+    # 27 regional list operations (lambda counted per page: 2) + 5 global = 33 calls
+    assert discovery.get_api_calls() == 33
 
 
 # ===========================================================================
@@ -555,3 +567,141 @@ def test_discovery_network_edge_and_load_balancer_types_req_14_1():
     assert attributes["aws_subnet"] == {"VpcId": "vpc-1", "DefaultForAz": True}
     assert attributes["aws_route_table"] == {"VpcId": "vpc-1"}
     assert attributes["aws_internet_gateway"] == {"VpcIds": ["vpc-1"]}
+
+
+# ===========================================================================
+# Task 29: compute and data types (Requirement 14.4)
+# ===========================================================================
+
+ECS = f"arn:aws:ecs:us-east-1:{ACCOUNT}"
+ASG_ARN = (
+    f"arn:aws:autoscaling:us-east-1:{ACCOUNT}:autoScalingGroup:uuid-1:autoScalingGroupName/web"
+)
+
+
+def test_discovery_compute_and_data_types_req_14_4():
+    regional = _empty_client()
+    regional.list_clusters.return_value = {"clusterArns": [f"{ECS}:cluster/web"]}
+    regional.list_services.return_value = {
+        "serviceArns": [f"{ECS}:service/web/api", f"{ECS}:service/web/worker"]
+    }
+    regional.describe_services.return_value = {
+        "services": [
+            {
+                "serviceArn": f"{ECS}:service/web/api",
+                "taskDefinition": f"{ECS}:task-definition/api:7",
+                # A rolling deployment still runs the previous revision.
+                "deployments": [
+                    {"taskDefinition": f"{ECS}:task-definition/api:7"},
+                    {"taskDefinition": f"{ECS}:task-definition/api:6"},
+                ],
+            },
+            {
+                "serviceArn": f"{ECS}:service/web/worker",
+                "taskDefinition": f"{ECS}:task-definition/api:7",
+            },
+        ]
+    }
+    regional.describe_repositories.return_value = {
+        "repositories": [{"repositoryArn": f"arn:aws:ecr:us-east-1:{ACCOUNT}:repository/api"}]
+    }
+    regional.describe_auto_scaling_groups.return_value = {
+        "AutoScalingGroups": [{"AutoScalingGroupARN": ASG_ARN, "AutoScalingGroupName": "web"}]
+    }
+    regional.describe_launch_templates.return_value = {
+        "LaunchTemplates": [{"LaunchTemplateId": "lt-1", "Tags": [{"Key": "a", "Value": "b"}]}]
+    }
+    regional.describe_replication_groups.return_value = {
+        "ReplicationGroups": [
+            {"ARN": f"arn:aws:elasticache:us-east-1:{ACCOUNT}:replicationgroup:cache"}
+        ]
+    }
+    regional.list_queues.return_value = {
+        "QueueUrls": [f"https://sqs.us-east-1.amazonaws.com/{ACCOUNT}/jobs"]
+    }
+    regional.list_topics.return_value = {
+        "Topics": [{"TopicArn": f"arn:aws:sns:us-east-1:{ACCOUNT}:events"}]
+    }
+    regional.list_event_buses.return_value = {
+        "EventBuses": [{"Name": "default"}, {"Name": "orders-bus"}]
+    }
+
+    def rules(EventBusName: str, **_):  # noqa: N803 - boto3 parameter name
+        if EventBusName == "default":
+            return {
+                "Rules": [
+                    {"Name": "nightly", "Arn": f"arn:aws:events:us-east-1:{ACCOUNT}:rule/nightly"},
+                    # Rules that AWS services manage on the customer's behalf are skipped.
+                    {
+                        "Name": "AutoScalingManagedRule",
+                        "Arn": f"arn:aws:events:us-east-1:{ACCOUNT}:rule/AutoScalingManagedRule",
+                        "ManagedBy": "autoscaling.amazonaws.com",
+                    },
+                ]
+            }
+        return {
+            "Rules": [
+                {
+                    "Name": "created",
+                    "Arn": f"arn:aws:events:us-east-1:{ACCOUNT}:rule/orders-bus/created",
+                }
+            ]
+        }
+
+    regional.list_rules.side_effect = rules
+    regional.list_schedules.return_value = {
+        "Schedules": [{"Arn": f"arn:aws:scheduler:us-east-1:{ACCOUNT}:schedule/default/report"}]
+    }
+
+    services = (
+        "ec2", "ecs", "ecr", "autoscaling", "elasticache", "sqs", "sns", "events", "scheduler",
+    )  # fmt: skip
+    session = _make_session({"us-east-1": dict.fromkeys(services, regional)})
+    discovery = ResourceDiscovery(session, regions=["us-east-1"], account_id=ACCOUNT)
+    found = {
+        (r.resource_type, r.resource_id, r.arn)
+        for r in discovery.discover_all_resources()
+        if r.region == "us-east-1"
+    }
+    assert discovery.get_errors() == []
+    assert found == {
+        ("aws_ecs_cluster", "web", f"{ECS}:cluster/web"),
+        ("aws_ecs_service", "web/api", f"{ECS}:service/web/api"),
+        ("aws_ecs_service", "web/worker", f"{ECS}:service/web/worker"),
+        ("aws_ecs_task_definition", "api:7", f"{ECS}:task-definition/api:7"),
+        ("aws_ecs_task_definition", "api:6", f"{ECS}:task-definition/api:6"),
+        ("aws_ecr_repository", "api", f"arn:aws:ecr:us-east-1:{ACCOUNT}:repository/api"),
+        ("aws_autoscaling_group", "web", ASG_ARN),
+        (
+            "aws_launch_template",
+            "lt-1",
+            f"arn:aws:ec2:us-east-1:{ACCOUNT}:launch-template/lt-1",
+        ),
+        (
+            "aws_elasticache_replication_group",
+            "cache",
+            f"arn:aws:elasticache:us-east-1:{ACCOUNT}:replicationgroup:cache",
+        ),
+        ("aws_sqs_queue", "jobs", f"arn:aws:sqs:us-east-1:{ACCOUNT}:jobs"),
+        ("aws_sns_topic", "events", f"arn:aws:sns:us-east-1:{ACCOUNT}:events"),
+        (
+            "aws_cloudwatch_event_rule",
+            "nightly",
+            f"arn:aws:events:us-east-1:{ACCOUNT}:rule/nightly",
+        ),
+        (
+            "aws_cloudwatch_event_rule",
+            "orders-bus/created",
+            f"arn:aws:events:us-east-1:{ACCOUNT}:rule/orders-bus/created",
+        ),
+        (
+            "aws_scheduler_schedule",
+            "default/report",
+            f"arn:aws:scheduler:us-east-1:{ACCOUNT}:schedule/default/report",
+        ),
+    }
+    regional.list_services.assert_called_with(cluster=f"{ECS}:cluster/web")
+    regional.describe_services.assert_called_with(
+        cluster=f"{ECS}:cluster/web",
+        services=[f"{ECS}:service/web/api", f"{ECS}:service/web/worker"],
+    )

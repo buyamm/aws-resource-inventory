@@ -37,6 +37,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.aws_session import InventorySession  # noqa: E402
+from src.moto_compat import mock_elasticache_replication_groups  # noqa: E402
 from src.sample_account import LAMBDA_ASSUME_POLICY, _lambda_zip  # noqa: E402
 
 REGIONS = (
@@ -239,7 +240,8 @@ def mocked_aws() -> Iterator[None]:
         for mock in mocks:
             mock.start()
         try:
-            yield
+            with mock_elasticache_replication_groups():
+                yield
         finally:
             for mock in reversed(mocks):
                 mock.stop()

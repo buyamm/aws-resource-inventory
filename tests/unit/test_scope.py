@@ -553,6 +553,231 @@ def test_scope_closure_follows_load_balancer_and_cloudfront_req_13_3(sample_acco
     )
 
 
+# ----------------------------------------------------------------------------
+# Compute and data types (Requirements 13.3, 14.4)
+# ----------------------------------------------------------------------------
+
+ECS_ARN = f"arn:aws:ecs:us-east-1:{ACCOUNT}"
+TG_ARN = f"arn:aws:elasticloadbalancing:us-east-1:{ACCOUNT}:targetgroup/web-tg/123"
+ROLE = f"arn:aws:iam::{ACCOUNT}:role"
+
+
+def test_scope_reference_rules_ecs_req_13_3():
+    service = _spec_of(
+        "aws_ecs_service",
+        "web/api",
+        {
+            "clusterArn": f"{ECS_ARN}:cluster/web",
+            "taskDefinition": f"{ECS_ARN}:task-definition/api:7",
+            "loadBalancers": [{"targetGroupArn": TG_ARN, "containerName": "api"}],
+            "networkConfiguration": {
+                "awsvpcConfiguration": {"subnets": ["subnet-a"], "securityGroups": ["sg-app"]}
+            },
+        },
+    )
+    refs = _refs(service)
+    assert set(refs) == {
+        ("aws_ecs_cluster", "web"),
+        ("aws_ecs_task_definition", "api:7"),
+        ("aws_lb_target_group", "web-tg/123"),
+        ("aws_subnet", "subnet-a"),
+        ("aws_security_group", "sg-app"),
+    }
+    assert refs[("aws_lb_target_group", "web-tg/123")] == [
+        f"{service.arn}#specifications.loadBalancers[0].targetGroupArn"
+    ]
+
+    image = f"{ACCOUNT}.dkr.ecr.us-east-1.amazonaws.com/team/api"
+    task = _spec_of(
+        "aws_ecs_task_definition",
+        "api:7",
+        {
+            "taskRoleArn": f"{ROLE}/api-task",
+            "executionRoleArn": f"{ROLE}/api-exec",
+            "containerDefinitions": [
+                {
+                    "image": f"{image}:1.2.3",
+                    "logConfiguration": {"options": {"awslogs-group": "/ecs/api"}},
+                },
+                # Public images and images of other accounts are not followed.
+                {"image": "public.ecr.aws/nginx/nginx:1.27"},
+                {"image": "999999999999.dkr.ecr.us-east-1.amazonaws.com/shared@sha256:abc"},
+                {"image": f"{image}@sha256:def"},
+            ],
+        },
+    )
+    refs = _refs(task)
+    assert set(refs) == {
+        ("aws_iam_role", "api-task"),
+        ("aws_iam_role", "api-exec"),
+        ("aws_cloudwatch_log_group", "/ecs/api"),
+        ("aws_ecr_repository", "team/api"),
+    }
+    assert refs[("aws_ecr_repository", "team/api")] == [
+        f"{task.arn}#specifications.containerDefinitions[0].image",
+        f"{task.arn}#specifications.containerDefinitions[3].image",
+    ]
+    assert refs[("aws_cloudwatch_log_group", "/ecs/api")] == [
+        f"{task.arn}#specifications.containerDefinitions[0].logConfiguration.options.awslogs-group"
+    ]
+
+
+def test_scope_reference_rules_autoscaling_and_cache_req_13_3():
+    asg = _spec_of(
+        "aws_autoscaling_group",
+        "workers",
+        {
+            "LaunchTemplate": {"LaunchTemplateId": "lt-1", "Version": "$Default"},
+            "VPCZoneIdentifier": "subnet-a,subnet-b",
+            "TargetGroupARNs": [TG_ARN],
+        },
+    )
+    refs = _refs(asg)
+    assert set(refs) == {
+        ("aws_launch_template", "lt-1"),
+        ("aws_subnet", "subnet-a"),
+        ("aws_subnet", "subnet-b"),
+        ("aws_lb_target_group", "web-tg/123"),
+    }
+    # One comma-separated property names both subnets.
+    assert refs[("aws_subnet", "subnet-b")] == [f"{asg.arn}#specifications.VPCZoneIdentifier"]
+    mixed = _spec_of(
+        "aws_autoscaling_group",
+        "spot",
+        {
+            "MixedInstancesPolicy": {
+                "LaunchTemplate": {"LaunchTemplateSpecification": {"LaunchTemplateId": "lt-2"}}
+            }
+        },
+    )
+    assert set(_refs(mixed)) == {("aws_launch_template", "lt-2")}
+
+    template = _spec_of(
+        "aws_launch_template",
+        "lt-1",
+        {
+            "LaunchTemplateData": {
+                "SecurityGroupIds": ["sg-1"],
+                "NetworkInterfaces": [{"Groups": ["sg-2"], "SubnetId": "subnet-c"}],
+            }
+        },
+    )
+    assert set(_refs(template)) == {
+        ("aws_security_group", "sg-1"),
+        ("aws_security_group", "sg-2"),
+        ("aws_subnet", "subnet-c"),
+    }
+
+    cache = _spec_of(
+        "aws_elasticache_replication_group",
+        "cache",
+        {
+            "CacheCluster": {"SecurityGroups": [{"SecurityGroupId": "sg-cache"}]},
+            "CacheSubnetGroup": {"VpcId": "vpc-1", "Subnets": [{"SubnetIdentifier": "subnet-a"}]},
+        },
+    )
+    assert set(_refs(cache)) == {
+        ("aws_security_group", "sg-cache"),
+        ("aws_subnet", "subnet-a"),
+        ("aws_vpc", "vpc-1"),
+    }
+
+
+def test_scope_reference_rules_messaging_and_events_req_13_3():
+    fn = f"arn:aws:lambda:us-east-1:{ACCOUNT}:function:worker"
+    queue = f"arn:aws:sqs:us-east-1:{ACCOUNT}:jobs"
+    rule = _spec_of(
+        "aws_cloudwatch_event_rule",
+        "nightly",
+        {
+            "Targets": [
+                {"Id": "1", "Arn": f"{fn}:live"},  # alias-qualified Lambda ARN
+                {"Id": "2", "Arn": queue},
+                {"Id": "3", "Arn": f"{ECS_ARN}:cluster/web", "RoleArn": f"{ROLE}/events"},
+                {"Id": "4", "Arn": f"arn:aws:states:us-east-1:{ACCOUNT}:stateMachine:flow"},
+                {"Id": "5", "Arn": f"arn:aws:sns:us-east-1:{ACCOUNT}:alerts"},
+            ]
+        },
+    )
+    assert set(_refs(rule)) == {
+        ("aws_lambda_function", "worker"),
+        ("aws_sqs_queue", "jobs"),
+        ("aws_ecs_cluster", "web"),
+        ("aws_iam_role", "events"),
+        ("aws_sfn_state_machine", "flow"),
+        ("aws_sns_topic", "alerts"),
+    }
+    schedule = _spec_of(
+        "aws_scheduler_schedule",
+        "default/report",
+        {"Target": {"Arn": queue, "RoleArn": f"{ROLE}/scheduler"}},
+    )
+    assert set(_refs(schedule)) == {("aws_sqs_queue", "jobs"), ("aws_iam_role", "scheduler")}
+    topic = _spec_of(
+        "aws_sns_topic",
+        "events",
+        {
+            "Subscriptions": [
+                {"Protocol": "sqs", "Endpoint": queue},
+                {"Protocol": "lambda", "Endpoint": fn},
+                {"Protocol": "email", "Endpoint": "ops@example.com"},
+            ]
+        },
+    )
+    assert set(_refs(topic)) == {("aws_sqs_queue", "jobs"), ("aws_lambda_function", "worker")}
+
+
+def test_scope_references_to_other_accounts_are_not_followed_req_13_3():
+    function = _spec_of("aws_lambda_function", "fn", {"Role": "arn:aws:iam::999999999999:role/x"})
+    assert _refs(function) == {}
+
+
+def test_scope_tag_seeds_skip_task_definition_revisions_req_14_4():
+    """Task definitions enter through the services that run them, not through tags."""
+    tagging = _tagging_client(
+        [f"{ECS_ARN}:task-definition/api:1", f"{ECS_ARN}:service/web/api", "arn:aws:s3:::b"]
+    )
+    iam = Mock()
+    iam.can_paginate.return_value = False
+    iam.list_roles.return_value = {"Roles": []}
+    session = Mock()
+    session.client.side_effect = lambda service, region_name=None, **_: (
+        iam if service == "iam" else tagging
+    )
+    seeds = TagScopedDiscovery(
+        session, PROJECT, regions=["us-east-1"], account_id=ACCOUNT
+    ).discover_all_resources()
+    assert {r.resource_type for r in seeds} == {"aws_ecs_service", "aws_s3_bucket"}
+
+
+def test_scope_closure_follows_ecs_service_req_13_3(sample_account):
+    session, ids = sample_account
+    seed = DiscoveredResource(
+        resource_type="aws_ecs_service",
+        resource_id="storefront/web",
+        arn=ids.ecs_service_arn,
+        region="us-east-1",
+    )
+    result = InventoryCollector(InventorySession(session), ACCOUNT).collect_all([seed])
+    assert result.errors == []
+    collected = {(s.resource_type, s.arn) for s in result.specs}
+    assert {
+        ("aws_ecs_cluster", ids.ecs_cluster_arn),
+        ("aws_ecs_task_definition", ids.task_definition_arn),
+        ("aws_lb_target_group", ids.target_group_arn),
+        ("aws_iam_role", ids.task_role_arn),
+        ("aws_iam_role", ids.execution_role_arn),
+        ("aws_ecr_repository", ids.ecr_repository_arn),
+        (
+            "aws_cloudwatch_log_group",
+            f"arn:aws:logs:us-east-1:{ACCOUNT}:log-group:{ids.ecs_log_group_name}",
+        ),
+        # ... and onwards: target group -> load balancer -> listener -> certificate.
+        ("aws_lb", ids.alb_arn),
+        ("aws_acm_certificate", ids.certificate_arn),
+    } <= collected
+
+
 # ============================================================================
 # Default exclusion (Requirement 13.4)
 # ============================================================================

@@ -11,6 +11,9 @@ Requirements Coverage:
 
 Design:
 - Sensitive keys are matched case-insensitively by name (e.g. "password", "aws_access_key_id")
+- ``{"name": <sensitive name>, "value": ...}`` pairs (ECS container environments) are
+  treated like a key/value entry: the ``value`` is redacted
+- EC2 launch template ``UserData`` is base64 and cannot be scanned, so it is always redacted
 - Sensitive values are matched by regex pattern (e.g. AKIA... AWS access keys)
 - Both key-name matching and value-pattern matching are applied
 - Redaction logs record the full path to each redacted field without exposing the value
@@ -48,7 +51,11 @@ SENSITIVE_KEY_PATTERNS: list[tuple[str, str]] = [
     ("token", "[REDACTED]"),
     ("api_key", "[REDACTED]"),
     ("credential", "[REDACTED]"),
+    ("userdata", "[REDACTED]"),
 ]
+
+# {"name": ..., "value": ...} entries: the name decides whether the value is sensitive.
+NAME_VALUE_KEYS = ("name", "value")
 
 # Keys that should NOT be redacted even if they substring-match a sensitive pattern.
 SAFE_KEY_ALLOWLIST: list[str] = [
@@ -155,9 +162,12 @@ class DataSanitizer:
             return self._memo[id(data)]  # type: ignore[no-any-return]
         result: dict[str, Any] = {}
         self._memo[id(data)] = result
+        pair_label = self._name_value_redaction(data)
         for key, value in data.items():
             child_path = f"{path}.{key}" if path else key
             redaction_label = self._sensitive_key_redaction(key)
+            if pair_label is not None and key.lower() == NAME_VALUE_KEYS[1]:
+                redaction_label = pair_label
             if redaction_label is not None and isinstance(value, str) and value not in PLACEHOLDERS:
                 # Key name itself marks this as sensitive — redact directly
                 result[key] = redaction_label
@@ -201,6 +211,14 @@ class DataSanitizer:
                 return replacement
 
         return value  # pragma: no cover — combined match guarantees one hit
+
+    def _name_value_redaction(self, data: dict[str, Any]) -> str | None:
+        """Label for the ``value`` of a ``{"name": ..., "value": ...}`` entry, if sensitive."""
+        lowered = {str(k).lower(): v for k, v in data.items()}
+        name = lowered.get(NAME_VALUE_KEYS[0])
+        if not isinstance(name, str) or NAME_VALUE_KEYS[1] not in lowered:
+            return None
+        return self._sensitive_key_redaction(name)
 
     def _sensitive_key_redaction(self, key: str) -> str | None:
         """

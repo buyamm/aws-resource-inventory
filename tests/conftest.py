@@ -31,6 +31,9 @@ import pytest
 from hypothesis import settings as hypothesis_settings
 from moto import mock_dynamodb, mock_ec2, mock_iam, mock_lambda, mock_s3
 
+# Registers the ElastiCache replication-group handlers before any session is created.
+from src.moto_compat import mock_elasticache_replication_groups
+
 # Property tests must run at least 100 examples (design.md, "Test Coverage Requirements").
 hypothesis_settings.register_profile("default", max_examples=100, deadline=None)
 hypothesis_settings.load_profile(os.environ.get("HYPOTHESIS_PROFILE", "default"))
@@ -384,12 +387,20 @@ def moto_all_services():
     """Start moto mocks for every service the inventory touches."""
     from moto import (
         mock_acm,
+        mock_autoscaling,
         mock_cloudfront,
+        mock_ecr,
+        mock_ecs,
+        mock_elasticache,
         mock_elbv2,
+        mock_events,
         mock_logs,
         mock_rds,
         mock_resourcegroupstaggingapi,
         mock_route53,
+        mock_scheduler,
+        mock_sns,
+        mock_sqs,
         mock_stepfunctions,
         mock_sts,
         mock_wafv2,
@@ -411,11 +422,20 @@ def moto_all_services():
         mock_route53(),
         mock_acm(),
         mock_wafv2(),
+        mock_ecs(),
+        mock_ecr(),
+        mock_autoscaling(),
+        mock_elasticache(),
+        mock_sqs(),
+        mock_sns(),
+        mock_events(),
+        mock_scheduler(),
     ]
     for m in mocks:
         m.start()
     try:
-        yield
+        with mock_elasticache_replication_groups():
+            yield
     finally:
         for m in reversed(mocks):
             m.stop()

@@ -76,7 +76,7 @@ AWS is mocked with **moto 4.x per-service decorators/context managers** (`mock_s
 |---|---|
 | `aws_credentials` | Fake credential environment |
 | `mock_s3_client`, `mock_ec2_client`, `mock_lambda_client`, `mock_iam_client`, `mock_dynamodb_client` | A boto3 client inside the corresponding moto mock |
-| `moto_all_services` | moto mocks for every service the inventory touches (EC2, IAM, Lambda, Logs, S3, Step Functions, RDS, DynamoDB, STS) |
+| `moto_all_services` | moto mocks for every service the inventory touches (EC2, IAM, Lambda, Logs, S3, Step Functions, RDS, DynamoDB, STS, tagging, ELBv2, CloudFront, Route 53, ACM, WAFv2, ECS, ECR, Auto Scaling, ElastiCache, SQS, SNS, EventBridge, Scheduler) plus `src.moto_compat.mock_elasticache_replication_groups()`, because moto 4.x does not implement ElastiCache replication groups |
 | `sample_account` | `moto_all_services` populated by `src/sample_account.py`: one resource of each type, a public bucket, an SSH-open security group and an admin inline policy. Returns `(session, SampleAccount ids)` |
 | `sample_*_response`, `sample_*_resource_spec`, `sample_collection_report` | Static sample data |
 | `fixtures_dir`, `sample_aws_responses_dir`, `sample_specs_dir`, `load_fixture_json`, `load_fixture_text` | Access to files under `tests/fixtures/` |

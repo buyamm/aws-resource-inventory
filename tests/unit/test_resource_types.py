@@ -4,6 +4,8 @@ Unit tests for the resource type registry (src/resource_types.py).
 Validates:
 - Req 1.3: the Supported_Resource_Types and their scope
 - Req 14.1: network, edge and load-balancing types (ids, ARNs, aliases)
+- Req 14.4: compute and data types (ECS, ECR, Auto Scaling, launch templates,
+  ElastiCache, SQS, SNS, EventBridge rules and schedules)
 - Req 3.2: resource ids, file ids and per-resource spec paths
 """
 
@@ -53,8 +55,23 @@ NETWORK_EDGE_TYPES = {
 }
 
 
+COMPUTE_DATA_TYPES = {
+    "aws_ecs_cluster",
+    "aws_ecs_service",
+    "aws_ecs_task_definition",
+    "aws_ecr_repository",
+    "aws_autoscaling_group",
+    "aws_launch_template",
+    "aws_elasticache_replication_group",
+    "aws_sqs_queue",
+    "aws_sns_topic",
+    "aws_cloudwatch_event_rule",
+    "aws_scheduler_schedule",
+}
+
+
 def test_registry_has_supported_types_req_1_3() -> None:
-    assert set(REGISTRY) == NETWORK_EDGE_TYPES | {
+    assert set(REGISTRY) == NETWORK_EDGE_TYPES | COMPUTE_DATA_TYPES | {
         "aws_instance",
         "aws_vpc",
         "aws_security_group",
@@ -113,6 +130,25 @@ def test_registry_has_supported_types_req_1_3() -> None:
         ("hosted_zone", "aws_route53_zone"),
         ("acm", "aws_acm_certificate"),
         ("waf", "aws_wafv2_web_acl"),
+        ("ecs_cluster", "aws_ecs_cluster"),
+        ("ecs_service", "aws_ecs_service"),
+        ("ecs_task_definition", "aws_ecs_task_definition"),
+        ("task_definition", "aws_ecs_task_definition"),
+        ("ecr", "aws_ecr_repository"),
+        ("ecr_repository", "aws_ecr_repository"),
+        ("asg", "aws_autoscaling_group"),
+        ("autoscaling_group", "aws_autoscaling_group"),
+        ("launch_template", "aws_launch_template"),
+        ("elasticache", "aws_elasticache_replication_group"),
+        ("aws_elasticache", "aws_elasticache_replication_group"),
+        ("sqs", "aws_sqs_queue"),
+        ("sqs_queue", "aws_sqs_queue"),
+        ("sns", "aws_sns_topic"),
+        ("sns_topic", "aws_sns_topic"),
+        ("eventbridge_rule", "aws_cloudwatch_event_rule"),
+        ("event_rule", "aws_cloudwatch_event_rule"),
+        ("scheduler", "aws_scheduler_schedule"),
+        ("schedule", "aws_scheduler_schedule"),
         ("not_a_type", None),
         ("", None),
     ],
@@ -374,3 +410,144 @@ def test_resource_id_network_edge_types_req_14_1(
 )
 def test_s3_bucket_from_origin_domain_req_14_3(domain: str, expected: str | None) -> None:
     assert s3_bucket_from_domain(domain) == expected
+
+
+# ============================================================================
+# Compute and data types (Requirement 14.4)
+# ============================================================================
+
+ECS = "arn:aws:ecs:us-east-1:123456789012"
+ASG_ARN = (
+    "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:"
+    "6d5af669-eb3b-4530-894b-e314a667f2e7:autoScalingGroupName/web-asg"
+)
+COMPUTE_DATA_ARNS = {
+    f"{ECS}:cluster/web": ("aws_ecs_cluster", "web"),
+    f"{ECS}:service/web/api": ("aws_ecs_service", "web/api"),
+    f"{ECS}:task-definition/api:7": ("aws_ecs_task_definition", "api:7"),
+    "arn:aws:ecr:us-east-1:123456789012:repository/team/api": ("aws_ecr_repository", "team/api"),
+    ASG_ARN: ("aws_autoscaling_group", "web-asg"),
+    "arn:aws:ec2:us-east-1:123456789012:launch-template/lt-0abc": (
+        "aws_launch_template",
+        "lt-0abc",
+    ),
+    "arn:aws:elasticache:us-east-1:123456789012:replicationgroup:cache": (
+        "aws_elasticache_replication_group",
+        "cache",
+    ),
+    "arn:aws:sqs:us-east-1:123456789012:orders.fifo": ("aws_sqs_queue", "orders.fifo"),
+    "arn:aws:sns:us-east-1:123456789012:events": ("aws_sns_topic", "events"),
+    "arn:aws:events:us-east-1:123456789012:rule/nightly": ("aws_cloudwatch_event_rule", "nightly"),
+    "arn:aws:events:us-east-1:123456789012:rule/orders-bus/created": (
+        "aws_cloudwatch_event_rule",
+        "orders-bus/created",
+    ),
+    "arn:aws:scheduler:us-east-1:123456789012:schedule/default/report": (
+        "aws_scheduler_schedule",
+        "default/report",
+    ),
+}
+
+
+@pytest.mark.parametrize(("arn", "expected"), sorted(COMPUTE_DATA_ARNS.items()))
+def test_parse_arn_compute_data_types_req_14_4(arn: str, expected: tuple) -> None:
+    assert parse_arn(arn) == (*expected, "us-east-1")
+
+
+@pytest.mark.parametrize(
+    "arn",
+    [
+        # Old-format ECS service ARNs (no cluster segment), SNS subscriptions, ECS tasks,
+        # ECR registries and scheduler groups are not Supported_Resource_Types.
+        f"{ECS}:service/api",
+        "arn:aws:sns:us-east-1:123456789012:events:2bcfbf39-05c3-41de-beaa-fcfcc21c8f55",
+        f"{ECS}:task/web/0123456789abcdef",
+        f"{ECS}:task-definition/api",
+        "arn:aws:scheduler:us-east-1:123456789012:schedule-group/default",
+        "arn:aws:autoscaling:us-east-1:123456789012:launchConfiguration:uuid:"
+        "launchConfigurationName/old",
+    ],
+)
+def test_parse_arn_rejects_unsupported_compute_kinds_req_14_4(arn: str) -> None:
+    assert parse_arn(arn) is None
+
+
+def test_build_arn_compute_data_types_req_14_4() -> None:
+    for arn, (type_id, raw_id) in COMPUTE_DATA_ARNS.items():
+        if type_id == "aws_autoscaling_group":
+            continue
+        assert build_arn(type_id, raw_id, "us-east-1", "123456789012") == arn
+    # Auto Scaling group ARNs embed a UUID that only the API returns; the built ARN uses
+    # the IAM wildcard form and still parses back to the group.
+    built = build_arn("aws_autoscaling_group", "web-asg", "us-east-1", "123456789012")
+    assert built == (
+        "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:*:"
+        "autoScalingGroupName/web-asg"
+    )
+    assert parse_arn(built) == ("aws_autoscaling_group", "web-asg", "us-east-1")
+
+
+@pytest.mark.parametrize(
+    ("resource_type", "arn", "specifications", "expected", "file_name"),
+    [
+        ("aws_ecs_cluster", f"{ECS}:cluster/web", {"clusterName": "web"}, "web", "web"),
+        ("aws_ecs_service", f"{ECS}:service/web/api", {"serviceName": "api"}, "web/api", "web_api"),
+        (
+            "aws_ecs_task_definition",
+            f"{ECS}:task-definition/api:7",
+            {"family": "api", "revision": 7},
+            "api:7",
+            "api_7",
+        ),
+        (
+            "aws_ecr_repository",
+            "arn:aws:ecr:us-east-1:1:repository/team/api",
+            {"repositoryName": "team/api"},
+            "team/api",
+            "team_api",
+        ),
+        (
+            "aws_autoscaling_group",
+            ASG_ARN,
+            {"AutoScalingGroupName": "web-asg"},
+            "web-asg",
+            "web-asg",
+        ),
+        (
+            "aws_launch_template",
+            "arn:aws:ec2:us-east-1:1:launch-template/lt-0abc",
+            {"LaunchTemplateId": "lt-0abc"},
+            "lt-0abc",
+            "lt-0abc",
+        ),
+        (
+            "aws_elasticache_replication_group",
+            "arn:aws:elasticache:us-east-1:1:replicationgroup:cache",
+            {"ReplicationGroupId": "cache"},
+            "cache",
+            "cache",
+        ),
+        ("aws_sqs_queue", "arn:aws:sqs:us-east-1:1:jobs", {"Attributes": {}}, "jobs", "jobs"),
+        ("aws_sns_topic", "arn:aws:sns:us-east-1:1:events", {"Attributes": {}}, "events", "events"),
+        (
+            "aws_cloudwatch_event_rule",
+            "arn:aws:events:us-east-1:1:rule/orders-bus/created",
+            {"Name": "created"},
+            "orders-bus/created",
+            "orders-bus_created",
+        ),
+        (
+            "aws_scheduler_schedule",
+            "arn:aws:scheduler:us-east-1:1:schedule/default/report",
+            {"Name": "report"},
+            "default/report",
+            "default_report",
+        ),
+    ],
+)
+def test_resource_id_compute_data_types_req_14_4(
+    resource_type: str, arn: str, specifications: dict, expected: str, file_name: str
+) -> None:
+    spec = _spec(resource_type, arn, specifications)
+    assert resource_id(spec) == expected
+    assert spec_relpath(spec) == f"{resource_type}/us-east-1/{file_name}.json"

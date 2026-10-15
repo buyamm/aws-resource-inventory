@@ -64,6 +64,14 @@ MOCKED_SERVICES = (
     "mock_route53",
     "mock_acm",
     "mock_wafv2",
+    "mock_ecs",
+    "mock_ecr",
+    "mock_autoscaling",
+    "mock_elasticache",
+    "mock_sqs",
+    "mock_sns",
+    "mock_events",
+    "mock_scheduler",
 )
 
 
@@ -113,6 +121,7 @@ def moto_account() -> Iterator[None]:
     import boto3
     import moto
 
+    from src.moto_compat import mock_elasticache_replication_groups
     from src.sample_account import build_sample_account
 
     saved = {key: os.environ.get(key) for key in FAKE_CREDENTIALS}
@@ -123,7 +132,7 @@ def moto_account() -> Iterator[None]:
     for mock in mocks:
         mock.start()
     try:
-        with warnings.catch_warnings():
+        with warnings.catch_warnings(), mock_elasticache_replication_groups():
             # moto 4.x's ACM mock uses deprecated cryptography datetime properties.
             warnings.filterwarnings("ignore", category=UserWarning, module=r"moto\.acm")
             build_sample_account(boto3.Session(region_name=SAMPLE_REGION))

@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188",
-  "generated_at": "2026-10-15T16:01:58.115386Z",
+  "generated_at": "2026-10-15T16:40:03.851507Z",
   "metadata": {
     "api_version": "2015-12-01",
-    "checksum": "f87889f960fd83ad060f30849b4694bff3bdef02220bd0e9b1a0567a312b0565",
-    "collected_at": "2026-10-15T16:01:58Z",
+    "checksum": "5444a4e427e90f15622e0e6e70342da17e582a02adf44228990b2da9237628d1",
+    "collected_at": "2026-10-15T16:40:03Z",
     "collector_version": "0.1.0"
   },
   "region": "us-east-1",
@@ -31,16 +31,16 @@
     ],
     "AvailabilityZones": [
       {
-        "SubnetId": "subnet-dc94c752",
+        "SubnetId": "subnet-d94916f9",
         "ZoneName": "us-east-1a"
       },
       {
-        "SubnetId": "subnet-ee0601cc",
+        "SubnetId": "subnet-b83c8765",
         "ZoneName": "us-east-1b"
       }
     ],
     "CanonicalHostedZoneId": "Z2P70J7EXAMPLE",
-    "CreatedTime": "2026-10-15T16:01:57.250000+00:00",
+    "CreatedTime": "2026-10-15T16:40:02.493000+00:00",
     "DNSName": "storefront-alb-1.us-east-1.elb.amazonaws.com",
     "IpAddressType": "ipv4",
     "Listeners": [
@@ -48,7 +48,7 @@
         "AlpnPolicy": [],
         "Certificates": [
           {
-            "CertificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/59f7c298-c41f-48f5-a3db-cb8263d5fcc6"
+            "CertificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/a731cd05-0052-48e0-8889-0431af5b4bbe"
           }
         ],
         "DefaultActions": [
@@ -57,7 +57,7 @@
             "Type": "forward"
           }
         ],
-        "ListenerArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434430983056",
+        "ListenerArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434588500944",
         "LoadBalancerArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188",
         "Port": 443,
         "Protocol": "HTTPS",
@@ -68,7 +68,7 @@
     "LoadBalancerName": "storefront-alb",
     "Scheme": "internet-facing",
     "SecurityGroups": [
-      "sg-347a556c97894d9e4"
+      "sg-8c9c7f5f96b0d5fb1"
     ],
     "State": {
       "Code": "active"
@@ -80,6 +80,6 @@
       }
     ],
     "Type": "application",
-    "VpcId": "vpc-1561eea5"
+    "VpcId": "vpc-b6ee287f"
   }
 }

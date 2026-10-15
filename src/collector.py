@@ -16,6 +16,8 @@ Requirements Coverage:
 - Requirement 12.3: Throttling honours the Retry-After header
 - Requirement 14.1: Network, edge and load-balancing Specifications (CloudFront:
   distributions only, never edge locations or IP ranges)
+- Requirement 14.4: Compute and data Specifications (ECS, ECR, Auto Scaling, launch
+  templates, ElastiCache, SQS, SNS, EventBridge rules and schedules)
 """
 
 from __future__ import annotations
@@ -145,6 +147,8 @@ NOT_CONFIGURED_CODES = frozenset(
         "ServerSideEncryptionConfigurationNotFoundError",
         "NoSuchEntity",
         "ResourceNotFoundException",
+        "CacheClusterNotFound",
+        "CacheSubnetGroupNotFoundFault",
     }
 )
 _TRANSIENT_EXCEPTIONS = (
@@ -169,6 +173,14 @@ IAM_SERVICE_PREFIX = {
     "route53": "route53",
     "acm": "acm",
     "wafv2": "wafv2",
+    "ecs": "ecs",
+    "ecr": "ecr",
+    "autoscaling": "autoscaling",
+    "elasticache": "elasticache",
+    "sqs": "sqs",
+    "sns": "sns",
+    "events": "events",
+    "scheduler": "scheduler",
 }
 
 
@@ -335,6 +347,17 @@ class SpecCollector:
             "aws_route53_zone": self.collect_route53_zone_spec,
             "aws_acm_certificate": self.collect_acm_certificate_spec,
             "aws_wafv2_web_acl": self.collect_web_acl_spec,
+            "aws_ecs_cluster": self.collect_ecs_cluster_spec,
+            "aws_ecs_service": self.collect_ecs_service_spec,
+            "aws_ecs_task_definition": self.collect_task_definition_spec,
+            "aws_ecr_repository": self.collect_ecr_repository_spec,
+            "aws_autoscaling_group": self.collect_autoscaling_group_spec,
+            "aws_launch_template": self.collect_launch_template_spec,
+            "aws_elasticache_replication_group": self.collect_replication_group_spec,
+            "aws_sqs_queue": self.collect_sqs_queue_spec,
+            "aws_sns_topic": self.collect_sns_topic_spec,
+            "aws_cloudwatch_event_rule": self.collect_event_rule_spec,
+            "aws_scheduler_schedule": self.collect_schedule_spec,
         }.get(resource_type)
         if method is None:
             return Result.err(
@@ -769,6 +792,232 @@ class SpecCollector:
         if tags is not None:
             specs["Tags"] = (tags.get("TagInfoForResource") or {}).get("TagList", [])
         return ctx.build("aws_wafv2_web_acl", region, account_id, specs)
+
+    # ------------------------------------------------------------------
+    # Compute and data (Requirement 14.4)
+    # ------------------------------------------------------------------
+
+    def collect_ecs_cluster_spec(
+        self, cluster_name: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """ECS cluster: DescribeClusters ``clusters[0]`` (with tags, settings, configuration)."""
+        arn = arn or build_arn("aws_ecs_cluster", cluster_name, region, account_id)
+        ctx = _Context(self, "ecs", arn, cluster_name)
+        response = ctx.primary(
+            "describe_clusters", clusters=[arn], include=["TAGS", "SETTINGS", "CONFIGURATIONS"]
+        )
+        if response is None:
+            return ctx.failure()
+        items = response.get("clusters", [])
+        if not items:
+            return ctx.not_found()
+        return ctx.build("aws_ecs_cluster", region, account_id, dict(items[0]))
+
+    def collect_ecs_service_spec(
+        self, raw_id: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """ECS service: DescribeServices ``services[0]`` with tags, without the ``events`` log.
+
+        ``raw_id`` is ``<cluster>/<service>``.
+        """
+        arn = arn or build_arn("aws_ecs_service", raw_id, region, account_id)
+        cluster = raw_id.split("/")[0]
+        ctx = _Context(self, "ecs", arn, raw_id)
+        response = ctx.primary(
+            "describe_services", cluster=cluster, services=[arn], include=["TAGS"]
+        )
+        if response is None:
+            return ctx.failure()
+        items = response.get("services", [])
+        if not items:
+            return ctx.not_found()
+        specs = {k: v for k, v in items[0].items() if k != "events"}
+        return ctx.build("aws_ecs_service", region, account_id, specs)
+
+    def collect_task_definition_spec(
+        self, raw_id: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """ECS task definition revision: ``taskDefinition`` + ``tags``. ``raw_id`` is ``family:rev``."""
+        arn = arn or build_arn("aws_ecs_task_definition", raw_id, region, account_id)
+        ctx = _Context(self, "ecs", arn, raw_id)
+        response = ctx.primary("describe_task_definition", taskDefinition=arn, include=["TAGS"])
+        if response is None:
+            return ctx.failure()
+        specs = dict(response.get("taskDefinition") or {})
+        if not specs:
+            return ctx.not_found()
+        specs["tags"] = response.get("tags", [])
+        return ctx.build("aws_ecs_task_definition", region, account_id, specs)
+
+    def collect_ecr_repository_spec(
+        self, name: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """ECR repository: DescribeRepositories ``repositories[0]`` + ``tags``."""
+        arn = arn or build_arn("aws_ecr_repository", name, region, account_id)
+        ctx = _Context(self, "ecr", arn, name)
+        response = ctx.primary("describe_repositories", repositoryNames=[name])
+        if response is None:
+            return ctx.failure()
+        items = response.get("repositories", [])
+        if not items:
+            return ctx.not_found()
+        specs = dict(items[0])
+        tags = ctx.secondary("list_tags_for_resource", "", resourceArn=arn)
+        if tags is not None:
+            specs["tags"] = tags.get("tags", [])
+        return ctx.build("aws_ecr_repository", region, account_id, specs)
+
+    def collect_autoscaling_group_spec(
+        self, name: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """Auto Scaling group: ``AutoScalingGroups[0]``; the ARN (with its UUID) comes from it."""
+        fallback_arn = arn or build_arn("aws_autoscaling_group", name, region, account_id)
+        ctx = _Context(self, "autoscaling", fallback_arn, name)
+        response = ctx.primary("describe_auto_scaling_groups", AutoScalingGroupNames=[name])
+        if response is None:
+            return ctx.failure()
+        items = response.get("AutoScalingGroups", [])
+        if not items:
+            return ctx.not_found()
+        specs = dict(items[0])
+        ctx.arn = specs.get("AutoScalingGroupARN") or fallback_arn
+        return ctx.build("aws_autoscaling_group", region, account_id, specs)
+
+    def collect_launch_template_spec(
+        self, template_id: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """Launch template: ``LaunchTemplates[0]`` + ``LaunchTemplateData`` of the default version."""
+        arn = arn or build_arn("aws_launch_template", template_id, region, account_id)
+        ctx = _Context(self, "ec2", arn, template_id)
+        response = ctx.primary("describe_launch_templates", LaunchTemplateIds=[template_id])
+        if response is None:
+            return ctx.failure()
+        items = response.get("LaunchTemplates", [])
+        if not items:
+            return ctx.not_found()
+        specs = dict(items[0])
+        versions = ctx.secondary(
+            "describe_launch_template_versions",
+            "",
+            LaunchTemplateId=template_id,
+            Versions=["$Default"],
+        )
+        if versions is not None and versions.get("LaunchTemplateVersions"):
+            specs["LaunchTemplateData"] = versions["LaunchTemplateVersions"][0].get(
+                "LaunchTemplateData", {}
+            )
+        return ctx.build("aws_launch_template", region, account_id, specs)
+
+    def collect_replication_group_spec(
+        self, group_id: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """ElastiCache replication group: ``ReplicationGroups[0]`` + ``CacheCluster`` (first
+        member: subnet group, security groups, engine version, parameter group) +
+        ``CacheSubnetGroup`` + ``TagList``."""
+        arn = arn or build_arn("aws_elasticache_replication_group", group_id, region, account_id)
+        ctx = _Context(self, "elasticache", arn, group_id)
+        response = ctx.primary("describe_replication_groups", ReplicationGroupId=group_id)
+        if response is None:
+            return ctx.failure()
+        items = response.get("ReplicationGroups", [])
+        if not items:
+            return ctx.not_found()
+        specs = dict(items[0])
+        members = specs.get("MemberClusters") or []
+        if members:
+            clusters = ctx.secondary("describe_cache_clusters", "", CacheClusterId=members[0])
+            if clusters is not None and clusters.get("CacheClusters"):
+                specs["CacheCluster"] = clusters["CacheClusters"][0]
+        subnet_group = (specs.get("CacheCluster") or {}).get("CacheSubnetGroupName")
+        if subnet_group:
+            groups = ctx.secondary(
+                "describe_cache_subnet_groups", "", CacheSubnetGroupName=subnet_group
+            )
+            if groups is not None and groups.get("CacheSubnetGroups"):
+                specs["CacheSubnetGroup"] = groups["CacheSubnetGroups"][0]
+        tags = ctx.secondary("list_tags_for_resource", "", ResourceName=specs.get("ARN") or arn)
+        if tags is not None:
+            specs["TagList"] = tags.get("TagList", [])
+        return ctx.build("aws_elasticache_replication_group", region, account_id, specs)
+
+    def collect_sqs_queue_spec(
+        self, name: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """SQS queue: ``QueueUrl`` + ``Attributes`` (all) + ``Tags``."""
+        arn = arn or build_arn("aws_sqs_queue", name, region, account_id)
+        ctx = _Context(self, "sqs", arn, name)
+        owner = {"QueueOwnerAWSAccountId": account_id} if account_id else {}
+        url_response = ctx.primary("get_queue_url", QueueName=name, **owner)
+        if url_response is None:
+            return ctx.failure()
+        url = url_response.get("QueueUrl")
+        if not url:
+            return ctx.not_found()
+        attributes = ctx.primary("get_queue_attributes", QueueUrl=url, AttributeNames=["All"])
+        if attributes is None:
+            return ctx.failure()
+        specs: dict[str, Any] = {"QueueUrl": url, "Attributes": attributes.get("Attributes", {})}
+        tags = ctx.secondary("list_queue_tags", "", QueueUrl=url)
+        if tags is not None:
+            specs["Tags"] = tags.get("Tags", {})
+        return ctx.build("aws_sqs_queue", region, account_id, specs)
+
+    def collect_sns_topic_spec(
+        self, name: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """SNS topic: ``Attributes`` + ``Tags`` + ``Subscriptions`` (all pages)."""
+        arn = arn or build_arn("aws_sns_topic", name, region, account_id)
+        ctx = _Context(self, "sns", arn, name)
+        response = ctx.primary("get_topic_attributes", TopicArn=arn)
+        if response is None:
+            return ctx.failure()
+        specs: dict[str, Any] = {"Attributes": response.get("Attributes", {})}
+        tags = ctx.secondary("list_tags_for_resource", "", ResourceArn=arn)
+        if tags is not None:
+            specs["Tags"] = tags.get("Tags", [])
+        subscriptions = ctx.secondary(
+            "list_subscriptions_by_topic", "", paginate=True, TopicArn=arn
+        )
+        if subscriptions is not None:
+            specs["Subscriptions"] = subscriptions.get("Subscriptions", [])
+        return ctx.build("aws_sns_topic", region, account_id, specs)
+
+    def collect_event_rule_spec(
+        self, raw_id: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """EventBridge rule: DescribeRule + ``Targets`` (all pages) + ``Tags``.
+
+        ``raw_id`` is the rule name (default bus) or ``<bus>/<name>``.
+        """
+        arn = arn or build_arn("aws_cloudwatch_event_rule", raw_id, region, account_id)
+        bus, _, name = raw_id.rpartition("/")
+        bus = bus or "default"
+        ctx = _Context(self, "events", arn, raw_id)
+        response = ctx.primary("describe_rule", Name=name, EventBusName=bus)
+        if response is None:
+            return ctx.failure()
+        specs = strip_metadata(response)
+        targets = ctx.secondary(
+            "list_targets_by_rule", "", paginate=True, Rule=name, EventBusName=bus
+        )
+        if targets is not None:
+            specs["Targets"] = targets.get("Targets", [])
+        tags = ctx.secondary("list_tags_for_resource", "", ResourceARN=specs.get("Arn") or arn)
+        if tags is not None:
+            specs["Tags"] = tags.get("Tags", [])
+        return ctx.build("aws_cloudwatch_event_rule", region, account_id, specs)
+
+    def collect_schedule_spec(
+        self, raw_id: str, region: str = "", account_id: str = "", arn: str | None = None
+    ) -> Result[ResourceSpec, CollectorError]:
+        """EventBridge Scheduler schedule: GetSchedule response. ``raw_id`` is ``<group>/<name>``."""
+        arn = arn or build_arn("aws_scheduler_schedule", raw_id, region, account_id)
+        group, _, name = raw_id.partition("/")
+        ctx = _Context(self, "scheduler", arn, raw_id)
+        response = ctx.primary("get_schedule", Name=name, GroupName=group)
+        if response is None:
+            return ctx.failure()
+        return ctx.build("aws_scheduler_schedule", region, account_id, strip_metadata(response))
 
     # ------------------------------------------------------------------
     # Internal helpers

@@ -1,0 +1,33 @@
+{
+  "GetSchedule": {
+    "Arn": "arn:aws:scheduler:us-east-1:123456789012:schedule/default/storefront-cleanup",
+    "CreationDate": "2026-10-15T23:40:02.856052+07:00",
+    "Description": "Hourly cleanup message",
+    "FlexibleTimeWindow": {
+      "Mode": "OFF"
+    },
+    "GroupName": "default",
+    "LastModificationDate": "2026-10-15T23:40:02.856052+07:00",
+    "Name": "storefront-cleanup",
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RetryAttempts": 0
+    },
+    "ScheduleExpression": "rate(1 hour)",
+    "State": "ENABLED",
+    "Target": {
+      "Arn": "arn:aws:sqs:us-east-1:123456789012:storefront-orders",
+      "Input": "{\"task\": \"cleanup\"}",
+      "RetryPolicy": {
+        "MaximumEventAgeInSeconds": 86400,
+        "MaximumRetryAttempts": 185
+      },
+      "RoleArn": "arn:aws:iam::123456789012:role/storefront-scheduler-role"
+    }
+  }
+}

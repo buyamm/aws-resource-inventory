@@ -74,3 +74,101 @@ resource "aws_iam_role" "orders-app-role" {
   EOT
   max_session_duration = 3600
 }
+
+# Resource: aws_iam_role.storefront-exec-role
+# Source specification: aws_iam_role/global/storefront-exec-role.json
+# ARN: arn:aws:iam::123456789012:role/storefront-exec-role
+# Region: global
+# mapped: Arn, AssumeRolePolicyDocument, AttachedPolicies, InlinePolicies, MaxSessionDuration, Path, RoleName, Tags
+# unmapped: CreateDate
+# unmapped: RoleId
+# unmapped: RoleLastUsed
+resource "aws_iam_role" "storefront-exec-role" {
+  name = "storefront-exec-role"
+  path = "/"
+  assume_role_policy = <<-EOT
+    {
+      "Statement": [
+        {
+          "Action": "sts:AssumeRole",
+          "Effect": "Allow",
+          "Principal": {
+            "Service": "ecs-tasks.amazonaws.com"
+          }
+        }
+      ],
+      "Version": "2012-10-17"
+    }
+  EOT
+  max_session_duration = 3600
+  tags = {
+    "service" = "storefront"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "storefront-exec-role_AmazonECSTaskExecutionRolePolicy" {
+  role = aws_iam_role.storefront-exec-role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+# Resource: aws_iam_role.storefront-scheduler-role
+# Source specification: aws_iam_role/global/storefront-scheduler-role.json
+# ARN: arn:aws:iam::123456789012:role/storefront-scheduler-role
+# Region: global
+# mapped: Arn, AssumeRolePolicyDocument, AttachedPolicies, InlinePolicies, MaxSessionDuration, Path, RoleName, Tags
+# unmapped: CreateDate
+# unmapped: RoleId
+# unmapped: RoleLastUsed
+resource "aws_iam_role" "storefront-scheduler-role" {
+  name = "storefront-scheduler-role"
+  path = "/"
+  assume_role_policy = <<-EOT
+    {
+      "Statement": [
+        {
+          "Action": "sts:AssumeRole",
+          "Effect": "Allow",
+          "Principal": {
+            "Service": "scheduler.amazonaws.com"
+          }
+        }
+      ],
+      "Version": "2012-10-17"
+    }
+  EOT
+  max_session_duration = 3600
+  tags = {
+    "service" = "storefront"
+  }
+}
+
+# Resource: aws_iam_role.storefront-task-role
+# Source specification: aws_iam_role/global/storefront-task-role.json
+# ARN: arn:aws:iam::123456789012:role/storefront-task-role
+# Region: global
+# mapped: Arn, AssumeRolePolicyDocument, AttachedPolicies, InlinePolicies, MaxSessionDuration, Path, RoleName, Tags
+# unmapped: CreateDate
+# unmapped: RoleId
+# unmapped: RoleLastUsed
+resource "aws_iam_role" "storefront-task-role" {
+  name = "storefront-task-role"
+  path = "/"
+  assume_role_policy = <<-EOT
+    {
+      "Statement": [
+        {
+          "Action": "sts:AssumeRole",
+          "Effect": "Allow",
+          "Principal": {
+            "Service": "ecs-tasks.amazonaws.com"
+          }
+        }
+      ],
+      "Version": "2012-10-17"
+    }
+  EOT
+  max_session_duration = 3600
+  tags = {
+    "service" = "storefront"
+  }
+}

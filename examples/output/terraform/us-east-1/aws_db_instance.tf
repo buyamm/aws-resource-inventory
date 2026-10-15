@@ -36,7 +36,7 @@ resource "aws_db_instance" "orders-db" {
   multi_az = false
   publicly_accessible = false
   storage_encrypted = false
-  vpc_security_group_ids = ["sg-ceb6d3dc119d60702"]
+  vpc_security_group_ids = ["sg-fb454a9efcd634f32"]
   username = "orders_admin"
   backup_retention_period = 1
   tags = {

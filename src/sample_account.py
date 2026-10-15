@@ -14,7 +14,15 @@ The "storefront" web stack (tag ``service=storefront``) lives in the same VPC:
 Route 53 ``shop.example.com`` -> CloudFront (WAF, ACM certificate) -> ALB in two
 public subnets -> HTTPS listener -> target group, plus an S3 origin for static files,
 an internet gateway, a NAT gateway and an S3 gateway endpoint on the private route
-table of the instance subnet.
+table of the instance subnet. Behind the target group runs the ECS service ``web``
+(cluster ``storefront``, Fargate task definition ``storefront-web`` with its image in
+the ECR repository ``storefront-web``, task/execution roles and log group), next to an
+ElastiCache replication group, a worker Auto Scaling group with its launch template, an
+SQS queue subscribed to an SNS topic, an EventBridge rule invoking the order Lambda and
+an EventBridge Scheduler schedule sending to the queue.
+
+ElastiCache replication groups need ``src.moto_compat.mock_elasticache_replication_groups``
+(moto 4.x does not implement them).
 
 Only call this inside a moto mock (``scripts/demo.py`` and tests do). It issues
 create calls and must never be pointed at a real account.
@@ -87,6 +95,22 @@ class SampleAccount:
     static_bucket_name: str
     distribution_id: str
     hosted_zone_id: str
+    ecs_cluster_arn: str
+    ecs_service_arn: str
+    task_definition_arn: str
+    ecr_repository_arn: str
+    task_role_arn: str
+    execution_role_arn: str
+    app_security_group_id: str
+    ecs_log_group_name: str
+    launch_template_id: str
+    autoscaling_group_arn: str
+    replication_group_id: str
+    queue_url: str
+    queue_arn: str
+    topic_arn: str
+    event_rule_arn: str
+    schedule_arn: str
 
 
 def _lambda_zip() -> bytes:
@@ -225,6 +249,15 @@ def build_sample_account(session: Any, region: str = SAMPLE_REGION) -> SampleAcc
     )
 
     web = _build_web_stack(session, region, vpc_id, subnet_id)
+    compute = _build_compute_stack(
+        session,
+        region,
+        vpc_id=vpc_id,
+        private_subnet_id=subnet_id,
+        alb_security_group_id=web["alb_security_group_id"],
+        target_group_arn=web["target_group_arn"],
+        function_arn=f"arn:aws:lambda:{region}:123456789012:function:{function_name}",
+    )
 
     return SampleAccount(
         vpc_id=vpc_id,
@@ -240,6 +273,7 @@ def build_sample_account(session: Any, region: str = SAMPLE_REGION) -> SampleAcc
         state_machine_arn=state_machine_arn,
         db_instance_id=db_instance_id,
         **web,
+        **compute,
     )
 
 
@@ -472,4 +506,253 @@ def _build_web_stack(session: Any, region: str, vpc_id: str, private_subnet_id: 
         "static_bucket_name": static_bucket,
         "distribution_id": distribution["Id"],
         "hosted_zone_id": zone_id,
+    }
+
+
+ECS_TASKS_ASSUME_POLICY = {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {"Service": "ecs-tasks.amazonaws.com"},
+            "Action": "sts:AssumeRole",
+        }
+    ],
+}
+SCHEDULER_ASSUME_POLICY = {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {"Service": "scheduler.amazonaws.com"},
+            "Action": "sts:AssumeRole",
+        }
+    ],
+}
+ECS_TAGS = [{"key": "service", "value": "storefront"}]
+
+
+def _build_compute_stack(
+    session: Any,
+    region: str,
+    vpc_id: str,
+    private_subnet_id: str,
+    alb_security_group_id: str,
+    target_group_arn: str,
+    function_arn: str,
+) -> dict:
+    """The storefront compute and data tier: ECS behind the ALB, cache, queues, events."""
+    ec2 = session.client("ec2", region_name=region)
+    iam = session.client("iam", region_name=region)
+
+    app_sg = ec2.create_security_group(
+        GroupName="storefront-app-sg",
+        Description="Storefront tasks and cache",
+        VpcId=vpc_id,
+        TagSpecifications=_ec2_tags("security-group", "storefront-app"),
+    )["GroupId"]
+    ec2.authorize_security_group_ingress(
+        GroupId=app_sg,
+        IpPermissions=[
+            {
+                "IpProtocol": "tcp",
+                "FromPort": 80,
+                "ToPort": 80,
+                "UserIdGroupPairs": [{"GroupId": alb_security_group_id}],
+            },
+            {
+                "IpProtocol": "tcp",
+                "FromPort": 6379,
+                "ToPort": 6379,
+                "UserIdGroupPairs": [{"GroupId": app_sg}],
+            },
+        ],
+    )
+
+    task_role = iam.create_role(
+        RoleName="storefront-task-role",
+        AssumeRolePolicyDocument=json.dumps(ECS_TASKS_ASSUME_POLICY),
+        Tags=STOREFRONT_TAGS,
+    )["Role"]["Arn"]
+    execution_role = iam.create_role(
+        RoleName="storefront-exec-role",
+        AssumeRolePolicyDocument=json.dumps(ECS_TASKS_ASSUME_POLICY),
+        Tags=STOREFRONT_TAGS,
+    )["Role"]["Arn"]
+    iam.attach_role_policy(
+        RoleName="storefront-exec-role",
+        PolicyArn="arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+    )
+    scheduler_role = iam.create_role(
+        RoleName="storefront-scheduler-role",
+        AssumeRolePolicyDocument=json.dumps(SCHEDULER_ASSUME_POLICY),
+        Tags=STOREFRONT_TAGS,
+    )["Role"]["Arn"]
+
+    logs = session.client("logs", region_name=region)
+    log_group = "/ecs/storefront-web"
+    logs.create_log_group(logGroupName=log_group, tags={"service": "storefront"})
+    logs.put_retention_policy(logGroupName=log_group, retentionInDays=30)
+
+    repository = session.client("ecr", region_name=region).create_repository(
+        repositoryName="storefront-web",
+        imageScanningConfiguration={"scanOnPush": True},
+        imageTagMutability="IMMUTABLE",
+        tags=STOREFRONT_TAGS,
+    )["repository"]
+
+    ecs = session.client("ecs", region_name=region)
+    cluster_arn = ecs.create_cluster(
+        clusterName="storefront",
+        settings=[{"name": "containerInsights", "value": "enabled"}],
+        tags=ECS_TAGS,
+    )["cluster"]["clusterArn"]
+    task_definition_arn = ecs.register_task_definition(
+        family="storefront-web",
+        taskRoleArn=task_role,
+        executionRoleArn=execution_role,
+        networkMode="awsvpc",
+        requiresCompatibilities=["FARGATE"],
+        cpu="256",
+        memory="512",
+        containerDefinitions=[
+            {
+                "name": "web",
+                "image": f"{repository['repositoryUri']}:1.4.2",
+                "essential": True,
+                "portMappings": [{"containerPort": 80, "protocol": "tcp"}],
+                "environment": [
+                    {"name": "CACHE_HOST", "value": "storefront-cache"},
+                    {"name": "SESSION_SECRET", "value": "demo-session-secret"},
+                ],
+                "logConfiguration": {
+                    "logDriver": "awslogs",
+                    "options": {
+                        "awslogs-group": log_group,
+                        "awslogs-region": region,
+                        "awslogs-stream-prefix": "web",
+                    },
+                },
+            }
+        ],
+        tags=ECS_TAGS,
+    )["taskDefinition"]["taskDefinitionArn"]
+    service_arn = ecs.create_service(
+        cluster="storefront",
+        serviceName="web",
+        taskDefinition=task_definition_arn,
+        desiredCount=2,
+        launchType="FARGATE",
+        loadBalancers=[
+            {"targetGroupArn": target_group_arn, "containerName": "web", "containerPort": 80}
+        ],
+        networkConfiguration={
+            "awsvpcConfiguration": {
+                "subnets": [private_subnet_id],
+                "securityGroups": [app_sg],
+                "assignPublicIp": "DISABLED",
+            }
+        },
+        tags=ECS_TAGS,
+    )["service"]["serviceArn"]
+
+    launch_template_id = ec2.create_launch_template(
+        LaunchTemplateName="storefront-worker",
+        LaunchTemplateData={
+            "ImageId": "ami-12c6146b",
+            "InstanceType": "t3.small",
+            "SecurityGroupIds": [app_sg],
+            "IamInstanceProfile": {"Name": "orders-app-role"},
+        },
+        TagSpecifications=_ec2_tags("launch-template", "storefront-worker"),
+    )["LaunchTemplate"]["LaunchTemplateId"]
+    autoscaling = session.client("autoscaling", region_name=region)
+    autoscaling.create_auto_scaling_group(
+        AutoScalingGroupName="storefront-workers",
+        LaunchTemplate={"LaunchTemplateId": launch_template_id, "Version": "$Default"},
+        MinSize=1,
+        MaxSize=2,
+        DesiredCapacity=1,
+        VPCZoneIdentifier=private_subnet_id,
+        Tags=[{**t, "PropagateAtLaunch": True} for t in STOREFRONT_TAGS],
+    )
+    asg_arn = autoscaling.describe_auto_scaling_groups(
+        AutoScalingGroupNames=["storefront-workers"]
+    )["AutoScalingGroups"][0]["AutoScalingGroupARN"]
+
+    elasticache = session.client("elasticache", region_name=region)
+    elasticache.create_cache_subnet_group(
+        CacheSubnetGroupName="storefront-cache-subnets",
+        CacheSubnetGroupDescription="Storefront cache",
+        SubnetIds=[private_subnet_id],
+    )
+    elasticache.create_replication_group(
+        ReplicationGroupId="storefront-cache",
+        ReplicationGroupDescription="Storefront session cache",
+        Engine="redis",
+        EngineVersion="7.1",
+        CacheNodeType="cache.t4g.micro",
+        NumCacheClusters=2,
+        AutomaticFailoverEnabled=True,
+        MultiAZEnabled=True,
+        CacheSubnetGroupName="storefront-cache-subnets",
+        SecurityGroupIds=[app_sg],
+        AtRestEncryptionEnabled=True,
+        TransitEncryptionEnabled=True,
+        Tags=STOREFRONT_TAGS,
+    )
+
+    sqs = session.client("sqs", region_name=region)
+    queue_url = sqs.create_queue(
+        QueueName="storefront-orders",
+        Attributes={"VisibilityTimeout": "60", "MessageRetentionPeriod": "345600"},
+        tags={"service": "storefront"},
+    )["QueueUrl"]
+    queue_arn = sqs.get_queue_attributes(QueueUrl=queue_url, AttributeNames=["QueueArn"])[
+        "Attributes"
+    ]["QueueArn"]
+    sns = session.client("sns", region_name=region)
+    topic_arn = sns.create_topic(
+        Name="storefront-events",
+        Attributes={"DisplayName": "Storefront events"},
+        Tags=STOREFRONT_TAGS,
+    )["TopicArn"]
+    sns.subscribe(TopicArn=topic_arn, Protocol="sqs", Endpoint=queue_arn)
+
+    events = session.client("events", region_name=region)
+    rule_arn = events.put_rule(
+        Name="storefront-nightly-report",
+        ScheduleExpression="cron(0 2 * * ? *)",
+        Description="Nightly order report",
+        State="ENABLED",
+        Tags=STOREFRONT_TAGS,
+    )["RuleArn"]
+    events.put_targets(
+        Rule="storefront-nightly-report", Targets=[{"Id": "order-processor", "Arn": function_arn}]
+    )
+    schedule_arn = session.client("scheduler", region_name=region).create_schedule(
+        Name="storefront-cleanup",
+        ScheduleExpression="rate(1 hour)",
+        FlexibleTimeWindow={"Mode": "OFF"},
+        Target={"Arn": queue_arn, "RoleArn": scheduler_role, "Input": '{"task": "cleanup"}'},
+        Description="Hourly cleanup message",
+    )["ScheduleArn"]
+
+    return {
+        "ecs_cluster_arn": cluster_arn,
+        "ecs_service_arn": service_arn,
+        "task_definition_arn": task_definition_arn,
+        "ecr_repository_arn": repository["repositoryArn"],
+        "task_role_arn": task_role,
+        "execution_role_arn": execution_role,
+        "app_security_group_id": app_sg,
+        "ecs_log_group_name": log_group,
+        "launch_template_id": launch_template_id,
+        "autoscaling_group_arn": asg_arn,
+        "replication_group_id": "storefront-cache",
+        "queue_url": queue_url,
+        "queue_arn": queue_arn,
+        "topic_arn": topic_arn,
+        "event_rule_arn": rule_arn,
+        "schedule_arn": schedule_arn,
     }

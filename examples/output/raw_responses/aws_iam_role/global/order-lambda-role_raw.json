@@ -2,7 +2,7 @@
   "GetRole": {
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Thu, 15 Oct 2026 23:01:58 GMT",
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,
@@ -24,11 +24,11 @@
         ],
         "Version": "2012-10-17"
       },
-      "CreateDate": "2026-10-15T16:01:56.952000+00:00",
+      "CreateDate": "2026-10-15T16:40:02.213000+00:00",
       "Description": "Execution role for order-processor",
       "MaxSessionDuration": 3600,
       "Path": "/",
-      "RoleId": "AROARZPUZDIKI6U4TOXCB",
+      "RoleId": "AROARZPUZDIKCNGY6FPGT",
       "RoleLastUsed": {},
       "RoleName": "order-lambda-role"
     }
@@ -47,7 +47,7 @@
     "PolicyName": "too-broad",
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Thu, 15 Oct 2026 23:01:58 GMT",
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,
@@ -62,7 +62,7 @@
     "IsTruncated": false,
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Thu, 15 Oct 2026 23:01:58 GMT",
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,
@@ -78,7 +78,7 @@
     ],
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Thu, 15 Oct 2026 23:01:58 GMT",
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,

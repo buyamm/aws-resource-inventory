@@ -15,6 +15,8 @@ Requirements Coverage:
 - Requirement 7.6: verify_state.sh
 - Requirement 7.7: Traceability comments (spec file, ARN, region)
 - Requirement 14.1: Mappings for the network, edge and load-balancing types
+- Requirement 14.4: Mappings for the compute and data types (EventBridge targets as
+  companion resources)
 """
 
 from __future__ import annotations
@@ -159,6 +161,8 @@ def _dict(value: Any) -> dict[str, Any]:
 
 
 def _json_doc(value: Any) -> Heredoc | None:
+    if isinstance(value, str) and not value.strip():
+        return None  # empty policy attributes (SNS, SQS) mean "not set"
     if isinstance(value, str):
         try:
             value = json.loads(value)
@@ -1196,6 +1200,624 @@ def _map_wafv2_web_acl(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapp
     return m
 
 
+# ============================================================================
+# Compute and data (Requirement 14.4)
+# ============================================================================
+
+
+def _map_ecs_cluster(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    m = Mapping(import_id=str(s.get("clusterName") or resource_id(spec)))
+    m.arg("name", s.get("clusterName"), "clusterName")
+    for setting in _list(s.get("settings")):
+        if isinstance(setting, dict) and setting.get("name"):
+            m.block(
+                Block("setting", [("name", setting["name"]), ("value", setting.get("value"))]),
+                "settings",
+            )
+    m.arg("tags", _tags(s.get("tags")), "tags")
+    m.mapped.add("clusterArn")
+    return m
+
+
+def _map_ecs_service(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    m = Mapping(import_id=resource_id(spec))
+    m.arg("name", s.get("serviceName"), "serviceName")
+    m.arg("cluster", s.get("clusterArn"), "clusterArn")
+    m.arg("task_definition", s.get("taskDefinition"), "taskDefinition")
+    m.arg("desired_count", s.get("desiredCount"), "desiredCount")
+    strategy = [x for x in _list(s.get("capacityProviderStrategy")) if isinstance(x, dict)]
+    for item in strategy:
+        m.block(
+            Block(
+                "capacity_provider_strategy",
+                _items(
+                    ("capacity_provider", item.get("capacityProvider")),
+                    ("weight", item.get("weight")),
+                    ("base", item.get("base")),
+                ),
+            ),
+            "capacityProviderStrategy",
+        )
+    # launch_type and capacity_provider_strategy are mutually exclusive.
+    m.arg("launch_type", None if strategy else s.get("launchType"), "launchType")
+    if s.get("launchType") == "FARGATE" or strategy:
+        m.arg("platform_version", s.get("platformVersion"), "platformVersion")
+    m.arg("scheduling_strategy", s.get("schedulingStrategy"), "schedulingStrategy")
+    deployment = _dict(s.get("deploymentConfiguration"))
+    m.arg("deployment_maximum_percent", deployment.get("maximumPercent"), "deploymentConfiguration")
+    m.arg("deployment_minimum_healthy_percent", deployment.get("minimumHealthyPercent"))
+    breaker = _dict(deployment.get("deploymentCircuitBreaker"))
+    if breaker:
+        m.block(
+            Block(
+                "deployment_circuit_breaker",
+                _items(("enable", breaker.get("enable")), ("rollback", breaker.get("rollback"))),
+            )
+        )
+    if _list(s.get("loadBalancers")):
+        m.arg(
+            "health_check_grace_period_seconds",
+            s.get("healthCheckGracePeriodSeconds"),
+            "healthCheckGracePeriodSeconds",
+        )
+    m.arg("enable_execute_command", s.get("enableExecuteCommand"), "enableExecuteCommand")
+    m.arg("enable_ecs_managed_tags", s.get("enableECSManagedTags"), "enableECSManagedTags")
+    m.arg("propagate_tags", s.get("propagateTags"), "propagateTags")
+    for lb in _list(s.get("loadBalancers")):
+        if isinstance(lb, dict):
+            m.block(
+                Block(
+                    "load_balancer",
+                    _items(
+                        ("target_group_arn", lb.get("targetGroupArn")),
+                        ("elb_name", lb.get("loadBalancerName")),
+                        ("container_name", lb.get("containerName")),
+                        ("container_port", lb.get("containerPort")),
+                    ),
+                ),
+                "loadBalancers",
+            )
+    for registry in _list(s.get("serviceRegistries")):
+        if isinstance(registry, dict):
+            m.block(
+                Block(
+                    "service_registries",
+                    _items(
+                        ("registry_arn", registry.get("registryArn")),
+                        ("port", registry.get("port")),
+                        ("container_name", registry.get("containerName")),
+                        ("container_port", registry.get("containerPort")),
+                    ),
+                ),
+                "serviceRegistries",
+            )
+    vpc = _dict(_dict(s.get("networkConfiguration")).get("awsvpcConfiguration"))
+    if vpc:
+        public = vpc.get("assignPublicIp")
+        m.block(
+            Block(
+                "network_configuration",
+                _items(
+                    ("subnets", _list(vpc.get("subnets"))),
+                    ("security_groups", _list(vpc.get("securityGroups"))),
+                    ("assign_public_ip", public == "ENABLED" if public else None),
+                ),
+            ),
+            "networkConfiguration",
+        )
+    role = s.get("roleArn")
+    if isinstance(role, str) and "/aws-service-role/" not in role:
+        m.arg("iam_role", role, "roleArn")
+    m.arg("tags", _tags(s.get("tags")), "tags")
+    m.mapped.update({"serviceArn", "roleArn"})
+    return m
+
+
+def _map_ecs_task_definition(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    m = Mapping(import_id=str(s.get("taskDefinitionArn") or spec.arn))
+    m.arg("family", s.get("family"), "family")
+    containers = s.get("containerDefinitions")
+    if _contains_placeholder(containers):
+        # The JSON document holds a redacted value: the argument cannot be compared.
+        m.items.append(("# REDACTED: set manually", None))
+        m.ignore_changes.append("container_definitions")
+    m.arg("container_definitions", _json_doc(containers), "containerDefinitions")
+    m.arg("task_role_arn", s.get("taskRoleArn"), "taskRoleArn")
+    m.arg("execution_role_arn", s.get("executionRoleArn"), "executionRoleArn")
+    m.arg("network_mode", s.get("networkMode"), "networkMode")
+    m.arg(
+        "requires_compatibilities",
+        _list(s.get("requiresCompatibilities")),
+        "requiresCompatibilities",
+    )
+    m.arg("cpu", s.get("cpu"), "cpu")
+    m.arg("memory", s.get("memory"), "memory")
+    m.arg("ipc_mode", s.get("ipcMode"), "ipcMode")
+    m.arg("pid_mode", s.get("pidMode"), "pidMode")
+    platform = _dict(s.get("runtimePlatform"))
+    if platform:
+        m.block(
+            Block(
+                "runtime_platform",
+                _items(
+                    ("cpu_architecture", platform.get("cpuArchitecture")),
+                    ("operating_system_family", platform.get("operatingSystemFamily")),
+                ),
+            ),
+            "runtimePlatform",
+        )
+    storage = _dict(s.get("ephemeralStorage"))
+    if storage.get("sizeInGiB"):
+        m.block(
+            Block("ephemeral_storage", [("size_in_gib", storage["sizeInGiB"])]), "ephemeralStorage"
+        )
+    for volume in _list(s.get("volumes")):
+        if not isinstance(volume, dict):
+            continue
+        items = _items(("name", volume.get("name")))
+        items += _items(("host_path", _dict(volume.get("host")).get("sourcePath")))
+        efs = _dict(volume.get("efsVolumeConfiguration"))
+        if efs:
+            items.append(
+                Block(
+                    "efs_volume_configuration",
+                    _items(
+                        ("file_system_id", efs.get("fileSystemId")),
+                        ("root_directory", efs.get("rootDirectory")),
+                        ("transit_encryption", efs.get("transitEncryption")),
+                    ),
+                )
+            )
+        m.block(Block("volume", items), "volumes")
+    m.arg("tags", _tags(s.get("tags")), "tags")
+    m.mapped.update({"taskDefinitionArn", "revision"})
+    return m
+
+
+def _map_ecr_repository(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    m = Mapping(import_id=str(s.get("repositoryName") or resource_id(spec)))
+    m.arg("name", s.get("repositoryName"), "repositoryName")
+    m.arg("image_tag_mutability", s.get("imageTagMutability"), "imageTagMutability")
+    scanning = _dict(s.get("imageScanningConfiguration"))
+    if "scanOnPush" in scanning:
+        m.block(
+            Block("image_scanning_configuration", [("scan_on_push", scanning["scanOnPush"])]),
+            "imageScanningConfiguration",
+        )
+    encryption = _dict(s.get("encryptionConfiguration"))
+    if encryption:
+        m.block(
+            Block(
+                "encryption_configuration",
+                _items(
+                    ("encryption_type", encryption.get("encryptionType")),
+                    ("kms_key", encryption.get("kmsKey")),
+                ),
+            ),
+            "encryptionConfiguration",
+        )
+    m.arg("tags", _tags(s.get("tags")), "tags")
+    m.mapped.update({"repositoryArn", "repositoryUri", "registryId"})
+    return m
+
+
+def _map_autoscaling_group(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    m = Mapping(import_id=str(s.get("AutoScalingGroupName") or resource_id(spec)))
+    m.arg("name", s.get("AutoScalingGroupName"), "AutoScalingGroupName")
+    m.arg("min_size", s.get("MinSize"), "MinSize")
+    m.arg("max_size", s.get("MaxSize"), "MaxSize")
+    m.arg("desired_capacity", s.get("DesiredCapacity"), "DesiredCapacity")
+    m.arg("default_cooldown", s.get("DefaultCooldown"), "DefaultCooldown")
+    m.arg("health_check_type", s.get("HealthCheckType"), "HealthCheckType")
+    m.arg("health_check_grace_period", s.get("HealthCheckGracePeriod"), "HealthCheckGracePeriod")
+    zones = str(s.get("VPCZoneIdentifier") or "")
+    subnets = [z.strip() for z in zones.split(",") if z.strip()]
+    if subnets:
+        # The subnets determine the availability zones.
+        m.arg("vpc_zone_identifier", subnets, "VPCZoneIdentifier", "AvailabilityZones")
+    else:
+        m.arg("availability_zones", _list(s.get("AvailabilityZones")), "AvailabilityZones")
+    m.arg("target_group_arns", _list(s.get("TargetGroupARNs")), "TargetGroupARNs")
+    m.arg("load_balancers", _list(s.get("LoadBalancerNames")), "LoadBalancerNames")
+    m.arg("termination_policies", _list(s.get("TerminationPolicies")), "TerminationPolicies")
+    m.arg("capacity_rebalance", s.get("CapacityRebalance"), "CapacityRebalance")
+    m.arg(
+        "protect_from_scale_in",
+        s.get("NewInstancesProtectedFromScaleIn"),
+        "NewInstancesProtectedFromScaleIn",
+    )
+    m.arg("max_instance_lifetime", s.get("MaxInstanceLifetime"), "MaxInstanceLifetime")
+    template = _dict(s.get("LaunchTemplate"))
+    if template:
+        m.block(
+            Block(
+                "launch_template",
+                _items(
+                    ("id", template.get("LaunchTemplateId")),
+                    ("version", template.get("Version")),
+                ),
+            ),
+            "LaunchTemplate",
+        )
+    for tag in _list(s.get("Tags")):
+        if isinstance(tag, dict) and "Key" in tag:
+            m.block(
+                Block(
+                    "tag",
+                    [
+                        ("key", tag["Key"]),
+                        ("value", tag.get("Value", "")),
+                        ("propagate_at_launch", bool(tag.get("PropagateAtLaunch", False))),
+                    ],
+                ),
+                "Tags",
+            )
+    m.mapped.update({"AutoScalingGroupARN", "ServiceLinkedRoleARN"})
+    return m
+
+
+# Resource types Terraform accepts in launch template tag_specifications.
+_LT_TAG_RESOURCE_TYPES = {
+    "instance",
+    "volume",
+    "network-interface",
+    "spot-instances-request",
+    "elastic-gpu",
+}
+
+
+def _map_launch_template(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    m = Mapping(import_id=str(s.get("LaunchTemplateId") or resource_id(spec)))
+    m.arg("name", s.get("LaunchTemplateName"), "LaunchTemplateName")
+    data = _dict(s.get("LaunchTemplateData"))
+    m.mapped.add("LaunchTemplateData")
+    m.arg("image_id", data.get("ImageId"))
+    m.arg("instance_type", data.get("InstanceType"))
+    m.arg("key_name", data.get("KeyName"))
+    m.arg("vpc_security_group_ids", _list(data.get("SecurityGroupIds")))
+    m.arg("security_group_names", _list(data.get("SecurityGroups")))
+    m.arg("user_data", data.get("UserData"))
+    m.arg("ebs_optimized", data.get("EbsOptimized"))
+    profile = _dict(data.get("IamInstanceProfile"))
+    if profile:
+        key = "arn" if profile.get("Arn") else "name"
+        m.block(Block("iam_instance_profile", [(key, profile.get("Arn") or profile.get("Name"))]))
+    monitoring = _dict(data.get("Monitoring"))
+    if "Enabled" in monitoring:
+        m.block(Block("monitoring", [("enabled", monitoring["Enabled"])]))
+    metadata = _dict(data.get("MetadataOptions"))
+    if metadata:
+        m.block(
+            Block(
+                "metadata_options",
+                _items(
+                    ("http_endpoint", metadata.get("HttpEndpoint")),
+                    ("http_tokens", metadata.get("HttpTokens")),
+                    ("http_put_response_hop_limit", metadata.get("HttpPutResponseHopLimit")),
+                    ("http_protocol_ipv6", metadata.get("HttpProtocolIpv6")),
+                    ("instance_metadata_tags", metadata.get("InstanceMetadataTags")),
+                ),
+            )
+        )
+    for interface in _list(data.get("NetworkInterfaces")):
+        if isinstance(interface, dict):
+            m.block(
+                Block(
+                    "network_interfaces",
+                    _items(
+                        ("device_index", interface.get("DeviceIndex")),
+                        ("subnet_id", interface.get("SubnetId")),
+                        ("security_groups", _list(interface.get("Groups"))),
+                        ("associate_public_ip_address", interface.get("AssociatePublicIpAddress")),
+                        ("delete_on_termination", interface.get("DeleteOnTermination")),
+                    ),
+                )
+            )
+    for mapping in _list(data.get("BlockDeviceMappings")):
+        if not isinstance(mapping, dict):
+            continue
+        items = _items(("device_name", mapping.get("DeviceName")))
+        ebs = _dict(mapping.get("Ebs"))
+        if ebs:
+            items.append(
+                Block(
+                    "ebs",
+                    _items(
+                        ("volume_size", ebs.get("VolumeSize")),
+                        ("volume_type", ebs.get("VolumeType")),
+                        ("iops", ebs.get("Iops")),
+                        ("throughput", ebs.get("Throughput")),
+                        ("encrypted", ebs.get("Encrypted")),
+                        ("kms_key_id", ebs.get("KmsKeyId")),
+                        ("delete_on_termination", ebs.get("DeleteOnTermination")),
+                    ),
+                )
+            )
+        m.block(Block("block_device_mappings", items))
+    for tag_spec in _list(data.get("TagSpecifications")):
+        # "launch-template" tags are the template's own tags (the tags argument).
+        if isinstance(tag_spec, dict) and tag_spec.get("ResourceType") in _LT_TAG_RESOURCE_TYPES:
+            m.block(
+                Block(
+                    "tag_specifications",
+                    [
+                        ("resource_type", tag_spec["ResourceType"]),
+                        ("tags", _tags(tag_spec.get("Tags"))),
+                    ],
+                )
+            )
+    m.arg("tags", _tags(s.get("Tags")), "Tags")
+    m.mapped.add("LaunchTemplateId")
+    return m
+
+
+def _engine_version(engine: Any, version: Any) -> Any:
+    """Redis/Valkey 6+ take ``major.minor`` in Terraform; other versions are kept as returned."""
+    text = str(version or "")
+    major = text.split(".")[0]
+    if engine in ("redis", "valkey") and major.isdigit() and int(major) >= 6:
+        return ".".join(text.split(".")[:2])
+    return version
+
+
+def _map_elasticache_replication_group(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    m = Mapping(import_id=str(s.get("ReplicationGroupId") or resource_id(spec)))
+    cluster = _dict(s.get("CacheCluster"))
+    engine = s.get("Engine") or cluster.get("Engine")
+    m.arg("replication_group_id", s.get("ReplicationGroupId"), "ReplicationGroupId")
+    m.arg("description", s.get("Description") or None, "Description")
+    m.arg("node_type", s.get("CacheNodeType"), "CacheNodeType")
+    m.arg("engine", engine, "Engine")
+    m.arg("engine_version", _engine_version(engine, cluster.get("EngineVersion")), "CacheCluster")
+    groups = [g for g in _list(s.get("NodeGroups")) if isinstance(g, dict)]
+    endpoint = _dict(s.get("ConfigurationEndpoint")) or _dict(
+        groups[0].get("PrimaryEndpoint") if groups else None
+    )
+    m.arg("port", endpoint.get("Port"), "NodeGroups", "ConfigurationEndpoint")
+    if s.get("ClusterEnabled"):
+        m.arg("num_node_groups", len(groups) or None, "ClusterEnabled")
+        members = [_list(g.get("NodeGroupMembers")) for g in groups]
+        m.arg("replicas_per_node_group", max(len(x) for x in members) - 1 if members else None)
+    else:
+        m.arg("num_cache_clusters", len(_list(s.get("MemberClusters"))) or None, "MemberClusters")
+        m.mapped.add("ClusterEnabled")
+    m.mapped.add("MemberClusters")
+    m.arg(
+        "parameter_group_name",
+        _dict(cluster.get("CacheParameterGroup")).get("CacheParameterGroupName"),
+    )
+    m.arg("subnet_group_name", cluster.get("CacheSubnetGroupName"), "CacheSubnetGroup")
+    groups_ids = [
+        g.get("SecurityGroupId")
+        for g in _list(cluster.get("SecurityGroups"))
+        if isinstance(g, dict)
+    ]
+    m.arg("security_group_ids", [g for g in groups_ids if g])
+    m.arg("maintenance_window", cluster.get("PreferredMaintenanceWindow"))
+    failover = s.get("AutomaticFailover")
+    m.arg(
+        "automatic_failover_enabled",
+        failover in ("enabled", "enabling") if failover else None,
+        "AutomaticFailover",
+    )
+    multi_az = s.get("MultiAZ")
+    m.arg("multi_az_enabled", multi_az == "enabled" if multi_az else None, "MultiAZ")
+    m.arg("at_rest_encryption_enabled", s.get("AtRestEncryptionEnabled"), "AtRestEncryptionEnabled")
+    m.arg(
+        "transit_encryption_enabled",
+        s.get("TransitEncryptionEnabled"),
+        "TransitEncryptionEnabled",
+    )
+    m.arg("kms_key_id", s.get("KmsKeyId"), "KmsKeyId")
+    m.arg("snapshot_retention_limit", s.get("SnapshotRetentionLimit"), "SnapshotRetentionLimit")
+    m.arg("snapshot_window", s.get("SnapshotWindow"), "SnapshotWindow")
+    if s.get("DataTiering") == "enabled":
+        m.arg("data_tiering_enabled", True, "DataTiering")
+    if s.get("AuthTokenEnabled"):
+        # The AUTH token is never returned by the API.
+        m.items.append(("# AUTH token enabled: set auth_token", None))
+        m.ignore_changes.append("auth_token")
+    m.mapped.add("AuthTokenEnabled")
+    m.arg("tags", _tags(s.get("TagList")), "TagList")
+    m.mapped.add("ARN")
+    return m
+
+
+def _attr_int(attributes: dict[str, Any], key: str) -> int | None:
+    return _int(attributes.get(key)) if key in attributes else None
+
+
+def _map_sqs_queue(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    attributes = _dict(s.get("Attributes"))
+    m = Mapping(import_id=str(s.get("QueueUrl") or spec.arn))
+    m.arg("name", resource_id(spec), "QueueUrl")
+    m.mapped.add("Attributes")
+    m.arg("fifo_queue", _bool(attributes.get("FifoQueue")) or None)
+    m.arg("content_based_deduplication", _bool(attributes.get("ContentBasedDeduplication")))
+    m.arg("deduplication_scope", attributes.get("DeduplicationScope"))
+    m.arg("fifo_throughput_limit", attributes.get("FifoThroughputLimit"))
+    m.arg("delay_seconds", _attr_int(attributes, "DelaySeconds"))
+    m.arg("max_message_size", _attr_int(attributes, "MaximumMessageSize"))
+    m.arg("message_retention_seconds", _attr_int(attributes, "MessageRetentionPeriod"))
+    m.arg("receive_wait_time_seconds", _attr_int(attributes, "ReceiveMessageWaitTimeSeconds"))
+    m.arg("visibility_timeout_seconds", _attr_int(attributes, "VisibilityTimeout"))
+    m.arg("kms_master_key_id", attributes.get("KmsMasterKeyId"))
+    m.arg(
+        "kms_data_key_reuse_period_seconds",
+        (
+            _attr_int(attributes, "KmsDataKeyReusePeriodSeconds")
+            if "KmsMasterKeyId" in attributes
+            else None
+        ),
+    )
+    m.arg("sqs_managed_sse_enabled", _bool(attributes.get("SqsManagedSseEnabled")))
+    m.arg("policy", _json_doc(attributes.get("Policy")))
+    m.arg("redrive_policy", _json_doc(attributes.get("RedrivePolicy")))
+    m.arg("redrive_allow_policy", _json_doc(attributes.get("RedriveAllowPolicy")))
+    m.arg("tags", _tags(s.get("Tags")), "Tags")
+    return m
+
+
+def _map_sns_topic(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    attributes = _dict(s.get("Attributes"))
+    m = Mapping(import_id=str(attributes.get("TopicArn") or spec.arn))
+    m.arg("name", resource_id(spec), "Attributes")
+    m.arg("display_name", attributes.get("DisplayName") or None)
+    m.arg("policy", _json_doc(attributes.get("Policy")))
+    m.arg("delivery_policy", _json_doc(attributes.get("DeliveryPolicy")))
+    m.arg("kms_master_key_id", attributes.get("KmsMasterKeyId"))
+    m.arg("fifo_topic", _bool(attributes.get("FifoTopic")) or None)
+    m.arg("content_based_deduplication", _bool(attributes.get("ContentBasedDeduplication")))
+    m.arg("tags", _tags(s.get("Tags")), "Tags")
+    return m
+
+
+def _event_target(target: dict[str, Any], rule_ref: Raw, bus: str | None) -> list[Item]:
+    items: list[Item] = [("rule", rule_ref)]
+    items += _items(
+        ("event_bus_name", bus),
+        ("target_id", target.get("Id")),
+        ("arn", target.get("Arn")),
+        ("role_arn", target.get("RoleArn")),
+        ("input", target.get("Input")),
+        ("input_path", target.get("InputPath")),
+    )
+    transformer = _dict(target.get("InputTransformer"))
+    if transformer:
+        items.append(
+            Block(
+                "input_transformer",
+                _items(
+                    ("input_paths", _dict(transformer.get("InputPathsMap"))),
+                    ("input_template", transformer.get("InputTemplate")),
+                ),
+            )
+        )
+    ecs = _dict(target.get("EcsParameters"))
+    if ecs:
+        ecs_items = _items(
+            ("task_definition_arn", ecs.get("TaskDefinitionArn")),
+            ("task_count", ecs.get("TaskCount")),
+            ("launch_type", ecs.get("LaunchType")),
+            ("platform_version", ecs.get("PlatformVersion")),
+        )
+        vpc = _dict(_dict(ecs.get("NetworkConfiguration")).get("awsvpcConfiguration"))
+        if vpc:
+            public = vpc.get("AssignPublicIp")
+            ecs_items.append(
+                Block(
+                    "network_configuration",
+                    _items(
+                        ("subnets", _list(vpc.get("Subnets"))),
+                        ("security_groups", _list(vpc.get("SecurityGroups"))),
+                        ("assign_public_ip", public == "ENABLED" if public else None),
+                    ),
+                )
+            )
+        items.append(Block("ecs_target", ecs_items))
+    retry = _dict(target.get("RetryPolicy"))
+    if retry:
+        items.append(
+            Block(
+                "retry_policy",
+                _items(
+                    ("maximum_event_age_in_seconds", retry.get("MaximumEventAgeInSeconds")),
+                    ("maximum_retry_attempts", retry.get("MaximumRetryAttempts")),
+                ),
+            )
+        )
+    dead_letter = _dict(target.get("DeadLetterConfig"))
+    if dead_letter.get("Arn"):
+        items.append(Block("dead_letter_config", [("arn", dead_letter["Arn"])]))
+    return items
+
+
+def _map_cloudwatch_event_rule(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    bus = s.get("EventBusName")
+    custom_bus = bus if bus and bus != "default" else None
+    rule = str(s.get("Name") or resource_id(spec).split("/")[-1])
+    prefix = f"{custom_bus}/" if custom_bus else ""
+    m = Mapping(import_id=f"{prefix}{rule}")
+    m.arg("name", rule, "Name")
+    m.arg("event_bus_name", custom_bus, "EventBusName")
+    m.arg("description", s.get("Description") or None, "Description")
+    m.arg("schedule_expression", s.get("ScheduleExpression"), "ScheduleExpression")
+    m.arg("event_pattern", _json_doc(s.get("EventPattern")), "EventPattern")
+    m.arg("state", s.get("State"), "State")
+    m.arg("role_arn", s.get("RoleArn"), "RoleArn")
+    m.arg("tags", _tags(s.get("Tags")), "Tags")
+    ref = Raw(f"aws_cloudwatch_event_rule.{name}.name")
+    for target in _list(s.get("Targets")):
+        if isinstance(target, dict) and target.get("Id"):
+            m.companions.append(
+                TfResource(
+                    "aws_cloudwatch_event_target",
+                    _companion_name(name, str(target["Id"])),
+                    _event_target(target, ref, custom_bus),
+                    f"{prefix}{rule}/{target['Id']}",
+                )
+            )
+    m.mapped.update({"Arn", "Targets"})
+    return m
+
+
+def _map_scheduler_schedule(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
+    group = str(s.get("GroupName") or "default")
+    m = Mapping(import_id=f"{group}/{s.get('Name') or resource_id(spec).split('/')[-1]}")
+    m.arg("name", s.get("Name"), "Name")
+    m.arg("group_name", group, "GroupName")
+    m.arg("description", s.get("Description") or None, "Description")
+    m.arg("schedule_expression", s.get("ScheduleExpression"), "ScheduleExpression")
+    m.arg(
+        "schedule_expression_timezone",
+        s.get("ScheduleExpressionTimezone"),
+        "ScheduleExpressionTimezone",
+    )
+    m.arg("start_date", s.get("StartDate"), "StartDate")
+    m.arg("end_date", s.get("EndDate"), "EndDate")
+    m.arg("state", s.get("State"), "State")
+    m.arg("kms_key_arn", s.get("KmsKeyArn"), "KmsKeyArn")
+    window = _dict(s.get("FlexibleTimeWindow"))
+    if window:
+        m.block(
+            Block(
+                "flexible_time_window",
+                _items(
+                    ("mode", window.get("Mode")),
+                    ("maximum_window_in_minutes", window.get("MaximumWindowInMinutes")),
+                ),
+            ),
+            "FlexibleTimeWindow",
+        )
+    target = _dict(s.get("Target"))
+    if target:
+        items = _items(
+            ("arn", target.get("Arn")),
+            ("role_arn", target.get("RoleArn")),
+            ("input", target.get("Input")),
+        )
+        retry = _dict(target.get("RetryPolicy"))
+        if retry:
+            items.append(
+                Block(
+                    "retry_policy",
+                    _items(
+                        ("maximum_event_age_in_seconds", retry.get("MaximumEventAgeInSeconds")),
+                        ("maximum_retry_attempts", retry.get("MaximumRetryAttempts")),
+                    ),
+                )
+            )
+        dead_letter = _dict(target.get("DeadLetterConfig"))
+        if dead_letter.get("Arn"):
+            items.append(Block("dead_letter_config", [("arn", dead_letter["Arn"])]))
+        group_id = _dict(target.get("SqsParameters")).get("MessageGroupId")
+        if group_id:
+            items.append(Block("sqs_parameters", [("message_group_id", group_id)]))
+        m.block(Block("target", items), "Target")
+    m.mapped.add("Arn")
+    return m
+
+
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]*$")
 
 
@@ -1231,6 +1853,17 @@ MAPPERS: dict[str, Callable[[dict[str, Any], str, ResourceSpec], Mapping]] = {
     "aws_route53_zone": _map_route53_zone,
     "aws_acm_certificate": _map_acm_certificate,
     "aws_wafv2_web_acl": _map_wafv2_web_acl,
+    "aws_ecs_cluster": _map_ecs_cluster,
+    "aws_ecs_service": _map_ecs_service,
+    "aws_ecs_task_definition": _map_ecs_task_definition,
+    "aws_ecr_repository": _map_ecr_repository,
+    "aws_autoscaling_group": _map_autoscaling_group,
+    "aws_launch_template": _map_launch_template,
+    "aws_elasticache_replication_group": _map_elasticache_replication_group,
+    "aws_sqs_queue": _map_sqs_queue,
+    "aws_sns_topic": _map_sns_topic,
+    "aws_cloudwatch_event_rule": _map_cloudwatch_event_rule,
+    "aws_scheduler_schedule": _map_scheduler_schedule,
 }
 
 

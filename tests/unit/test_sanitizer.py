@@ -528,6 +528,36 @@ class TestDataSanitizerRevisedRules:
         sanitized = DataSanitizer().sanitize({"aws_access_key_id": "not-a-real-format"})
         assert sanitized["aws_access_key_id"] == "[REDACTED_AWS_KEY]"
 
+    def test_sanitizer_redacts_name_value_pairs_req_9_5(self):
+        """ECS container environments are lists of {name, value} pairs (Req 14.4)."""
+        data = {
+            "containerDefinitions": [
+                {
+                    "environment": [
+                        {"name": "SESSION_SECRET", "value": "s3cr3t"},
+                        {"name": "CACHE_HOST", "value": "cache.local"},
+                    ]
+                }
+            ]
+        }
+        sanitizer = DataSanitizer()
+        sanitized = sanitizer.sanitize(data)
+        environment = sanitized["containerDefinitions"][0]["environment"]
+        assert environment[0] == {"name": "SESSION_SECRET", "value": "[REDACTED]"}
+        assert environment[1] == {"name": "CACHE_HOST", "value": "cache.local"}
+        assert sanitizer.get_redaction_logs() == [
+            "Redacted field 'containerDefinitions[0].environment[0].value' → [REDACTED]"
+        ]
+        # Tags are {Key, Value} pairs and keep their values.
+        tags = {"Tags": [{"Key": "password-rotation", "Value": "enabled"}]}
+        assert DataSanitizer().sanitize(tags) == tags
+
+    def test_sanitizer_redacts_launch_template_user_data_req_9_5(self):
+        """User data scripts often embed credentials and are base64, so values cannot be scanned."""
+        data = {"LaunchTemplateData": {"UserData": "IyEvYmluL2Jhc2gK", "ImageId": "ami-1"}}
+        sanitized = DataSanitizer().sanitize(data)
+        assert sanitized["LaunchTemplateData"] == {"UserData": "[REDACTED]", "ImageId": "ami-1"}
+
     def test_sanitizer_key_rule_applies_only_to_strings_req_9_5(self):
         data = {"Credentials": {"Expiration": "2026-01-01", "Count": 3}, "TokenCount": 5}
         sanitized = DataSanitizer().sanitize(data)

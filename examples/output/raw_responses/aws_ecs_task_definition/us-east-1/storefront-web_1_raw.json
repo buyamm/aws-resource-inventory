@@ -1,0 +1,73 @@
+{
+  "DescribeTaskDefinition": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RetryAttempts": 0
+    },
+    "tags": [
+      {
+        "key": "service",
+        "value": "storefront"
+      }
+    ],
+    "taskDefinition": {
+      "compatibilities": [
+        "EC2",
+        "FARGATE"
+      ],
+      "containerDefinitions": [
+        {
+          "cpu": 0,
+          "environment": [
+            {
+              "name": "CACHE_HOST",
+              "value": "storefront-cache"
+            },
+            {
+              "name": "SESSION_SECRET",
+              "value": "[REDACTED]"
+            }
+          ],
+          "essential": true,
+          "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/storefront-web:1.4.2",
+          "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+              "awslogs-group": "/ecs/storefront-web",
+              "awslogs-region": "us-east-1",
+              "awslogs-stream-prefix": "web"
+            }
+          },
+          "mountPoints": [],
+          "name": "web",
+          "portMappings": [
+            {
+              "containerPort": 80,
+              "protocol": "tcp"
+            }
+          ],
+          "volumesFrom": []
+        }
+      ],
+      "cpu": "256",
+      "executionRoleArn": "arn:aws:iam::123456789012:role/storefront-exec-role",
+      "family": "storefront-web",
+      "memory": "512",
+      "networkMode": "awsvpc",
+      "placementConstraints": [],
+      "requiresCompatibilities": [
+        "FARGATE"
+      ],
+      "revision": 1,
+      "status": "ACTIVE",
+      "taskDefinitionArn": "arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1",
+      "taskRoleArn": "arn:aws:iam::123456789012:role/storefront-task-role",
+      "volumes": []
+    }
+  }
+}

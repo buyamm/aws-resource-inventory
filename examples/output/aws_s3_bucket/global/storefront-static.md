@@ -8,7 +8,7 @@
 | ARN               | arn:aws:s3:::storefront-static |
 | Region            | global                         |
 | Account ID        | 123456789012                   |
-| Collected At      | 2026-10-15T16:01:58Z           |
+| Collected At      | 2026-10-15T16:40:03Z           |
 | Collector Version | 0.1.0                          |
 
 

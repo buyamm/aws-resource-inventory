@@ -1,0 +1,37 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-fc59c9b7",
+  "generated_at": "2026-10-15T16:40:03.851507Z",
+  "metadata": {
+    "api_version": "2016-11-15",
+    "checksum": "61fc13bad193f18f0efc31b23df8079985ab7476be9a77171c68cb070106e36a",
+    "collected_at": "2026-10-15T16:40:03Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_route_table",
+  "specifications": {
+    "Associations": [
+      {
+        "AssociationState": {
+          "State": "associated"
+        },
+        "Main": true,
+        "RouteTableAssociationId": "rtbassoc-0652b6d7",
+        "RouteTableId": "rtb-fc59c9b7"
+      }
+    ],
+    "OwnerId": "123456789012",
+    "RouteTableId": "rtb-fc59c9b7",
+    "Routes": [
+      {
+        "DestinationCidrBlock": "10.0.0.0/16",
+        "GatewayId": "local",
+        "Origin": "CreateRouteTable",
+        "State": "active"
+      }
+    ],
+    "Tags": [],
+    "VpcId": "vpc-b6ee287f"
+  }
+}

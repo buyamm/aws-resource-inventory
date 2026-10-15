@@ -7,6 +7,7 @@ Requirements Coverage:
 - Requirement 7.4: Generate terraform import commands for all existing resources
 - Requirement 7.6: Include verification script comparing Terraform state with actual AWS
 - Requirement 7.7: Traceability comments linking back to original specification files
+- Requirement 14.1 / 14.4: Mappings for the network, edge, compute and data types
 """
 
 from pathlib import Path
@@ -1169,3 +1170,469 @@ class TestIaCNetworkEdgeMappings:
                 hcl2.loads(text)
             if rel.endswith(".tf") and "/" in rel and not rel.endswith("versions.tf"):
                 assert "# unmapped: Tags" not in text, rel
+
+
+# ============================================================================
+# Compute and data types (Requirement 14.4)
+# ============================================================================
+
+ECS = f"arn:aws:ecs:us-east-1:{ACCOUNT}"
+CLUSTER_ARN = f"{ECS}:cluster/web"
+TASK_ARN = f"{ECS}:task-definition/api:7"
+ROLE_PREFIX = f"arn:aws:iam::{ACCOUNT}:role"
+QUEUE_ARN = f"arn:aws:sqs:us-east-1:{ACCOUNT}:jobs"
+TOPIC_ARN = f"arn:aws:sns:us-east-1:{ACCOUNT}:events"
+FUNCTION_ARN = f"arn:aws:lambda:us-east-1:{ACCOUNT}:function:worker"
+ECS_TAGS = [{"key": "service", "value": "shop"}]
+CONTAINERS = [
+    {
+        "name": "api",
+        "image": f"{ACCOUNT}.dkr.ecr.us-east-1.amazonaws.com/api:1.2.3",
+        "cpu": 0,
+        "essential": True,
+        "portMappings": [{"containerPort": 80, "hostPort": 80, "protocol": "tcp"}],
+        "environment": [{"name": "SESSION_SECRET", "value": "[REDACTED]"}],
+        "logConfiguration": {"logDriver": "awslogs", "options": {"awslogs-group": "/ecs/api"}},
+    }
+]
+
+CLUSTER = _s(
+    "aws_ecs_cluster",
+    CLUSTER_ARN,
+    {
+        "clusterArn": CLUSTER_ARN,
+        "clusterName": "web",
+        "status": "ACTIVE",
+        "settings": [{"name": "containerInsights", "value": "enabled"}],
+        "capacityProviders": ["FARGATE"],
+        "tags": ECS_TAGS,
+    },
+)
+SERVICE = _s(
+    "aws_ecs_service",
+    f"{ECS}:service/web/api",
+    {
+        "serviceArn": f"{ECS}:service/web/api",
+        "serviceName": "api",
+        "clusterArn": CLUSTER_ARN,
+        "taskDefinition": TASK_ARN,
+        "desiredCount": 2,
+        "launchType": "FARGATE",
+        "platformVersion": "LATEST",
+        "schedulingStrategy": "REPLICA",
+        "deploymentConfiguration": {"maximumPercent": 200, "minimumHealthyPercent": 100},
+        "healthCheckGracePeriodSeconds": 60,
+        "enableExecuteCommand": False,
+        "propagateTags": "SERVICE",
+        "loadBalancers": [{"targetGroupArn": TG_ARN, "containerName": "api", "containerPort": 80}],
+        "networkConfiguration": {
+            "awsvpcConfiguration": {
+                "subnets": ["subnet-a"],
+                "securityGroups": ["sg-app"],
+                "assignPublicIp": "DISABLED",
+            }
+        },
+        "runningCount": 2,
+        "deployments": [{"status": "PRIMARY"}],
+        "tags": ECS_TAGS,
+    },
+)
+TASK_DEFINITION = _s(
+    "aws_ecs_task_definition",
+    TASK_ARN,
+    {
+        "taskDefinitionArn": TASK_ARN,
+        "family": "api",
+        "revision": 7,
+        "taskRoleArn": f"{ROLE_PREFIX}/api-task",
+        "executionRoleArn": f"{ROLE_PREFIX}/api-exec",
+        "networkMode": "awsvpc",
+        "requiresCompatibilities": ["FARGATE"],
+        "cpu": "256",
+        "memory": "512",
+        "runtimePlatform": {"cpuArchitecture": "ARM64", "operatingSystemFamily": "LINUX"},
+        "containerDefinitions": CONTAINERS,
+        "status": "ACTIVE",
+        "tags": ECS_TAGS,
+    },
+)
+REPOSITORY = _s(
+    "aws_ecr_repository",
+    f"arn:aws:ecr:us-east-1:{ACCOUNT}:repository/team/api",
+    {
+        "repositoryName": "team/api",
+        "repositoryUri": f"{ACCOUNT}.dkr.ecr.us-east-1.amazonaws.com/team/api",
+        "imageTagMutability": "IMMUTABLE",
+        "imageScanningConfiguration": {"scanOnPush": True},
+        "encryptionConfiguration": {"encryptionType": "AES256"},
+        "tags": TAGS,
+    },
+)
+AUTOSCALING_GROUP = _s(
+    "aws_autoscaling_group",
+    f"arn:aws:autoscaling:us-east-1:{ACCOUNT}:autoScalingGroup:uuid:autoScalingGroupName/workers",
+    {
+        "AutoScalingGroupName": "workers",
+        "LaunchTemplate": {"LaunchTemplateId": "lt-1", "Version": "$Default"},
+        "MinSize": 1,
+        "MaxSize": 4,
+        "DesiredCapacity": 2,
+        "DefaultCooldown": 300,
+        "HealthCheckType": "ELB",
+        "HealthCheckGracePeriod": 120,
+        "VPCZoneIdentifier": "subnet-a,subnet-b",
+        "TargetGroupARNs": [TG_ARN],
+        "TerminationPolicies": ["Default"],
+        "Instances": [{"InstanceId": "i-1"}],
+        "Tags": [
+            {
+                "ResourceId": "workers",
+                "ResourceType": "auto-scaling-group",
+                "Key": "service",
+                "Value": "shop",
+                "PropagateAtLaunch": True,
+            }
+        ],
+    },
+)
+LAUNCH_TEMPLATE = _s(
+    "aws_launch_template",
+    f"arn:aws:ec2:us-east-1:{ACCOUNT}:launch-template/lt-1",
+    {
+        "LaunchTemplateId": "lt-1",
+        "LaunchTemplateName": "worker",
+        "DefaultVersionNumber": 3,
+        "LatestVersionNumber": 3,
+        "LaunchTemplateData": {
+            "ImageId": "ami-123",
+            "InstanceType": "t3.small",
+            "SecurityGroupIds": ["sg-app"],
+            "IamInstanceProfile": {"Name": "worker-profile"},
+            "UserData": "[REDACTED]",
+            "MetadataOptions": {"HttpTokens": "required", "HttpEndpoint": "enabled"},
+        },
+        "Tags": TAGS,
+    },
+)
+REPLICATION_GROUP = _s(
+    "aws_elasticache_replication_group",
+    f"arn:aws:elasticache:us-east-1:{ACCOUNT}:replicationgroup:cache",
+    {
+        "ReplicationGroupId": "cache",
+        "Description": "session cache",
+        "MemberClusters": ["cache-001", "cache-002"],
+        "NodeGroups": [
+            {"PrimaryEndpoint": {"Address": "cache.x.cache.amazonaws.com", "Port": 6379}}
+        ],
+        "AutomaticFailover": "enabled",
+        "MultiAZ": "enabled",
+        "ClusterEnabled": False,
+        "CacheNodeType": "cache.t4g.micro",
+        "TransitEncryptionEnabled": True,
+        "AtRestEncryptionEnabled": True,
+        "SnapshotRetentionLimit": 1,
+        "SnapshotWindow": "05:00-06:00",
+        "Engine": "redis",
+        "CacheCluster": {
+            "Engine": "redis",
+            "EngineVersion": "7.1.0",
+            "CacheParameterGroup": {"CacheParameterGroupName": "default.redis7"},
+            "CacheSubnetGroupName": "cache-subnets",
+            "SecurityGroups": [{"SecurityGroupId": "sg-app", "Status": "active"}],
+            "PreferredMaintenanceWindow": "sun:23:00-mon:01:30",
+        },
+        "CacheSubnetGroup": {"CacheSubnetGroupName": "cache-subnets", "VpcId": "vpc-1"},
+        "TagList": TAGS,
+    },
+)
+QUEUE = _s(
+    "aws_sqs_queue",
+    QUEUE_ARN,
+    {
+        "QueueUrl": f"https://sqs.us-east-1.amazonaws.com/{ACCOUNT}/jobs",
+        "Attributes": {
+            "QueueArn": QUEUE_ARN,
+            "VisibilityTimeout": "60",
+            "MessageRetentionPeriod": "345600",
+            "DelaySeconds": "0",
+            "MaximumMessageSize": "262144",
+            "ReceiveMessageWaitTimeSeconds": "20",
+            "SqsManagedSseEnabled": "true",
+            "ApproximateNumberOfMessages": "3",
+            "RedrivePolicy": json.dumps(
+                {"deadLetterTargetArn": f"{QUEUE_ARN}-dlq", "maxReceiveCount": 5}
+            ),
+        },
+        "Tags": {"service": "shop"},
+    },
+)
+TOPIC = _s(
+    "aws_sns_topic",
+    TOPIC_ARN,
+    {
+        "Attributes": {
+            "TopicArn": TOPIC_ARN,
+            "DisplayName": "Shop events",
+            "Policy": json.dumps({"Version": "2012-10-17", "Statement": []}),
+            "DeliveryPolicy": "",
+            "SubscriptionsConfirmed": "1",
+        },
+        "Subscriptions": [{"Protocol": "sqs", "Endpoint": QUEUE_ARN}],
+        "Tags": TAGS,
+    },
+)
+EVENT_RULE = _s(
+    "aws_cloudwatch_event_rule",
+    f"arn:aws:events:us-east-1:{ACCOUNT}:rule/nightly",
+    {
+        "Name": "nightly",
+        "Arn": f"arn:aws:events:us-east-1:{ACCOUNT}:rule/nightly",
+        "ScheduleExpression": "cron(0 2 * * ? *)",
+        "State": "ENABLED",
+        "Description": "Nightly report",
+        "EventBusName": "default",
+        "Targets": [
+            {"Id": "worker", "Arn": FUNCTION_ARN, "Input": '{"report": true}'},
+            {
+                "Id": "cleanup",
+                "Arn": CLUSTER_ARN,
+                "RoleArn": f"{ROLE_PREFIX}/events",
+                "EcsParameters": {"TaskDefinitionArn": TASK_ARN, "TaskCount": 1},
+            },
+        ],
+        "Tags": TAGS,
+    },
+)
+BUS_RULE = _s(
+    "aws_cloudwatch_event_rule",
+    f"arn:aws:events:us-east-1:{ACCOUNT}:rule/orders-bus/created",
+    {
+        "Name": "created",
+        "EventBusName": "orders-bus",
+        "EventPattern": json.dumps({"source": ["shop.orders"]}),
+        "State": "DISABLED",
+        "Targets": [{"Id": "q", "Arn": QUEUE_ARN}],
+    },
+)
+SCHEDULE = _s(
+    "aws_scheduler_schedule",
+    f"arn:aws:scheduler:us-east-1:{ACCOUNT}:schedule/default/report",
+    {
+        "Name": "report",
+        "GroupName": "default",
+        "Arn": f"arn:aws:scheduler:us-east-1:{ACCOUNT}:schedule/default/report",
+        "ScheduleExpression": "rate(1 hour)",
+        "ScheduleExpressionTimezone": "UTC",
+        "State": "ENABLED",
+        "FlexibleTimeWindow": {"Mode": "FLEXIBLE", "MaximumWindowInMinutes": 15},
+        "Target": {
+            "Arn": QUEUE_ARN,
+            "RoleArn": f"{ROLE_PREFIX}/scheduler",
+            "Input": '{"task": "report"}',
+            "RetryPolicy": {"MaximumEventAgeInSeconds": 86400, "MaximumRetryAttempts": 185},
+        },
+    },
+)
+COMPUTE_DATA = [
+    CLUSTER,
+    SERVICE,
+    TASK_DEFINITION,
+    REPOSITORY,
+    AUTOSCALING_GROUP,
+    LAUNCH_TEMPLATE,
+    REPLICATION_GROUP,
+    QUEUE,
+    TOPIC,
+    EVENT_RULE,
+    BUS_RULE,
+    SCHEDULE,
+]
+
+
+class TestIaCComputeDataMappings:
+    def test_iac_ecs_types_map_arguments_req_7_3(self):
+        cluster = _body(CLUSTER)
+        assert _arg(cluster, "name") == "web"
+        assert _block(cluster, "setting") == {"name": "containerInsights", "value": "enabled"}
+        assert _arg(cluster, "tags") == {"service": "shop"}
+
+        service = _body(SERVICE)
+        assert _arg(service, "name") == "api"
+        assert _arg(service, "cluster") == CLUSTER_ARN
+        assert _arg(service, "task_definition") == TASK_ARN
+        assert _arg(service, "desired_count") == 2
+        assert _arg(service, "launch_type") == "FARGATE"
+        assert _arg(service, "deployment_maximum_percent") == 200
+        assert _arg(service, "deployment_minimum_healthy_percent") == 100
+        assert _arg(service, "health_check_grace_period_seconds") == 60
+        assert _arg(service, "propagate_tags") == "SERVICE"
+        assert _block(service, "load_balancer") == {
+            "target_group_arn": TG_ARN,
+            "container_name": "api",
+            "container_port": 80,
+        }
+        assert _block(service, "network_configuration") == {
+            "subnets": ["subnet-a"],
+            "security_groups": ["sg-app"],
+            "assign_public_ip": False,
+        }
+        assert _arg(service, "tags") == {"service": "shop"}
+
+        task = _body(TASK_DEFINITION)
+        assert _arg(task, "family") == "api"
+        assert _arg(task, "task_role_arn") == f"{ROLE_PREFIX}/api-task"
+        assert _arg(task, "network_mode") == "awsvpc"
+        assert _arg(task, "requires_compatibilities") == ["FARGATE"]
+        assert _arg(task, "cpu") == "256" and _arg(task, "memory") == "512"
+        assert _block(task, "runtime_platform") == {
+            "cpu_architecture": "ARM64",
+            "operating_system_family": "LINUX",
+        }
+        assert _json_arg(task, "container_definitions") == CONTAINERS
+        # A redacted environment value stays out of the plan.
+        text = IaCGenerator().generate_resource_block(TASK_DEFINITION)
+        assert "# REDACTED: set manually" in text
+        assert "container_definitions" in str(_unquote(task["lifecycle"][0])["ignore_changes"])
+
+        repository = _body(REPOSITORY)
+        assert _arg(repository, "name") == "team/api"
+        assert _arg(repository, "image_tag_mutability") == "IMMUTABLE"
+        assert _block(repository, "image_scanning_configuration") == {"scan_on_push": True}
+        assert _block(repository, "encryption_configuration") == {"encryption_type": "AES256"}
+
+    def test_iac_autoscaling_types_map_arguments_req_7_3(self):
+        asg = _body(AUTOSCALING_GROUP)
+        assert _arg(asg, "name") == "workers"
+        assert _arg(asg, "min_size") == 1 and _arg(asg, "max_size") == 4
+        assert _arg(asg, "desired_capacity") == 2
+        assert _arg(asg, "vpc_zone_identifier") == ["subnet-a", "subnet-b"]
+        assert _arg(asg, "target_group_arns") == [TG_ARN]
+        assert _arg(asg, "health_check_type") == "ELB"
+        assert _block(asg, "launch_template") == {"id": "lt-1", "version": "$Default"}
+        assert _block(asg, "tag") == {
+            "key": "service",
+            "value": "shop",
+            "propagate_at_launch": True,
+        }
+        assert "# unmapped: Instances" in IaCGenerator().generate_resource_block(AUTOSCALING_GROUP)
+
+        template = _body(LAUNCH_TEMPLATE)
+        assert _arg(template, "name") == "worker"
+        assert _arg(template, "image_id") == "ami-123"
+        assert _arg(template, "instance_type") == "t3.small"
+        assert _arg(template, "vpc_security_group_ids") == ["sg-app"]
+        assert _block(template, "iam_instance_profile") == {"name": "worker-profile"}
+        assert _block(template, "metadata_options") == {
+            "http_endpoint": "enabled",
+            "http_tokens": "required",
+        }
+        assert "user_data" in str(_unquote(template["lifecycle"][0])["ignore_changes"])
+
+    def test_iac_data_and_messaging_types_map_arguments_req_7_3(self):
+        cache = _body(REPLICATION_GROUP)
+        assert _arg(cache, "replication_group_id") == "cache"
+        assert _arg(cache, "description") == "session cache"
+        assert _arg(cache, "node_type") == "cache.t4g.micro"
+        assert _arg(cache, "engine") == "redis"
+        assert _arg(cache, "engine_version") == "7.1"
+        assert _arg(cache, "port") == 6379
+        assert _arg(cache, "num_cache_clusters") == 2
+        assert _arg(cache, "parameter_group_name") == "default.redis7"
+        assert _arg(cache, "subnet_group_name") == "cache-subnets"
+        assert _arg(cache, "security_group_ids") == ["sg-app"]
+        assert _arg(cache, "automatic_failover_enabled") is True
+        assert _arg(cache, "multi_az_enabled") is True
+        assert _arg(cache, "at_rest_encryption_enabled") is True
+        assert _arg(cache, "transit_encryption_enabled") is True
+        assert _arg(cache, "tags") == {"service": "shop"}
+
+        queue = _body(QUEUE)
+        assert _arg(queue, "name") == "jobs"
+        assert _arg(queue, "visibility_timeout_seconds") == 60
+        assert _arg(queue, "message_retention_seconds") == 345600
+        assert _arg(queue, "receive_wait_time_seconds") == 20
+        assert _arg(queue, "sqs_managed_sse_enabled") is True
+        assert _json_arg(queue, "redrive_policy")["maxReceiveCount"] == 5
+        assert "approximate" not in json.dumps(queue).lower()
+        assert _arg(queue, "tags") == {"service": "shop"}
+
+        topic = _body(TOPIC)
+        assert _arg(topic, "name") == "events"
+        assert _arg(topic, "display_name") == "Shop events"
+        assert _json_arg(topic, "policy") == {"Version": "2012-10-17", "Statement": []}
+        # An empty policy attribute means "not set", not an empty JSON document.
+        assert "delivery_policy" not in topic
+        assert "# unmapped: Subscriptions" in IaCGenerator().generate_resource_block(TOPIC)
+
+    def test_iac_event_types_map_arguments_req_7_3(self):
+        rule = _body(EVENT_RULE)
+        assert _arg(rule, "name") == "nightly"
+        assert _arg(rule, "schedule_expression") == "cron(0 2 * * ? *)"
+        assert _arg(rule, "state") == "ENABLED"
+        assert "event_bus_name" not in rule
+        targets = _resources(IaCGenerator().generate_resource_block(EVENT_RULE))
+        bodies = {n: b for (t, n), b in targets.items() if t == "aws_cloudwatch_event_target"}
+        assert sorted(bodies) == ["nightly_cleanup", "nightly_worker"]
+        worker = bodies["nightly_worker"]
+        assert _arg(worker, "rule") == "${aws_cloudwatch_event_rule.nightly.name}"
+        assert _arg(worker, "arn") == FUNCTION_ARN and _arg(worker, "target_id") == "worker"
+        # HCL string escapes are JSON escapes.
+        assert json.loads(f'"{_arg(worker, "input")}"') == '{"report": true}'
+        cleanup = bodies["nightly_cleanup"]
+        assert _arg(cleanup, "role_arn") == f"{ROLE_PREFIX}/events"
+        assert _block(cleanup, "ecs_target") == {"task_definition_arn": TASK_ARN, "task_count": 1}
+
+        bus_rule = _body(BUS_RULE)
+        assert _arg(bus_rule, "event_bus_name") == "orders-bus"
+        assert _json_arg(bus_rule, "event_pattern") == {"source": ["shop.orders"]}
+        assert _arg(bus_rule, "state") == "DISABLED"
+
+        schedule = _body(SCHEDULE)
+        assert _arg(schedule, "name") == "report"
+        assert _arg(schedule, "group_name") == "default"
+        assert _arg(schedule, "schedule_expression") == "rate(1 hour)"
+        assert _arg(schedule, "schedule_expression_timezone") == "UTC"
+        assert _block(schedule, "flexible_time_window") == {
+            "mode": "FLEXIBLE",
+            "maximum_window_in_minutes": 15,
+        }
+        target = _block(schedule, "target")
+        assert target["arn"] == QUEUE_ARN and target["role_arn"] == f"{ROLE_PREFIX}/scheduler"
+        assert json.loads(f'"{target["input"]}"') == '{"task": "report"}'
+        retry = target["retry_policy"]
+        retry = _unquote(retry[0] if isinstance(retry, list) else retry)
+        assert retry == {"maximum_event_age_in_seconds": 86400, "maximum_retry_attempts": 185}
+
+    def test_iac_compute_data_import_ids_req_7_4(self):
+        script = IaCGenerator().generate_import_script(COMPUTE_DATA).replace("'", "")
+        east = "module.us_east_1."
+        expected = [
+            (east + "aws_ecs_cluster.web", "web"),
+            (east + "aws_ecs_service.web_api", "web/api"),
+            (east + "aws_ecs_task_definition.api_7", TASK_ARN),
+            (east + "aws_ecr_repository.team_api", "team/api"),
+            (east + "aws_autoscaling_group.workers", "workers"),
+            (east + "aws_launch_template.lt-1", "lt-1"),
+            (east + "aws_elasticache_replication_group.cache", "cache"),
+            (east + "aws_sqs_queue.jobs", f"https://sqs.us-east-1.amazonaws.com/{ACCOUNT}/jobs"),
+            (east + "aws_sns_topic.events", TOPIC_ARN),
+            (east + "aws_cloudwatch_event_rule.nightly", "nightly"),
+            (east + "aws_cloudwatch_event_target.nightly_worker", "nightly/worker"),
+            (east + "aws_cloudwatch_event_target.nightly_cleanup", "nightly/cleanup"),
+            (east + "aws_cloudwatch_event_rule.orders-bus_created", "orders-bus/created"),
+            (east + "aws_cloudwatch_event_target.orders-bus_created_q", "orders-bus/created/q"),
+            (east + "aws_scheduler_schedule.default_report", "default/report"),
+        ]
+        for address, import_id in expected:
+            assert f"terraform import {address} {import_id}" in script, address
+        assert script.count("terraform import ") == len(expected)
+
+    def test_iac_compute_data_files_parse_as_hcl_req_7_2(self, tmp_path):
+        files = IaCGenerator().generate_terraform(COMPUTE_DATA, target_dir=tmp_path)
+        assert "us-east-1/aws_ecs_service.tf" in files
+        for rel, text in files.items():
+            if rel.endswith(".tf"):
+                hcl2.loads(text)
+            if rel.endswith(".tf") and "/" in rel and not rel.endswith("versions.tf"):
+                assert "# unmapped: Tags" not in text, rel
+                assert "# unmapped: tags" not in text, rel

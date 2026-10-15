@@ -8,7 +8,7 @@
 | ARN               | arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor |
 | Region            | us-east-1                                                                 |
 | Account ID        | 123456789012                                                              |
-| Collected At      | 2026-10-15T16:01:57Z                                                      |
+| Collected At      | 2026-10-15T16:40:03Z                                                      |
 | Collector Version | 0.1.0                                                                     |
 
 
@@ -17,7 +17,7 @@
 | Configuration Key | Value                                                                     |
 | ----------------- | ------------------------------------------------------------------------- |
 | arn               | arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor |
-| creationTime      | 1792080116997                                                             |
+| creationTime      | 1792082402256                                                             |
 | logGroupName      | /aws/lambda/order-processor                                               |
 | metricFilterCount | 0                                                                         |
 | retentionInDays   | 14                                                                        |

@@ -14,6 +14,9 @@ Requirements Coverage:
 - Requirement 14.1: Subnets, route tables, internet/NAT gateways, VPC endpoints,
   CloudFront distributions, load balancers, listeners, target groups, Route 53 zones,
   ACM certificates and WAFv2 web ACLs
+- Requirement 14.4: ECS clusters, services and task definitions, ECR repositories,
+  Auto Scaling groups, launch templates, ElastiCache replication groups, SQS queues,
+  SNS topics, EventBridge rules and EventBridge Scheduler schedules
 """
 
 from __future__ import annotations
@@ -62,6 +65,9 @@ def _aws4_group(stroke_color: str) -> str:
 
 NETWORK_COLOR = "#8C4FFF"
 SECURITY_COLOR = "#DD344C"
+COMPUTE_COLOR = "#ED7100"
+DATABASE_COLOR = "#C925D1"
+INTEGRATION_COLOR = "#E7157B"
 
 
 @dataclass(frozen=True)
@@ -316,10 +322,135 @@ REGISTRY: dict[str, ResourceTypeInfo] = {
             arn_resource="regional/webacl/{id}",
             id_pattern=r"[^/]+/[^/]+",
         ),
+        # Compute and data (Requirement 14.4).
+        ResourceTypeInfo(
+            "aws_ecs_cluster",
+            "ecs",
+            "regional",
+            "clusterName",
+            ("ecs", "ecs_cluster"),
+            _aws4_style("ecs", COMPUTE_COLOR),
+            arn_service="ecs",
+            arn_resource="cluster/{id}",
+            id_pattern=r"[^/]+",
+        ),
+        # Long ARN format only (service/<cluster>/<service>); the id is "<cluster>/<service>".
+        ResourceTypeInfo(
+            "aws_ecs_service",
+            "ecs",
+            "regional",
+            "",
+            ("ecs_service",),
+            _aws4_shape("ecs_service", COMPUTE_COLOR),
+            arn_service="ecs",
+            arn_resource="service/{id}",
+            id_pattern=r"[^/]+/[^/]+",
+        ),
+        ResourceTypeInfo(
+            "aws_ecs_task_definition",
+            "ecs",
+            "regional",
+            "",
+            ("ecs_task_definition", "task_definition"),
+            _aws4_shape("ecs_task", COMPUTE_COLOR),
+            arn_service="ecs",
+            arn_resource="task-definition/{id}",
+            id_pattern=r"[^/:]+:\d+",
+        ),
+        ResourceTypeInfo(
+            "aws_ecr_repository",
+            "ecr",
+            "regional",
+            "repositoryName",
+            ("ecr", "ecr_repository"),
+            _aws4_style("ecr", COMPUTE_COLOR),
+            arn_service="ecr",
+            arn_resource="repository/{id}",
+        ),
+        # ARN: autoScalingGroup:<uuid>:autoScalingGroupName/<name> (see parse_arn/build_arn).
+        ResourceTypeInfo(
+            "aws_autoscaling_group",
+            "autoscaling",
+            "regional",
+            "AutoScalingGroupName",
+            ("asg", "autoscaling_group", "aws_autoscaling"),
+            _aws4_shape("auto_scaling_group", COMPUTE_COLOR),
+            arn_service="autoscaling",
+            arn_resource="autoScalingGroupName/{id}",
+        ),
+        ResourceTypeInfo(
+            "aws_launch_template",
+            "ec2",
+            "regional",
+            "LaunchTemplateId",
+            ("launch_template",),
+            _aws4_shape("ami", COMPUTE_COLOR),
+            arn_service="ec2",
+            arn_resource="launch-template/{id}",
+        ),
+        ResourceTypeInfo(
+            "aws_elasticache_replication_group",
+            "elasticache",
+            "regional",
+            "ReplicationGroupId",
+            ("elasticache", "aws_elasticache", "replication_group"),
+            _aws4_style("elasticache", DATABASE_COLOR),
+            arn_service="elasticache",
+            arn_resource="replicationgroup:{id}",
+            id_pattern=r"[^:/]+",
+        ),
+        ResourceTypeInfo(
+            "aws_sqs_queue",
+            "sqs",
+            "regional",
+            "",
+            ("sqs", "sqs_queue", "queue"),
+            _aws4_style("sqs", INTEGRATION_COLOR),
+            arn_service="sqs",
+            arn_resource="{id}",
+            id_pattern=r"[^:/]+",
+        ),
+        ResourceTypeInfo(
+            "aws_sns_topic",
+            "sns",
+            "regional",
+            "",
+            ("sns", "sns_topic", "topic"),
+            _aws4_style("sns", INTEGRATION_COLOR),
+            arn_service="sns",
+            arn_resource="{id}",
+            id_pattern=r"[^:/]+",
+        ),
+        # Rules on the default bus: id = name; on a custom bus: "<bus>/<name>".
+        ResourceTypeInfo(
+            "aws_cloudwatch_event_rule",
+            "events",
+            "regional",
+            "",
+            ("eventbridge_rule", "event_rule", "cloudwatch_event_rule"),
+            _aws4_shape("rule_3", INTEGRATION_COLOR),
+            arn_service="events",
+            arn_resource="rule/{id}",
+            id_pattern=r"[^/]+(/[^/]+)?",
+        ),
+        ResourceTypeInfo(
+            "aws_scheduler_schedule",
+            "scheduler",
+            "regional",
+            "",
+            ("scheduler", "schedule", "scheduler_schedule"),
+            _aws4_shape("eventbridge_scheduler", INTEGRATION_COLOR),
+            arn_service="scheduler",
+            arn_resource="schedule/{id}",
+            id_pattern=r"[^/]+/[^/]+",
+        ),
     )
 }
 
 _WAF_GLOBAL_PREFIX = "global/webacl/"
+# Auto Scaling group ARNs embed a UUID only the API returns; built ARNs use the IAM
+# wildcard form "autoScalingGroup:*:autoScalingGroupName/<name>".
+_ASG_PREFIX = "autoScalingGroup:"
 # S3 origin domains: <bucket>.s3.amazonaws.com, <bucket>.s3.<region>.amazonaws.com,
 # <bucket>.s3-website-<region>.amazonaws.com, <bucket>.s3-website.<region>.amazonaws.com
 _S3_DOMAIN = re.compile(r"^(?P<bucket>.+?)\.s3(?:-website)?(?:[.-][a-z0-9-]+)*\.amazonaws\.com$")
@@ -346,6 +477,8 @@ def build_arn(type_id: str, resource_id: str, region: str, account_id: str) -> s
         return f"arn:aws:wafv2:us-east-1:{account_id}:{_WAF_GLOBAL_PREFIX}{resource_id}"
     if info.scope == "global":
         return f"arn:aws:{info.arn_service}::{account_id}:{resource}"
+    if type_id == "aws_autoscaling_group":
+        resource = f"{_ASG_PREFIX}*:{resource}"
     return f"arn:aws:{info.arn_service}:{region}:{account_id}:{resource}"
 
 
@@ -353,8 +486,9 @@ def parse_arn(arn: str) -> tuple[str, str, str] | None:
     """(type_id, resource_id, region) of a Supported_Resource_Type ARN, else None.
 
     IAM role ids drop the path; log group ids drop a trailing ``:*``; CloudFront-scope
-    WAF web ACLs map to region ``global``; S3 object ARNs and unsupported resource kinds
-    (classic load balancers, listener rules, ...) return None.
+    WAF web ACLs map to region ``global``; Auto Scaling group ids drop the UUID segment;
+    S3 object ARNs and unsupported resource kinds (classic load balancers, listener
+    rules, old-format ECS service ARNs, SNS subscriptions, ...) return None.
     """
     parts = arn.split(":", 5)
     if len(parts) != 6 or parts[0] != "arn":
@@ -362,6 +496,10 @@ def parse_arn(arn: str) -> tuple[str, str, str] | None:
     service, region, resource = parts[2], parts[3], parts[5]
     if service == "wafv2" and resource.startswith(_WAF_GLOBAL_PREFIX):
         resource, region = "regional/webacl/" + resource[len(_WAF_GLOBAL_PREFIX) :], GLOBAL_REGION
+    if service == "autoscaling":
+        if not resource.startswith(_ASG_PREFIX) or resource.count(":") < 2:
+            return None
+        resource = resource.split(":", 2)[2]
     for info in REGISTRY.values():
         prefix = info.arn_resource.split("{id}")[0]
         if info.arn_service != service or not resource.startswith(prefix):
@@ -395,8 +533,9 @@ def resource_id(spec: ResourceSpec) -> str:
     """The resource id of a spec: its Specifications id field, else the id in its ARN.
 
     Types without an id field (load balancers, listeners, target groups, Route 53 zones,
-    ACM certificates, WAF web ACLs) use the id parse_arn() reads from the ARN, e.g.
-    ``app/web-alb/50dc6c495c0c9188``; anything else falls back to the ARN's last segment.
+    ACM certificates, WAF web ACLs, ECS services and task definitions, SQS queues, SNS
+    topics, EventBridge rules and schedules) use the id parse_arn() reads from the ARN,
+    e.g. ``app/web-alb/50dc6c495c0c9188``; anything else falls back to the ARN's last segment.
     """
     info = REGISTRY.get(canonical_type(spec.resource_type) or "")
     if info is not None:

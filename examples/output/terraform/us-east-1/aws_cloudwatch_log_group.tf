@@ -16,3 +16,19 @@ resource "aws_cloudwatch_log_group" "aws_lambda_order-processor" {
     "team" = "orders"
   }
 }
+
+# Resource: aws_cloudwatch_log_group.ecs_storefront-web
+# Source specification: aws_cloudwatch_log_group/us-east-1/ecs_storefront-web.json
+# ARN: arn:aws:logs:us-east-1:123456789012:log-group:/ecs/storefront-web
+# Region: us-east-1
+# mapped: arn, logGroupName, retentionInDays, tags
+# unmapped: creationTime
+# unmapped: metricFilterCount
+# unmapped: storedBytes
+resource "aws_cloudwatch_log_group" "ecs_storefront-web" {
+  name = "/ecs/storefront-web"
+  retention_in_days = 30
+  tags = {
+    "service" = "storefront"
+  }
+}

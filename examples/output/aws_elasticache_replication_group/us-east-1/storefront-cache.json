@@ -1,0 +1,132 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:elasticache:us-east-1:123456789012:replicationgroup:storefront-cache",
+  "generated_at": "2026-10-15T16:40:03.851507Z",
+  "metadata": {
+    "api_version": "2015-02-02",
+    "checksum": "fce04d9cfc9808c1f8a24a9aa4946e589ced146fbe9d191e4907ec2167db9b95",
+    "collected_at": "2026-10-15T16:40:03Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_elasticache_replication_group",
+  "specifications": {
+    "ARN": "arn:aws:elasticache:us-east-1:123456789012:replicationgroup:storefront-cache",
+    "AtRestEncryptionEnabled": true,
+    "AuthTokenEnabled": false,
+    "AutoMinorVersionUpgrade": true,
+    "AutomaticFailover": "enabled",
+    "CacheCluster": {
+      "ARN": "arn:aws:elasticache:us-east-1:123456789012:cluster:storefront-cache-001",
+      "AtRestEncryptionEnabled": true,
+      "AuthTokenEnabled": false,
+      "AutoMinorVersionUpgrade": true,
+      "CacheClusterCreateTime": "2026-01-01T00:00:00+00:00",
+      "CacheClusterId": "storefront-cache-001",
+      "CacheClusterStatus": "available",
+      "CacheNodeType": "cache.t4g.micro",
+      "CacheParameterGroup": {
+        "CacheNodeIdsToReboot": [],
+        "CacheParameterGroupName": "default.redis7",
+        "ParameterApplyStatus": "in-sync"
+      },
+      "CacheSecurityGroups": [],
+      "CacheSubnetGroupName": "storefront-cache-subnets",
+      "Engine": "redis",
+      "EngineVersion": "7.1",
+      "IpDiscovery": "ipv4",
+      "LogDeliveryConfigurations": [],
+      "NetworkType": "ipv4",
+      "NumCacheNodes": 1,
+      "PendingModifiedValues": {},
+      "PreferredAvailabilityZone": "us-east-1a",
+      "PreferredMaintenanceWindow": "sun:23:00-mon:01:30",
+      "ReplicationGroupId": "storefront-cache",
+      "ReplicationGroupLogDeliveryEnabled": false,
+      "SecurityGroups": [
+        {
+          "SecurityGroupId": "sg-eaaa2c57ac5ecc98e",
+          "Status": "active"
+        }
+      ],
+      "SnapshotRetentionLimit": 0,
+      "SnapshotWindow": "05:00-06:00",
+      "TransitEncryptionEnabled": true
+    },
+    "CacheNodeType": "cache.t4g.micro",
+    "CacheSubnetGroup": {
+      "ARN": "arn:aws:elasticache:us-east-1:123456789012:subnetgroup:storefront-cache-subnets",
+      "CacheSubnetGroupDescription": "Storefront cache",
+      "CacheSubnetGroupName": "storefront-cache-subnets",
+      "Subnets": [
+        {
+          "SubnetAvailabilityZone": {
+            "Name": "us-east-1a"
+          },
+          "SubnetIdentifier": "subnet-a6e131f6",
+          "SupportedNetworkTypes": [
+            "ipv4"
+          ]
+        }
+      ],
+      "SupportedNetworkTypes": [
+        "ipv4"
+      ],
+      "VpcId": "vpc-b6ee287f"
+    },
+    "ClusterEnabled": false,
+    "ClusterMode": "disabled",
+    "DataTiering": "disabled",
+    "Description": "Storefront session cache",
+    "Engine": "redis",
+    "IpDiscovery": "ipv4",
+    "LogDeliveryConfigurations": [],
+    "MemberClusters": [
+      "storefront-cache-001",
+      "storefront-cache-002"
+    ],
+    "MultiAZ": "enabled",
+    "NetworkType": "ipv4",
+    "NodeGroups": [
+      {
+        "NodeGroupId": "0001",
+        "NodeGroupMembers": [
+          {
+            "CacheClusterId": "storefront-cache-001",
+            "CacheNodeId": "0001",
+            "CurrentRole": "primary",
+            "PreferredAvailabilityZone": "us-east-1a"
+          },
+          {
+            "CacheClusterId": "storefront-cache-002",
+            "CacheNodeId": "0001",
+            "CurrentRole": "replica",
+            "PreferredAvailabilityZone": "us-east-1a"
+          }
+        ],
+        "PrimaryEndpoint": {
+          "Address": "storefront-cache.abc123.ng.0001.us-east-1.cache.amazonaws.com",
+          "Port": 6379
+        },
+        "ReaderEndpoint": {
+          "Address": "storefront-cache.abc123.ro.0001.us-east-1.cache.amazonaws.com",
+          "Port": 6379
+        },
+        "Status": "available"
+      }
+    ],
+    "PendingModifiedValues": {},
+    "ReplicationGroupCreateTime": "2026-01-01T00:00:00+00:00",
+    "ReplicationGroupId": "storefront-cache",
+    "SnapshotRetentionLimit": 0,
+    "SnapshotWindow": "05:00-06:00",
+    "Status": "available",
+    "TagList": [
+      {
+        "Key": "service",
+        "Value": "storefront"
+      }
+    ],
+    "TransitEncryptionEnabled": true
+  }
+}

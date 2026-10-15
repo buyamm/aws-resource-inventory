@@ -1,19 +1,27 @@
 {
   "account_id": "123456789012",
-  "finished_at": "2026-10-15T16:01:58.114791Z",
+  "finished_at": "2026-10-15T16:40:03.850926Z",
   "regions": [
     "us-east-1"
   ],
   "resource_counts": {
     "aws_acm_certificate": 1,
+    "aws_autoscaling_group": 1,
     "aws_cloudfront_distribution": 1,
-    "aws_cloudwatch_log_group": 1,
+    "aws_cloudwatch_event_rule": 1,
+    "aws_cloudwatch_log_group": 2,
     "aws_db_instance": 1,
     "aws_dynamodb_table": 1,
-    "aws_iam_role": 2,
-    "aws_instance": 1,
+    "aws_ecr_repository": 1,
+    "aws_ecs_cluster": 1,
+    "aws_ecs_service": 1,
+    "aws_ecs_task_definition": 1,
+    "aws_elasticache_replication_group": 1,
+    "aws_iam_role": 5,
+    "aws_instance": 2,
     "aws_internet_gateway": 1,
     "aws_lambda_function": 1,
+    "aws_launch_template": 1,
     "aws_lb": 1,
     "aws_lb_listener": 1,
     "aws_lb_target_group": 1,
@@ -21,8 +29,11 @@
     "aws_route53_zone": 1,
     "aws_route_table": 3,
     "aws_s3_bucket": 2,
-    "aws_security_group": 3,
+    "aws_scheduler_schedule": 1,
+    "aws_security_group": 4,
     "aws_sfn_state_machine": 1,
+    "aws_sns_topic": 1,
+    "aws_sqs_queue": 1,
     "aws_subnet": 3,
     "aws_vpc": 1,
     "aws_vpc_endpoint": 1,
@@ -30,15 +41,15 @@
   },
   "scope": {
     "excluded_defaults": [
-      "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-6f16fc72",
-      "arn:aws:ec2:us-east-1:123456789012:security-group/sg-7ab3caab446b8d5ed",
-      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-0a48f93e",
-      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-4bd5fbe2",
-      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-4c34a1de",
-      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-972b96d0",
-      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-aabab88c",
-      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-c5449e54",
-      "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-8460ddb8"
+      "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-1fa6d031",
+      "arn:aws:ec2:us-east-1:123456789012:security-group/sg-4a7bc473b04ad8650",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-180bea1f",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-42776559",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-a05da697",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-a2260c94",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-cb9634f7",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-cbe4f3f0",
+      "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-72070a3f"
     ],
     "include_defaults": false,
     "mode": "account",
@@ -47,9 +58,9 @@
     "regions": [
       "us-east-1"
     ],
-    "seed_resources": 30
+    "seed_resources": 47
   },
-  "started_at": "2026-10-15T16:01:57.424365Z",
+  "started_at": "2026-10-15T16:40:02.929528Z",
   "tool_version": "0.1.0",
-  "total_resources": 30
+  "total_resources": 47
 }

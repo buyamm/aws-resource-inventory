@@ -15,8 +15,8 @@ resource "aws_lb" "app_storefront-alb_50dc6c495c0c9188" {
   name = "storefront-alb"
   internal = false
   load_balancer_type = "application"
-  subnets = ["subnet-dc94c752", "subnet-ee0601cc"]
-  security_groups = ["sg-347a556c97894d9e4"]
+  subnets = ["subnet-d94916f9", "subnet-b83c8765"]
+  security_groups = ["sg-8c9c7f5f96b0d5fb1"]
   ip_address_type = "ipv4"
   enable_deletion_protection = false
   tags = {

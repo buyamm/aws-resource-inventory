@@ -8,7 +8,7 @@
 | ARN               | arn:aws:states:us-east-1:123456789012:stateMachine:order-flow |
 | Region            | us-east-1                                                     |
 | Account ID        | 123456789012                                                  |
-| Collected At      | 2026-10-15T16:01:57Z                                          |
+| Collected At      | 2026-10-15T16:40:03Z                                          |
 | Collector Version | 0.1.0                                                         |
 
 
@@ -16,7 +16,7 @@
 
 | Configuration Key | Value                                                                                                                                                      |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| creationDate      | 2026-10-15T16:01:57.031000+00:00                                                                                                                           |
+| creationDate      | 2026-10-15T16:40:02.287000+00:00                                                                                                                           |
 | definition        | {"StartAt": "Process", "States": {"Process": {"Type": "Task", "Resource": "arn:aws:lambda:us-east-1:123456789012:function:order-processor", "End": true}}} |
 | name              | order-flow                                                                                                                                                 |
 | roleArn           | arn:aws:iam::123456789012:role/order-lambda-role                                                                                                           |

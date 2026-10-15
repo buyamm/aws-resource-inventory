@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:s3:::orders-public-assets",
-  "generated_at": "2026-10-15T16:01:58.115386Z",
+  "generated_at": "2026-10-15T16:40:03.851507Z",
   "metadata": {
     "api_version": "2006-03-01",
     "checksum": "dddfb5d26229dbac29deba5ca9d77b2bb319a49ac22ce6449080e30ec2d1122d",
-    "collected_at": "2026-10-15T16:01:58Z",
+    "collected_at": "2026-10-15T16:40:03Z",
     "collector_version": "0.1.0"
   },
   "region": "global",

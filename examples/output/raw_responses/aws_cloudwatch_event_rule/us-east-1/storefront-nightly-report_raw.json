@@ -1,0 +1,54 @@
+{
+  "DescribeRule": {
+    "Arn": "arn:aws:events:us-east-1:123456789012:rule/storefront-nightly-report",
+    "CreatedBy": "123456789012",
+    "Description": "Nightly order report",
+    "EventBusName": "default",
+    "Name": "storefront-nightly-report",
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RetryAttempts": 0
+    },
+    "ScheduleExpression": "cron(0 2 * * ? *)",
+    "State": "ENABLED"
+  },
+  "ListTagsForResource": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RetryAttempts": 0
+    },
+    "Tags": [
+      {
+        "Key": "service",
+        "Value": "storefront"
+      }
+    ]
+  },
+  "ListTargetsByRule": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RetryAttempts": 0
+    },
+    "Targets": [
+      {
+        "Arn": "arn:aws:lambda:us-east-1:123456789012:function:order-processor",
+        "Id": "order-processor"
+      }
+    ]
+  }
+}

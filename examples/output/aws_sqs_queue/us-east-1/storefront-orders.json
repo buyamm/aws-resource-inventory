@@ -1,0 +1,32 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:sqs:us-east-1:123456789012:storefront-orders",
+  "generated_at": "2026-10-15T16:40:03.851507Z",
+  "metadata": {
+    "api_version": "2012-11-05",
+    "checksum": "fad905fb55cfa3b933d646e338ef18bb496aa4cc6dbce7e63ebd173dac98d6cc",
+    "collected_at": "2026-10-15T16:40:03Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_sqs_queue",
+  "specifications": {
+    "Attributes": {
+      "ApproximateNumberOfMessages": "0",
+      "ApproximateNumberOfMessagesDelayed": "0",
+      "ApproximateNumberOfMessagesNotVisible": "0",
+      "CreatedTimestamp": "1792082402.659784",
+      "DelaySeconds": "0",
+      "LastModifiedTimestamp": "1792082402.659784",
+      "MaximumMessageSize": "262144",
+      "MessageRetentionPeriod": "345600",
+      "QueueArn": "arn:aws:sqs:us-east-1:123456789012:storefront-orders",
+      "ReceiveMessageWaitTimeSeconds": "0",
+      "VisibilityTimeout": "60"
+    },
+    "QueueUrl": "https://sqs.us-east-1.amazonaws.com/123456789012/storefront-orders",
+    "Tags": {
+      "service": "storefront"
+    }
+  }
+}

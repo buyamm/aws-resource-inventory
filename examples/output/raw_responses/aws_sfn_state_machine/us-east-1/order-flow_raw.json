@@ -2,16 +2,16 @@
   "DescribeStateMachine": {
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Thu, 15 Oct 2026 23:01:57 GMT",
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
         "server": "amazon.com",
-        "x-amzn-requestid": "2IL2ztKZk94xbAVXm9IqeegTEVmOoCaX4kCqaTfFE8spSLL0QyFC"
+        "x-amzn-requestid": "wzVMw0F4o4NZpGnG7MBHOPSI5zACt6UgmuLWQyf4bDHMm696vqRV"
       },
       "HTTPStatusCode": 200,
       "MaxAttemptsReached": true,
-      "RequestId": "2IL2ztKZk94xbAVXm9IqeegTEVmOoCaX4kCqaTfFE8spSLL0QyFC",
+      "RequestId": "wzVMw0F4o4NZpGnG7MBHOPSI5zACt6UgmuLWQyf4bDHMm696vqRV",
       "RetryAttempts": 0
     },
-    "creationDate": "2026-10-15T16:01:57.031000+00:00",
+    "creationDate": "2026-10-15T16:40:02.287000+00:00",
     "definition": "{\"StartAt\": \"Process\", \"States\": {\"Process\": {\"Type\": \"Task\", \"Resource\": \"arn:aws:lambda:us-east-1:123456789012:function:order-processor\", \"End\": true}}}",
     "name": "order-flow",
     "roleArn": "arn:aws:iam::123456789012:role/order-lambda-role",
@@ -21,13 +21,13 @@
   "ListTagsForResource": {
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Thu, 15 Oct 2026 23:01:57 GMT",
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
         "server": "amazon.com",
-        "x-amzn-requestid": "u8V6r0YcqTcYfODF8GMAMvIayPT76k1TJz4hNGUYX3D3SRNaooYY"
+        "x-amzn-requestid": "Pf02XrOJvOdtWJxaGuGA3QRDibK5qCitSa0hqCLyjgbT7aGbiEvr"
       },
       "HTTPStatusCode": 200,
       "MaxAttemptsReached": true,
-      "RequestId": "u8V6r0YcqTcYfODF8GMAMvIayPT76k1TJz4hNGUYX3D3SRNaooYY",
+      "RequestId": "Pf02XrOJvOdtWJxaGuGA3QRDibK5qCitSa0hqCLyjgbT7aGbiEvr",
       "RetryAttempts": 0
     },
     "tags": [

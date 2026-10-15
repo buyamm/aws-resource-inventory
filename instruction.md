@@ -9,7 +9,7 @@
 
 Bạn tiếp nhận một AWS account **không có IaC, không có tài liệu, không có diagram**. `aws-inventory` giúp bạn:
 
-1. **Quét account** (chỉ dùng API đọc `Describe*`/`List*`/`Get*`) và thu thập cấu hình đầy đủ của 22 loại resource: EC2 instance, VPC, Security Group, Lambda, RDS instance, CloudWatch log group, Step Functions state machine, DynamoDB table, S3 bucket, IAM role, subnet, route table, internet gateway, NAT gateway, VPC endpoint, CloudFront distribution, load balancer (ALB/NLB), listener, target group, Route 53 hosted zone, ACM certificate, WAFv2 web ACL.
+1. **Quét account** (chỉ dùng API đọc `Describe*`/`List*`/`Get*`) và thu thập cấu hình đầy đủ của 33 loại resource: EC2 instance, VPC, Security Group, Lambda, RDS instance, CloudWatch log group, Step Functions state machine, DynamoDB table, S3 bucket, IAM role, subnet, route table, internet gateway, NAT gateway, VPC endpoint, CloudFront distribution, load balancer (ALB/NLB), listener, target group, Route 53 hosted zone, ACM certificate, WAFv2 web ACL, ECS cluster, ECS service, ECS task definition (chỉ revision đang được service chạy), ECR repository, Auto Scaling group, launch template, ElastiCache replication group, SQS queue, SNS topic, EventBridge rule, EventBridge Scheduler schedule.
 2. **Lưu ra thư mục output** (gọi là Output_Dir) dạng JSON + Markdown, có checksum SHA-256 để kiểm tra toàn vẹn.
 3. **Phân tích** quan hệ giữa các resource (Lambda → DynamoDB, EC2 → VPC, ...), nhận diện pattern kiến trúc và phát hiện rủi ro bảo mật. **Mỗi kết luận đều có trích dẫn (citation)** trỏ tới đúng file và đúng thuộc tính đã thu thập.
 4. **Vẽ diagram** draw.io với icon AWS chính thức.
@@ -138,10 +138,10 @@ aws-inventory analyze --output-dir ./output --validate-diagram   # thêm bước
 ```
 
 Ghi:
-- `analysis/analysis.json`, `analysis/analysis.md`: quan hệ (`vpc_connection`, `iam_role_usage`, `security_group`, `dynamodb_access`, `log_group`, `subnet_placement`, `route_table_association`, `route_target`, `lb_listener`, `forwards_to`, `certificate`, `cdn_origin`, `waf_protection`, `dns_alias`), pattern ("Serverless Application", "Compute in VPC") và phát hiện bảo mật (`OVERLY_PERMISSIVE_IAM_POLICY`, `PUBLIC_S3_BUCKET`, `UNRESTRICTED_SECURITY_GROUP_ACCESS`), mỗi mục có điểm tin cậy và citation.
+- `analysis/analysis.json`, `analysis/analysis.md`: quan hệ (`vpc_connection`, `iam_role_usage`, `security_group`, `dynamodb_access`, `log_group`, `subnet_placement`, `route_table_association`, `route_target`, `lb_listener`, `forwards_to`, `certificate`, `cdn_origin`, `waf_protection`, `dns_alias`, `ecs_cluster`, `task_definition`, `container_image`, `lb_target`, `launch_template`, `subscription`, `event_target`), pattern ("Serverless Application", "Compute in VPC", "Static site: S3 + CloudFront", "Web app: CloudFront + ALB + ECS") và phát hiện bảo mật (`OVERLY_PERMISSIVE_IAM_POLICY`, `PUBLIC_S3_BUCKET`, `UNRESTRICTED_SECURITY_GROUP_ACCESS`), mỗi mục có điểm tin cậy và citation.
 - `diagrams/architecture.drawio`: mở bằng <https://app.diagrams.net> hoặc draw.io desktop.
 
-Các pattern chưa có luật nhận diện (API Gateway + Lambda + DynamoDB, EC2 + Load Balancer, S3 + CloudFront) được liệt kê trong `undetectable_patterns` kèm lý do, tool không đoán.
+Các pattern chưa có luật nhận diện (API Gateway + Lambda + DynamoDB, EC2 + Load Balancer khi instance được đăng ký trực tiếp vào target group) được liệt kê trong `undetectable_patterns` kèm lý do, tool không đoán.
 
 ### Bước 4 — `generate-iac`: sinh Terraform
 
@@ -242,7 +242,7 @@ output/
 └── checksums.sha256  checksums.json      cập nhật sau mỗi lệnh có ghi file
 ```
 
-`<type>` là tên loại resource theo Terraform: `aws_instance`, `aws_vpc`, `aws_security_group`, `aws_lambda_function`, `aws_db_instance`, `aws_cloudwatch_log_group`, `aws_sfn_state_machine`, `aws_dynamodb_table`, `aws_s3_bucket`, `aws_iam_role`, `aws_subnet`, `aws_route_table`, `aws_internet_gateway`, `aws_nat_gateway`, `aws_vpc_endpoint`, `aws_cloudfront_distribution`, `aws_lb`, `aws_lb_listener`, `aws_lb_target_group`, `aws_route53_zone`, `aws_acm_certificate`, `aws_wafv2_web_acl`. CloudFront, Route 53 và WAF web ACL scope CLOUDFRONT dùng region `global`.
+`<type>` là tên loại resource theo Terraform: `aws_instance`, `aws_vpc`, `aws_security_group`, `aws_lambda_function`, `aws_db_instance`, `aws_cloudwatch_log_group`, `aws_sfn_state_machine`, `aws_dynamodb_table`, `aws_s3_bucket`, `aws_iam_role`, `aws_subnet`, `aws_route_table`, `aws_internet_gateway`, `aws_nat_gateway`, `aws_vpc_endpoint`, `aws_cloudfront_distribution`, `aws_lb`, `aws_lb_listener`, `aws_lb_target_group`, `aws_route53_zone`, `aws_acm_certificate`, `aws_wafv2_web_acl`, `aws_ecs_cluster`, `aws_ecs_service`, `aws_ecs_task_definition`, `aws_ecr_repository`, `aws_autoscaling_group`, `aws_launch_template`, `aws_elasticache_replication_group`, `aws_sqs_queue`, `aws_sns_topic`, `aws_cloudwatch_event_rule`, `aws_scheduler_schedule`. CloudFront, Route 53 và WAF web ACL scope CLOUDFRONT dùng region `global`.
 
 ---
 
@@ -303,8 +303,10 @@ Chi tiết: [docs/ACCURACY_AND_SECURITY.md](docs/ACCURACY_AND_SECURITY.md).
 ## 11. Giới hạn đã biết
 
 - Chỉ hỗ trợ các loại resource ở trên. CloudFront chỉ thu thập distribution (không thu thập edge location hay dải IP).
+- ECS: chỉ thu thập các revision task definition mà service đang chạy; service phải dùng định dạng ARN dài (`service/<cluster>/<service>`). ElastiCache: chỉ replication group (không gồm cluster Memcached đứng riêng); subnet group, security group và engine version lấy từ member cluster đầu tiên.
+- Biến môi trường ECS có `name` nhạy cảm (chứa `secret`, `password`, `token`, ...) và `UserData` của launch template luôn bị thay bằng `[REDACTED]`.
 - Origin là load balancer được nối với load balancer đã thu thập theo DNS name khi phân tích, nhưng dependency closure không lần theo được (DNS name không xác định ARN); hãy gắn tag cho load balancer hoặc thu thập không dùng `--project-tag`.
-- Terraform: rule của WAF web ACL và certificate phụ (không phải default) của listener chưa được map; rule WAF được giữ ngoài plan bằng `ignore_changes = [rule]`. ACM certificate dạng IMPORTED cần tự điền `certificate_body`/`private_key`.
+- Terraform: rule của WAF web ACL, certificate phụ (không phải default) của listener, SNS subscription, mixed-instances policy của Auto Scaling và capacity provider của ECS cluster chưa được map; rule WAF được giữ ngoài plan bằng `ignore_changes = [rule]`. ACM certificate dạng IMPORTED cần tự điền `certificate_body`/`private_key`.
 - Phân tích dựa trên luật cố định, không dùng LLM bên trong. Phần giải thích tự do do AI Agent kết nối qua MCP đảm nhận.
 - Sanitizer che theo tên key, nên một số trường vô hại có tên chứa `token`, `secret`, ... (ví dụ `ClientToken` của EC2) cũng hiện là `[REDACTED]`.
 - Terraform: code Lambda là file placeholder `lambda_<name>.zip`; không lấy được mật khẩu master của RDS; S3 lifecycle/CORS/website/ACL và DynamoDB TTL/PITR chưa được map; rule security group có mô tả khác nhau theo từng dải IP được sinh ra không kèm mô tả.

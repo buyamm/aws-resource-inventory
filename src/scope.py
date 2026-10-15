@@ -13,11 +13,14 @@ Requirements Coverage:
   or ``--include-defaults`` is given
 - Requirement 13.5: The scope is recorded in discovery.json, manifest.json and
   collection_report.json
+- Requirement 14.4: Task definition revisions are not seeded from tags; they enter
+  through the ECS services that run them
 """
 
 from __future__ import annotations
 
 import logging
+import re
 import threading
 from collections.abc import Callable, Iterable, Iterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -39,6 +42,9 @@ logger = logging.getLogger(__name__)
 
 GLOBAL_CLIENT_REGION = "us-east-1"
 SERVICE_LINKED_ROLE_PATH = "/aws-service-role/"
+# Every registered revision carries the tags of its family; only the revisions services
+# run are wanted, and the closure reaches those from the services (Req 14.4).
+TAG_SEED_EXCLUDED_TYPES = frozenset({"aws_ecs_task_definition"})
 
 
 def parse_project_tags(values: Iterable[str]) -> dict[str, str]:
@@ -188,6 +194,8 @@ class TagScopedDiscovery:
         if parsed is None:
             return None
         type_id, resource_id, region = parsed
+        if type_id in TAG_SEED_EXCLUDED_TYPES:
+            return None
         return DiscoveredResource(
             resource_type=type_id,
             resource_id=resource_id,
@@ -280,17 +288,64 @@ def exclude_defaults(
 class Rule(NamedTuple):
     """``path`` in the source Specifications names a ``target`` resource.
 
-    ``resolve`` maps the raw value to the target's id/name/ARN, or None when the value
-    does not name such a resource (e.g. a route to ``local``, a non-S3 origin domain).
+    ``resolve`` maps the raw value to the target's id/name/ARN (or several, for
+    comma-separated lists), or None when the value does not name such a resource (e.g.
+    a route to ``local``, a non-S3 origin domain, a public container image).
     """
 
     path: str
     target: str
-    resolve: Callable[[str], str | None] | None = None
+    resolve: Callable[[str], str | list[str] | None] | None = None
 
 
 def _prefixed(prefix: str) -> Callable[[str], str | None]:
     return lambda value: value if value.startswith(prefix) else None
+
+
+def _comma_list(value: str) -> list[str]:
+    """Auto Scaling ``VPCZoneIdentifier``: ``"subnet-a,subnet-b"``."""
+    return [part.strip() for part in value.split(",") if part.strip()]
+
+
+_ECR_IMAGE = re.compile(
+    r"^(?P<account>\d{12})\.dkr\.ecr\.(?P<region>[a-z0-9-]+)\.amazonaws\.com(?:\.cn)?/"
+    r"(?P<repository>[^:@]+)(?:[:@].*)?$"
+)
+
+
+def ecr_repository_arn(image: str) -> str | None:
+    """Repository ARN of a private ECR image URI (``<acct>.dkr.ecr.<region>...``), else None."""
+    match = _ECR_IMAGE.match(image)
+    if match is None:
+        return None
+    return f"arn:aws:ecr:{match['region']}:{match['account']}:repository/{match['repository']}"
+
+
+def _arn_only(value: str) -> str | None:
+    """Values that name a resource only when they are ARNs (event targets, endpoints)."""
+    return value if value.startswith("arn:") else None
+
+
+def _unqualified_function(value: str) -> str | None:
+    """A Lambda ARN without its version/alias qualifier; other ARNs pass unchanged."""
+    if not value.startswith("arn:"):
+        return None
+    parts = value.split(":")
+    if len(parts) > 7 and parts[2] == "lambda" and parts[5] == "function":
+        return ":".join(parts[:7])
+    return value
+
+
+def _target_rules(path: str, role_path: str) -> list[Rule]:
+    """An event target ARN (any supported invocable type) and the role used to invoke it."""
+    return [
+        Rule(path, "aws_lambda_function", _unqualified_function),
+        Rule(path, "aws_sqs_queue", _arn_only),
+        Rule(path, "aws_sns_topic", _arn_only),
+        Rule(path, "aws_sfn_state_machine", _arn_only),
+        Rule(path, "aws_ecs_cluster", _arn_only),
+        Rule(role_path, "aws_iam_role"),
+    ]
 
 
 # source type -> rules; "[]" walks every list element. Values are resource ids, names or
@@ -370,6 +425,48 @@ REFERENCE_RULES: dict[str, list[Rule]] = {
         Rule("DistributionConfig.WebACLId", "aws_wafv2_web_acl"),
         Rule("DistributionConfig.ViewerCertificate.ACMCertificateArn", "aws_acm_certificate"),
     ],
+    # Compute and data (Requirement 14.4).
+    "aws_ecs_service": [
+        Rule("clusterArn", "aws_ecs_cluster"),
+        Rule("taskDefinition", "aws_ecs_task_definition"),
+        Rule("loadBalancers[].targetGroupArn", "aws_lb_target_group"),
+        Rule("networkConfiguration.awsvpcConfiguration.subnets[]", "aws_subnet"),
+        Rule("networkConfiguration.awsvpcConfiguration.securityGroups[]", "aws_security_group"),
+    ],
+    "aws_ecs_task_definition": [
+        Rule("taskRoleArn", "aws_iam_role"),
+        Rule("executionRoleArn", "aws_iam_role"),
+        Rule(
+            "containerDefinitions[].logConfiguration.options.awslogs-group",
+            "aws_cloudwatch_log_group",
+        ),
+        Rule("containerDefinitions[].image", "aws_ecr_repository", ecr_repository_arn),
+    ],
+    "aws_autoscaling_group": [
+        Rule("LaunchTemplate.LaunchTemplateId", "aws_launch_template"),
+        Rule(
+            "MixedInstancesPolicy.LaunchTemplate.LaunchTemplateSpecification.LaunchTemplateId",
+            "aws_launch_template",
+        ),
+        Rule("VPCZoneIdentifier", "aws_subnet", _comma_list),
+        Rule("TargetGroupARNs[]", "aws_lb_target_group"),
+    ],
+    "aws_launch_template": [
+        Rule("LaunchTemplateData.SecurityGroupIds[]", "aws_security_group"),
+        Rule("LaunchTemplateData.NetworkInterfaces[].Groups[]", "aws_security_group"),
+        Rule("LaunchTemplateData.NetworkInterfaces[].SubnetId", "aws_subnet"),
+    ],
+    "aws_elasticache_replication_group": [
+        Rule("CacheCluster.SecurityGroups[].SecurityGroupId", "aws_security_group"),
+        Rule("CacheSubnetGroup.VpcId", "aws_vpc"),
+        Rule("CacheSubnetGroup.Subnets[].SubnetIdentifier", "aws_subnet"),
+    ],
+    "aws_sns_topic": [
+        Rule("Subscriptions[].Endpoint", "aws_sqs_queue", _arn_only),
+        Rule("Subscriptions[].Endpoint", "aws_lambda_function", _unqualified_function),
+    ],
+    "aws_cloudwatch_event_rule": _target_rules("Targets[].Arn", "Targets[].RoleArn"),
+    "aws_scheduler_schedule": _target_rules("Target.Arn", "Target.RoleArn"),
 }
 
 
@@ -380,6 +477,9 @@ def _target(
         parsed = parse_arn(value)
         if parsed is None or parsed[0] != target_type:
             return None
+        owner = value.split(":")[4]
+        if owner and account_id and owner != account_id:
+            return None  # another account's resource cannot be collected with these credentials
         _, resource_id, region = parsed
         arn = value[:-2] if value.endswith(":*") else value
         if REGISTRY[target_type].service == "ec2":
@@ -401,13 +501,16 @@ def extract_references(spec: ResourceSpec, account_id: str) -> list[DiscoveredRe
             if not isinstance(value, str) or not value:
                 continue
             resolved = rule.resolve(value) if rule.resolve else value
-            if not resolved:
-                continue
-            target = _target(rule.target, resolved, spec, account_id or spec.account_id)
-            if target is None or target.arn == spec.arn:
-                continue
-            entry = targets.setdefault(target.arn, target)
-            entry.referenced_by.append(f"{spec.arn}#{path}")
+            for name in [resolved] if isinstance(resolved, str) else resolved or []:
+                if not name:
+                    continue
+                target = _target(rule.target, name, spec, account_id or spec.account_id)
+                if target is None or target.arn == spec.arn:
+                    continue
+                entry = targets.setdefault(target.arn, target)
+                reference = f"{spec.arn}#{path}"
+                if reference not in entry.referenced_by:
+                    entry.referenced_by.append(reference)
     return list(targets.values())
 
 

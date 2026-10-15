@@ -2,13 +2,13 @@
   "DescribeTags": {
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Thu, 15 Oct 2026 23:01:58 GMT",
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
         "server": "amazon.com",
-        "x-amzn-requestid": "K4et73T2sducpxUpp8cbmBsFzxWNG2Gy6mzhHWoDqu4VO7U2zc7Q"
+        "x-amzn-requestid": "z9BhRpAjDEyvu7JmPiLfyLwaeZOKibJdeqlrpXQG3gF738EjZd9S"
       },
       "HTTPStatusCode": 200,
       "MaxAttemptsReached": true,
-      "RequestId": "K4et73T2sducpxUpp8cbmBsFzxWNG2Gy6mzhHWoDqu4VO7U2zc7Q",
+      "RequestId": "z9BhRpAjDEyvu7JmPiLfyLwaeZOKibJdeqlrpXQG3gF738EjZd9S",
       "RetryAttempts": 0
     },
     "TagDescriptions": [
@@ -56,26 +56,26 @@
     ],
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Thu, 15 Oct 2026 23:01:58 GMT",
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
         "server": "amazon.com",
-        "x-amzn-requestid": "z1ISG0K6Kzb6GeaTuhugOEyjqBlIVfHYzOoGZqsLDVmrDM390h6c"
+        "x-amzn-requestid": "DaLlmzXjaLxhsy6NfIAWiE2ZGXq9SM8VDf4tvbiT83jojxcB9gkz"
       },
       "HTTPStatusCode": 200,
       "MaxAttemptsReached": true,
-      "RequestId": "z1ISG0K6Kzb6GeaTuhugOEyjqBlIVfHYzOoGZqsLDVmrDM390h6c",
+      "RequestId": "DaLlmzXjaLxhsy6NfIAWiE2ZGXq9SM8VDf4tvbiT83jojxcB9gkz",
       "RetryAttempts": 0
     }
   },
   "DescribeTargetGroups": {
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Thu, 15 Oct 2026 23:01:58 GMT",
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
         "server": "amazon.com",
-        "x-amzn-requestid": "wGynVJBBIpJhA2DQjK5AWZeWLmIxqQNng0uKnjE46QNw2q08Cbdt"
+        "x-amzn-requestid": "GbtCt1ydZjKB4E8DFeFrNsdvvmhbg6tgr4pdKhRXs7PEy8B1uZcd"
       },
       "HTTPStatusCode": 200,
       "MaxAttemptsReached": true,
-      "RequestId": "wGynVJBBIpJhA2DQjK5AWZeWLmIxqQNng0uKnjE46QNw2q08Cbdt",
+      "RequestId": "GbtCt1ydZjKB4E8DFeFrNsdvvmhbg6tgr4pdKhRXs7PEy8B1uZcd",
       "RetryAttempts": 0
     },
     "TargetGroups": [
@@ -101,7 +101,7 @@
         "TargetGroupName": "storefront-tg",
         "TargetType": "ip",
         "UnhealthyThresholdCount": 2,
-        "VpcId": "vpc-1561eea5"
+        "VpcId": "vpc-b6ee287f"
       }
     ]
   }

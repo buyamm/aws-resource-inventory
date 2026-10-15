@@ -1,0 +1,34 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:ecs:us-east-1:123456789012:cluster/storefront",
+  "generated_at": "2026-10-15T16:40:03.851507Z",
+  "metadata": {
+    "api_version": "2014-11-13",
+    "checksum": "61c9a1f831d5bf403586b152442e2514218b43f7a91d4de0df805a6438e62121",
+    "collected_at": "2026-10-15T16:40:03Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_ecs_cluster",
+  "specifications": {
+    "activeServicesCount": 0,
+    "clusterArn": "arn:aws:ecs:us-east-1:123456789012:cluster/storefront",
+    "clusterName": "storefront",
+    "pendingTasksCount": 0,
+    "registeredContainerInstancesCount": 0,
+    "runningTasksCount": 0,
+    "settings": [
+      {
+        "name": "containerInsights",
+        "value": "enabled"
+      }
+    ],
+    "status": "ACTIVE",
+    "tags": [
+      {
+        "key": "service",
+        "value": "storefront"
+      }
+    ]
+  }
+}

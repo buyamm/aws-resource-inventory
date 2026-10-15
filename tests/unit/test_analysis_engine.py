@@ -10,6 +10,8 @@ Requirements Coverage:
 - Requirement 8.1 / 8.2 / 8.5: Every statement cited; citations resolve against specs
 - Requirement 14.2: Network and load-balancing relationships
 - Requirement 14.3: Edge relationships (CloudFront origins, WAF, ACM, Route 53 aliases)
+- Requirement 14.4: Compute and data relationships (ECS, Auto Scaling, ElastiCache,
+  messaging and event targets) and the web-app / static-site patterns
 """
 
 from __future__ import annotations
@@ -283,11 +285,8 @@ class TestAnalysisEnginePatterns:
     def test_analysis_engine_reports_undetectable_patterns_req_6_2(self, serverless_pattern_specs):
         report = AnalysisEngine().analyze(serverless_pattern_specs)
         names = {u["pattern"] for u in report.undetectable_patterns}
-        assert names == {
-            "API Gateway + Lambda + DynamoDB",
-            "S3 + CloudFront",
-            "EC2 + Load Balancer",
-        }
+        # S3 + CloudFront is detected since Task 29 ("Static site: S3 + CloudFront").
+        assert names == {"API Gateway + Lambda + DynamoDB", "EC2 + Load Balancer"}
         reasons = {u["pattern"]: u["reason"] for u in report.undetectable_patterns}
         assert (
             "API Gateway is not a Supported_Resource_Type"
@@ -295,7 +294,7 @@ class TestAnalysisEnginePatterns:
         )
         # CloudFront and ELB are supported now: the reasons must not claim otherwise.
         assert "DescribeTargetHealth" in reasons["EC2 + Load Balancer"]
-        assert "cdn_origin" in reasons["S3 + CloudFront"]
+        assert "lb_target" in reasons["EC2 + Load Balancer"]
         assert not any(
             "CloudFront is not" in r or "Load Balancing is not" in r for r in reasons.values()
         )
@@ -751,3 +750,223 @@ class TestAnalysisEngineNetworkEdge:
                     resolve_property_path(documents[citation.spec_file], citation.property_path)
                     == citation.evidence_value
                 )
+
+
+# ----------------------------------------------------------------------------
+# Compute and data relationships and patterns (Req 14.4, 6.2)
+# ----------------------------------------------------------------------------
+
+ECS = f"arn:aws:ecs:us-east-1:{ACCOUNT}"
+CLUSTER_ARN = f"{ECS}:cluster/web"
+SERVICE_ARN = f"{ECS}:service/web/api"
+TASK_ARN = f"{ECS}:task-definition/api:7"
+REPO_ARN = f"arn:aws:ecr:us-east-1:{ACCOUNT}:repository/api"
+REPO_URI = f"{ACCOUNT}.dkr.ecr.us-east-1.amazonaws.com/api"
+ASG_ARN = (
+    f"arn:aws:autoscaling:us-east-1:{ACCOUNT}:autoScalingGroup:uuid:autoScalingGroupName/workers"
+)
+LT_ARN = f"{EC2}:launch-template/lt-1"
+CACHE_ARN = f"arn:aws:elasticache:us-east-1:{ACCOUNT}:replicationgroup:cache"
+QUEUE_ARN = f"arn:aws:sqs:us-east-1:{ACCOUNT}:jobs"
+TOPIC_ARN = f"arn:aws:sns:us-east-1:{ACCOUNT}:events"
+RULE_ARN = f"arn:aws:events:us-east-1:{ACCOUNT}:rule/nightly"
+SCHEDULE_ARN = f"arn:aws:scheduler:us-east-1:{ACCOUNT}:schedule/default/report"
+FUNCTION_ARN = f"arn:aws:lambda:us-east-1:{ACCOUNT}:function:worker"
+TASK_ROLE = f"arn:aws:iam::{ACCOUNT}:role/api-task"
+EVENTS_ROLE = f"arn:aws:iam::{ACCOUNT}:role/events"
+
+
+@pytest.fixture
+def compute_stack_specs(web_stack_specs) -> list[ResourceSpec]:
+    return [
+        *web_stack_specs,
+        _spec("aws_security_group", f"{EC2}:security-group/sg-app", {"GroupId": "sg-app"}),
+        _spec("aws_iam_role", TASK_ROLE, {"RoleName": "api-task", "Arn": TASK_ROLE}, "global"),
+        _spec("aws_iam_role", EVENTS_ROLE, {"RoleName": "events", "Arn": EVENTS_ROLE}, "global"),
+        _spec(
+            "aws_cloudwatch_log_group",
+            f"arn:aws:logs:us-east-1:{ACCOUNT}:log-group:/ecs/api",
+            {"logGroupName": "/ecs/api"},
+        ),
+        _spec("aws_ecs_cluster", CLUSTER_ARN, {"clusterArn": CLUSTER_ARN, "clusterName": "web"}),
+        _spec(
+            "aws_ecs_service",
+            SERVICE_ARN,
+            {
+                "serviceArn": SERVICE_ARN,
+                "clusterArn": CLUSTER_ARN,
+                "taskDefinition": TASK_ARN,
+                "loadBalancers": [{"targetGroupArn": TG_ARN, "containerName": "api"}],
+                "networkConfiguration": {
+                    "awsvpcConfiguration": {"subnets": ["subnet-b"], "securityGroups": ["sg-app"]}
+                },
+            },
+        ),
+        _spec(
+            "aws_ecs_task_definition",
+            TASK_ARN,
+            {
+                "taskDefinitionArn": TASK_ARN,
+                "taskRoleArn": TASK_ROLE,
+                "containerDefinitions": [
+                    {
+                        "name": "api",
+                        "image": f"{REPO_URI}:1.2.3",
+                        "logConfiguration": {"options": {"awslogs-group": "/ecs/api"}},
+                    }
+                ],
+            },
+        ),
+        _spec(
+            "aws_ecr_repository",
+            REPO_ARN,
+            {"repositoryName": "api", "repositoryArn": REPO_ARN, "repositoryUri": REPO_URI},
+        ),
+        _spec(
+            "aws_autoscaling_group",
+            ASG_ARN,
+            {
+                "AutoScalingGroupName": "workers",
+                "LaunchTemplate": {"LaunchTemplateId": "lt-1"},
+                "VPCZoneIdentifier": "subnet-a,subnet-b",
+                "TargetGroupARNs": [TG_ARN],
+            },
+        ),
+        _spec(
+            "aws_launch_template",
+            LT_ARN,
+            {
+                "LaunchTemplateId": "lt-1",
+                "LaunchTemplateData": {
+                    "SecurityGroupIds": ["sg-app"],
+                    "IamInstanceProfile": {"Name": "api-task"},
+                },
+            },
+        ),
+        _spec(
+            "aws_elasticache_replication_group",
+            CACHE_ARN,
+            {
+                "ReplicationGroupId": "cache",
+                "CacheCluster": {"SecurityGroups": [{"SecurityGroupId": "sg-app"}]},
+                "CacheSubnetGroup": {
+                    "VpcId": "vpc-1",
+                    "Subnets": [{"SubnetIdentifier": "subnet-a"}],
+                },
+            },
+        ),
+        _spec("aws_sqs_queue", QUEUE_ARN, {"Attributes": {"QueueArn": QUEUE_ARN}}),
+        _spec("aws_lambda_function", FUNCTION_ARN, {"FunctionName": "worker"}),
+        _spec(
+            "aws_sns_topic",
+            TOPIC_ARN,
+            {
+                "Attributes": {"TopicArn": TOPIC_ARN},
+                "Subscriptions": [{"Protocol": "sqs", "Endpoint": QUEUE_ARN}],
+            },
+        ),
+        _spec(
+            "aws_cloudwatch_event_rule",
+            RULE_ARN,
+            {
+                "Name": "nightly",
+                "Targets": [
+                    {"Id": "1", "Arn": f"{FUNCTION_ARN}:live"},
+                    {"Id": "2", "Arn": CLUSTER_ARN, "RoleArn": EVENTS_ROLE},
+                ],
+            },
+        ),
+        _spec(
+            "aws_scheduler_schedule",
+            SCHEDULE_ARN,
+            {"Name": "report", "Target": {"Arn": QUEUE_ARN, "RoleArn": EVENTS_ROLE}},
+        ),
+    ]
+
+
+class TestAnalysisEngineComputeData:
+    def test_analysis_engine_compute_relationships_req_14_4(self, compute_stack_specs):
+        rels = AnalysisEngine().identify_relationships(compute_stack_specs)
+        by_key = {(r.from_arn, r.to_arn, r.relationship_type): r for r in rels}
+        sg_app, vpc = f"{EC2}:security-group/sg-app", f"{EC2}:vpc/vpc-1"
+        subnet_a, subnet_b = f"{EC2}:subnet/subnet-a", f"{EC2}:subnet/subnet-b"
+        log_group = f"arn:aws:logs:us-east-1:{ACCOUNT}:log-group:/ecs/api"
+        expected = {
+            (SERVICE_ARN, CLUSTER_ARN, "ecs_cluster"),
+            (SERVICE_ARN, TASK_ARN, "task_definition"),
+            (SERVICE_ARN, subnet_b, "subnet_placement"),
+            (SERVICE_ARN, sg_app, "security_group"),
+            (TG_ARN, SERVICE_ARN, "lb_target"),
+            (TG_ARN, ASG_ARN, "lb_target"),
+            (TASK_ARN, TASK_ROLE, "iam_role_usage"),
+            (TASK_ARN, log_group, "log_group"),
+            (TASK_ARN, REPO_ARN, "container_image"),
+            (ASG_ARN, LT_ARN, "launch_template"),
+            (ASG_ARN, subnet_a, "subnet_placement"),
+            (ASG_ARN, subnet_b, "subnet_placement"),
+            (LT_ARN, sg_app, "security_group"),
+            (LT_ARN, TASK_ROLE, "iam_role_usage"),
+            (CACHE_ARN, sg_app, "security_group"),
+            (CACHE_ARN, subnet_a, "subnet_placement"),
+            (CACHE_ARN, vpc, "vpc_connection"),
+            (TOPIC_ARN, QUEUE_ARN, "subscription"),
+            (RULE_ARN, FUNCTION_ARN, "event_target"),
+            (RULE_ARN, CLUSTER_ARN, "event_target"),
+            (RULE_ARN, EVENTS_ROLE, "iam_role_usage"),
+            (SCHEDULE_ARN, QUEUE_ARN, "event_target"),
+            (SCHEDULE_ARN, EVENTS_ROLE, "iam_role_usage"),
+        }
+        assert expected <= set(by_key)
+
+        # The target group -> service edge is cited at the service's own reference.
+        lb_target = by_key[(TG_ARN, SERVICE_ARN, "lb_target")]
+        assert [(c.resource_arn, c.property_path) for c in lb_target.citations] == [
+            (SERVICE_ARN, "specifications.loadBalancers[0].targetGroupArn")
+        ]
+        image = by_key[(TASK_ARN, REPO_ARN, "container_image")]
+        assert [c.property_path for c in image.citations] == [
+            "specifications.containerDefinitions[0].image",
+            "specifications.repositoryUri",
+        ]
+        subnet = by_key[(ASG_ARN, subnet_b, "subnet_placement")]
+        assert subnet.citations[0].evidence_value == "subnet-a,subnet-b"
+        target = by_key[(RULE_ARN, FUNCTION_ARN, "event_target")]
+        assert target.citations[0].property_path == "specifications.Targets[0].Arn"
+        assert by_key[(LT_ARN, TASK_ROLE, "iam_role_usage")].confidence == 0.95
+        assert by_key[(SERVICE_ARN, sg_app, "security_group")].confidence == 0.9
+        assert by_key[(TG_ARN, ASG_ARN, "lb_target")].confidence == 1.0
+
+    def test_analysis_engine_web_app_pattern_req_6_2(self, compute_stack_specs):
+        patterns = AnalysisEngine().detect_patterns(compute_stack_specs)
+        (web,) = [p for p in patterns if p.pattern_name == "Web app: CloudFront + ALB + ECS"]
+        assert web.participating_resources == [CF_ARN, LB_ARN, LISTENER_ARN, TG_ARN, SERVICE_ARN]
+        assert web.confidence == 1.0
+        assert "web-alb" in web.description and "web/api" in web.description
+        assert {c.resource_arn for c in web.citations} == {
+            CF_ARN,
+            LB_ARN,
+            LISTENER_ARN,
+            SERVICE_ARN,
+        }
+
+    def test_analysis_engine_static_site_pattern_req_6_2(self, web_stack_specs):
+        patterns = AnalysisEngine().detect_patterns(web_stack_specs)
+        (site,) = [p for p in patterns if p.pattern_name == "Static site: S3 + CloudFront"]
+        assert site.participating_resources == [CF_ARN, BUCKET_ARN]
+        assert site.confidence == 1.0
+        assert "static-site" in site.description
+        # Without an ECS service behind the load balancer there is no web-app pattern.
+        assert not [p for p in patterns if p.pattern_name.startswith("Web app")]
+
+    def test_analysis_engine_compute_citations_resolve_req_8_5(self, compute_stack_specs):
+        sealed = seal_specs(compute_stack_specs, DataSanitizer())
+        documents = {spec_relpath(s): {"specifications": s.specifications} for s in sealed}
+        report = AnalysisEngine().analyze(sealed)
+        citations = [c for r in report.relationships for c in r.citations]
+        citations += [c for p in report.patterns for c in p.citations]
+        assert citations
+        for citation in citations:
+            assert (
+                resolve_property_path(documents[citation.spec_file], citation.property_path)
+                == citation.evidence_value
+            )

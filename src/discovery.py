@@ -17,6 +17,9 @@ Requirements Coverage:
 - Requirement 14.1: Network, edge and load-balancing types; listeners are listed per
   load balancer; CloudFront distributions, Route 53 zones and CloudFront-scope WAF web
   ACLs are discovered once through ``us-east-1``
+- Requirement 14.4: Compute and data types; ECS services are listed per cluster, task
+  definitions are the revisions the services run, EventBridge rules are listed per
+  event bus (rules managed by AWS services are skipped)
 """
 
 from __future__ import annotations
@@ -389,6 +392,50 @@ _extract_nat_gateways = _ec2_extractor(
     keep=lambda n: n.get("State") not in ("deleted", "deleting", "failed"),
 )
 _extract_vpc_endpoints = _ec2_extractor("aws_vpc_endpoint", "VpcEndpoints", "VpcEndpointId")
+
+
+def _arn_list_extractor(
+    list_key: str,
+) -> Callable[[dict[str, Any], str, str], list[DiscoveredResource]]:
+    """Extractor for list APIs that return bare ARN strings (ECS clusters and services)."""
+    inner = _arn_extractor((list_key,), "arn")
+
+    def extract(
+        response: dict[str, Any], region: str, account_id: str = ""
+    ) -> list[DiscoveredResource]:
+        items = [{"arn": arn} for arn in response.get(list_key, []) if isinstance(arn, str)]
+        return inner({list_key: items}, region, account_id)
+
+    return extract
+
+
+def _extract_queues(
+    response: dict[str, Any], region: str, account_id: str = ""
+) -> list[DiscoveredResource]:
+    resources = []
+    for url in response.get("QueueUrls", []):
+        name = str(url).rstrip("/").split("/")[-1]
+        resources.append(
+            DiscoveredResource(
+                resource_type="aws_sqs_queue",
+                resource_id=name,
+                arn=build_arn("aws_sqs_queue", name, region, account_id),
+                region=region,
+            )
+        )
+    return resources
+
+
+_extract_launch_templates = _ec2_extractor(
+    "aws_launch_template", "LaunchTemplates", "LaunchTemplateId"
+)
+_extract_clusters = _arn_list_extractor("clusterArns")
+_extract_services = _arn_list_extractor("serviceArns")
+_extract_repositories = _arn_extractor(("repositories",), "repositoryArn")
+_extract_auto_scaling_groups = _arn_extractor(("AutoScalingGroups",), "AutoScalingGroupARN")
+_extract_replication_groups = _arn_extractor(("ReplicationGroups",), "ARN")
+_extract_topics = _arn_extractor(("Topics",), "TopicArn")
+_extract_schedules = _arn_extractor(("Schedules",), "Arn")
 _extract_load_balancers = _arn_extractor(("LoadBalancers",), "LoadBalancerArn")
 _extract_listeners = _arn_extractor(("Listeners",), "ListenerArn")
 _extract_target_groups = _arn_extractor(("TargetGroups",), "TargetGroupArn")
@@ -416,7 +463,30 @@ _REGIONAL_DISCOVERERS: list[Any] = [
     ("aws_acm_certificate", "acm", "list_certificates", _extract_certificates, {}),
     # ListWebACLs cannot be paginated by boto3; one call returns up to 100 ACLs.
     ("aws_wafv2_web_acl", "wafv2", "list_web_acls", _extract_web_acls, {"Scope": "REGIONAL"}),
+    ("aws_ecs_cluster", "ecs", "list_clusters", _extract_clusters, {}),
+    ("aws_ecr_repository", "ecr", "describe_repositories", _extract_repositories, {}),
+    (
+        "aws_autoscaling_group",
+        "autoscaling",
+        "describe_auto_scaling_groups",
+        _extract_auto_scaling_groups,
+        {},
+    ),
+    ("aws_launch_template", "ec2", "describe_launch_templates", _extract_launch_templates, {}),
+    (
+        "aws_elasticache_replication_group",
+        "elasticache",
+        "describe_replication_groups",
+        _extract_replication_groups,
+        {},
+    ),
+    ("aws_sqs_queue", "sqs", "list_queues", _extract_queues, {}),
+    ("aws_sns_topic", "sns", "list_topics", _extract_topics, {}),
+    ("aws_scheduler_schedule", "scheduler", "list_schedules", _extract_schedules, {}),
 ]
+
+# DescribeServices accepts at most 10 services per call.
+_ECS_DESCRIBE_BATCH = 10
 
 # Account-wide ("global") resource types: discovered once, not per-region.
 _GLOBAL_DISCOVERERS: list[Any] = [
@@ -562,6 +632,84 @@ class ResourceDiscovery:
                     _extract_listeners,
                     region,
                     {"LoadBalancerArn": lb.arn},
+                )
+            )
+        # ECS services can only be listed per cluster.
+        for cluster in [r for r in resources if r.resource_type == "aws_ecs_cluster"]:
+            services = self._safe_discover(
+                "aws_ecs_service",
+                "ecs",
+                "list_services",
+                _extract_services,
+                region,
+                {"cluster": cluster.arn},
+            )
+            resources.extend(services)
+            resources.extend(self._task_definitions_in_use(cluster.arn, services, region))
+        resources.extend(self._event_rules(region))
+        return resources
+
+    def _task_definitions_in_use(
+        self, cluster_arn: str, services: list[DiscoveredResource], region: str
+    ) -> list[DiscoveredResource]:
+        """Task definition revisions run by ``services`` (current and in-flight deployments)."""
+        found: dict[str, DiscoveredResource] = {}
+
+        def extract(
+            response: dict[str, Any], region: str, account_id: str = ""
+        ) -> list[DiscoveredResource]:
+            arns = []
+            for service in response.get("services", []):
+                arns.append(service.get("taskDefinition"))
+                arns += [d.get("taskDefinition") for d in service.get("deployments") or []]
+            items = [{"arn": arn} for arn in arns if isinstance(arn, str)]
+            return _arn_extractor(("items",), "arn")({"items": items}, region, account_id)
+
+        arns = [s.arn for s in services]
+        for start in range(0, len(arns), _ECS_DESCRIBE_BATCH):
+            batch = arns[start : start + _ECS_DESCRIBE_BATCH]
+            for resource in self._safe_discover(
+                "aws_ecs_task_definition",
+                "ecs",
+                "describe_services",
+                extract,
+                region,
+                {"cluster": cluster_arn, "services": batch},
+            ):
+                found.setdefault(resource.arn, resource)
+        return list(found.values())
+
+    def _event_rules(self, region: str) -> list[DiscoveredResource]:
+        """EventBridge rules of every event bus, without rules managed by AWS services."""
+        buses: list[str] = []
+
+        def extract_buses(
+            response: dict[str, Any], region: str, account_id: str = ""
+        ) -> list[DiscoveredResource]:
+            buses.extend(str(b["Name"]) for b in response.get("EventBuses", []) if b.get("Name"))
+            return []
+
+        self._safe_discover(
+            "aws_cloudwatch_event_rule", "events", "list_event_buses", extract_buses, region, {}
+        )
+        extract_rules = _arn_extractor(("Rules",), "Arn")
+
+        def extract(
+            response: dict[str, Any], region: str, account_id: str = ""
+        ) -> list[DiscoveredResource]:
+            own = [r for r in response.get("Rules", []) if not r.get("ManagedBy")]
+            return extract_rules({"Rules": own}, region, account_id)
+
+        resources: list[DiscoveredResource] = []
+        for bus in buses:
+            resources.extend(
+                self._safe_discover(
+                    "aws_cloudwatch_event_rule",
+                    "events",
+                    "list_rules",
+                    extract,
+                    region,
+                    {"EventBusName": bus},
                 )
             )
         return resources

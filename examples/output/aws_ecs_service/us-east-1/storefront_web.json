@@ -1,0 +1,52 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:ecs:us-east-1:123456789012:service/storefront/web",
+  "generated_at": "2026-10-15T16:40:03.851507Z",
+  "metadata": {
+    "api_version": "2014-11-13",
+    "checksum": "de1130ac0afe088e46cdf067bf814bab669ac71b95545bcdfa07714fe0055225",
+    "collected_at": "2026-10-15T16:40:03Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_ecs_service",
+  "specifications": {
+    "clusterArn": "arn:aws:ecs:us-east-1:123456789012:cluster/storefront",
+    "deployments": [
+      {
+        "createdAt": "2026-10-15T23:40:02.617837+07:00",
+        "desiredCount": 2,
+        "id": "ecs-svc/614225609518633782",
+        "launchType": "FARGATE",
+        "pendingCount": 2,
+        "runningCount": 0,
+        "status": "PRIMARY",
+        "taskDefinition": "arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1",
+        "updatedAt": "2026-10-15T23:40:02.617843+07:00"
+      }
+    ],
+    "desiredCount": 2,
+    "launchType": "FARGATE",
+    "loadBalancers": [
+      {
+        "containerName": "web",
+        "containerPort": 80,
+        "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188"
+      }
+    ],
+    "pendingCount": 2,
+    "runningCount": 0,
+    "schedulingStrategy": "REPLICA",
+    "serviceArn": "arn:aws:ecs:us-east-1:123456789012:service/storefront/web",
+    "serviceName": "web",
+    "serviceRegistries": [],
+    "status": "ACTIVE",
+    "tags": [
+      {
+        "key": "service",
+        "value": "storefront"
+      }
+    ],
+    "taskDefinition": "arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1"
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "DescribeAutoScalingGroups": {
+    "AutoScalingGroups": [
+      {
+        "AutoScalingGroupARN": "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:d7e19156-0c83-434b-b8e0-a1b67c604518:autoScalingGroupName/storefront-workers",
+        "AutoScalingGroupName": "storefront-workers",
+        "AvailabilityZones": [
+          "us-east-1a"
+        ],
+        "CapacityRebalance": false,
+        "CreatedTime": "2013-05-06T17:47:15.107000+00:00",
+        "DefaultCooldown": 300,
+        "DesiredCapacity": 1,
+        "HealthCheckGracePeriod": 300,
+        "HealthCheckType": "EC2",
+        "Instances": [
+          {
+            "AvailabilityZone": "us-east-1a",
+            "HealthStatus": "Healthy",
+            "InstanceId": "i-f6333ad6a6250cb6f",
+            "InstanceType": "t3.small",
+            "LaunchTemplate": {
+              "LaunchTemplateId": "lt-254efd878ee151eb7",
+              "LaunchTemplateName": "storefront-worker",
+              "Version": "$Default"
+            },
+            "LifecycleState": "InService",
+            "ProtectedFromScaleIn": false
+          }
+        ],
+        "LaunchTemplate": {
+          "LaunchTemplateId": "lt-254efd878ee151eb7",
+          "LaunchTemplateName": "storefront-worker",
+          "Version": "$Default"
+        },
+        "LoadBalancerNames": [],
+        "MaxSize": 2,
+        "MinSize": 1,
+        "NewInstancesProtectedFromScaleIn": false,
+        "ServiceLinkedRoleARN": "arn:aws:iam::123456789012:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling",
+        "SuspendedProcesses": [],
+        "Tags": [
+          {
+            "Key": "service",
+            "PropagateAtLaunch": true,
+            "ResourceId": "storefront-workers",
+            "ResourceType": "auto-scaling-group",
+            "Value": "storefront"
+          }
+        ],
+        "TargetGroupARNs": [],
+        "TerminationPolicies": [
+          "Default"
+        ],
+        "VPCZoneIdentifier": "subnet-a6e131f6"
+      }
+    ],
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "0f02a07d-b677-11e2-9eb0-dd50EXAMPLE",
+      "RetryAttempts": 0
+    }
+  }
+}

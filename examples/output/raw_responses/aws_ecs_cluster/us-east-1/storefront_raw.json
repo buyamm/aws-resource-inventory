@@ -1,0 +1,37 @@
+{
+  "DescribeClusters": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RetryAttempts": 0
+    },
+    "clusters": [
+      {
+        "activeServicesCount": 0,
+        "clusterArn": "arn:aws:ecs:us-east-1:123456789012:cluster/storefront",
+        "clusterName": "storefront",
+        "pendingTasksCount": 0,
+        "registeredContainerInstancesCount": 0,
+        "runningTasksCount": 0,
+        "settings": [
+          {
+            "name": "containerInsights",
+            "value": "enabled"
+          }
+        ],
+        "status": "ACTIVE",
+        "tags": [
+          {
+            "key": "service",
+            "value": "storefront"
+          }
+        ]
+      }
+    ],
+    "failures": []
+  }
+}

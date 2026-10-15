@@ -44,7 +44,7 @@ Every relationship, pattern and finding in `analysis/analysis.json` carries at l
 
 Citations are built by one function, `cite(spec, property_path)`, which reads `evidence_value` from the spec itself, so a citation always resolves at the time it is created. A property-based test (`test_property_citations_resolve_req_8_5`) checks this for generated specs. `docs/infrastructure.md` uses the same citations in compact form: `[cite: <spec_file>#<property_path> sha256:<first 12 hex chars>]`.
 
-Confidence scores are fixed per rule: 1.0 for direct id references, 0.95 for role ARN/name matches, 0.9 for security group attachments, and 0.85 for environment-variable substring matches. A pattern's confidence is the minimum of its supporting relationships. Patterns that would need unsupported services (API Gateway, load balancers, CloudFront) are listed in `undetectable_patterns` and are never asserted.
+Confidence scores are fixed per rule: 1.0 for direct id references, 0.95 for role ARN/name matches, 0.9 for security group attachments, and 0.85 for environment-variable substring matches. A pattern's confidence is the minimum of its supporting relationships. Patterns no rule can detect from the collected data (API Gateway + Lambda + DynamoDB, EC2 + Load Balancer with instances registered directly in the target group) are listed in `undetectable_patterns` with the reason and are never asserted.
 
 ### Verification method
 
@@ -89,11 +89,12 @@ If someone edits a cited value in a spec file after `analyze`, `verify` reports 
 | A string containing an AWS access key ID (`AKIA`/`ASIA` + 16 characters), or the value of a key containing `access_key_id` | `[REDACTED_AWS_KEY]` |
 | The value of a key containing `secret_access_key` | `[REDACTED_AWS_SECRET]` |
 | A string containing a PEM private key header | `[REDACTED_PRIVATE_KEY]` |
-| The string value of a key containing `password`, `passwd`, `secret`, `private_key`, `token`, `api_key` or `credential` (keys containing `public` are exempt) | `[REDACTED]` |
+| The string value of a key containing `password`, `passwd`, `secret`, `private_key`, `token`, `api_key`, `credential` or `userdata` (keys containing `public` are exempt; launch template `UserData` is base64, so it cannot be scanned) | `[REDACTED]` |
+| The `value` of a `{name, value}` entry (ECS container environment) whose `name` matches the previous row | `[REDACTED]` |
 
 Keys, list lengths and nesting are always preserved, and sanitizing twice gives the same result (property tests). A dict or list referenced from several places (or from itself) is sanitized once and every reference gets the sanitized copy, so a shared object can never pass through unredacted. Names like `KeyName`, `KmsKeyId` and `KeyType` are not redacted. Each redaction is logged with its JSON path and placeholder, never the original value.
 
-The sanitizer runs on per-resource JSON and Markdown, aggregates, raw responses, reports, analysis and documentation files, every MCP response, and every log record. In the example output the Lambda environment variable `DB_PASSWORD` is stored as `[REDACTED]`. The Terraform generator turns placeholders into a `# REDACTED: set manually` comment plus a `lifecycle.ignore_changes` entry, so secrets are never written into IaC.
+The sanitizer runs on per-resource JSON and Markdown, aggregates, raw responses, reports, analysis and documentation files, every MCP response, and every log record. In the example output the Lambda environment variable `DB_PASSWORD` and the ECS container variable `SESSION_SECRET` are stored as `[REDACTED]`. The Terraform generator turns placeholders into a `# REDACTED: set manually` comment plus a `lifecycle.ignore_changes` entry, so secrets are never written into IaC.
 
 ### MCP server isolation (Requirement 5, 9.7)
 
@@ -111,16 +112,16 @@ The sanitizer runs on per-resource JSON and Markdown, aggregates, raw responses,
 
 ## Performance benchmark
 
-Measured with `scripts/benchmark.py` on 2026-10-15 after the network/edge types were added (Apple M1, 8 cores, Python 3.11.9, moto 4.x, default 10 workers). The script creates **1000 resources in 17 regions** in moto (per region: moto's default VPC, security group, subnets and main route table, 9 instances, 9 security groups, 9 log groups, 9 DynamoDB tables, 5 Lambda functions, 4 state machines, 4 RDS instances; plus 30 IAM roles and 31 S3 buckets), adds a fixed delay to every AWS API call the CLI makes (a botocore `before-call` hook on each client of `InventorySession`), runs `aws-inventory collect` in-process and reads the phase timings from `collection_report.json`.
+Measured with `scripts/benchmark.py` on 2026-10-15 after the compute and data types were added (Apple M1, 8 cores, Python 3.11.9, moto 4.x, default 10 workers). The script creates **1000 resources in 17 regions** in moto (per region: moto's default VPC, security group, subnets and main route table, 9 instances, 9 security groups, 9 log groups, 9 DynamoDB tables, 5 Lambda functions, 4 state machines, 4 RDS instances; plus 30 IAM roles and 31 S3 buckets), adds a fixed delay to every AWS API call the CLI makes (a botocore `before-call` hook on each client of `InventorySession`), runs `aws-inventory collect` in-process and reads the phase timings from `collection_report.json`.
 
 | Phase | 100 ms per API call | 0 ms (moto overhead only) | Target |
 |---|---|---|---|
-| Discovery (17 regions) | 8.66 s | 4.74 s | < 5 minutes (Requirement 1.5) |
-| Collection (1000 specs) | 19.80 s = 50.5 resources/s | 2.33 s = 429.6 resources/s | ≥ 10 resources/s |
-| Output (1000 spec files + reports) | 1.91 s | 1.86 s | - |
+| Discovery (17 regions) | 12.73 s | 6.87 s | < 5 minutes (Requirement 1.5) |
+| Collection (1000 specs) | 19.29 s = 51.9 resources/s | 2.17 s = 460.3 resources/s | ≥ 10 resources/s |
+| Output (1000 spec files + reports) | 1.87 s | 2.04 s | - |
 | `generate-iac` on the 1000 specs | - | 0.87 s (whole command, 2026-10-14 run) | < 10 s |
 
-Both runs made 1980 API calls (every one delayed in the first run), collected 1000/1000 specs and had no failures. Discovery time is dominated by moto building each region's backend, not by the simulated latency: regions are scanned concurrently and each region needs about one list call per resource type (17 regional list calls per region since the network/edge types). Collection with 100 ms latency is bounded by `calls per resource × latency / workers` (≈ 1700 collection calls × 0.1 s / 10 ≈ 17 s plus moto time).
+Both runs made 2150 API calls (every one delayed in the first run), collected 1000/1000 specs and had no failures. Discovery time is dominated by moto building each region's backend, not by the simulated latency: regions are scanned concurrently and each region needs about one list call per resource type (27 regional list calls per region since the compute and data types, plus one `ListRules` per event bus). Collection with 100 ms latency is bounded by `calls per resource × latency / workers` (≈ 1700 collection calls × 0.1 s / 10 ≈ 17 s plus moto time).
 
 Reproduce:
 

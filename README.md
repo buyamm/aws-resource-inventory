@@ -2,7 +2,7 @@
 
 `aws-inventory` takes over an AWS account that has no Infrastructure as Code, documentation or diagrams and produces all three, using **read-only** API calls:
 
-- collects the full configuration of 22 resource types into a local, checksummed **Output_Dir**;
+- collects the full configuration of 33 resource types into a local, checksummed **Output_Dir**;
 - analyzes relationships, architecture patterns and security findings, where **every statement carries a citation** that `aws-inventory verify` checks mechanically;
 - draws a draw.io architecture diagram with official AWS stencils;
 - generates Terraform plus `terraform import` and plan-verification scripts;
@@ -10,7 +10,7 @@
 
 Only `discover` and `collect` talk to AWS. Every other command works offline on the Output_Dir, so its results can be reproduced and audited.
 
-Supported resource types (canonical id = Terraform type): `aws_instance`, `aws_vpc`, `aws_security_group`, `aws_lambda_function`, `aws_db_instance`, `aws_cloudwatch_log_group`, `aws_sfn_state_machine`, `aws_dynamodb_table`, `aws_s3_bucket`, `aws_iam_role`, `aws_subnet`, `aws_route_table`, `aws_internet_gateway`, `aws_nat_gateway`, `aws_vpc_endpoint`, `aws_cloudfront_distribution`, `aws_lb`, `aws_lb_listener`, `aws_lb_target_group`, `aws_route53_zone`, `aws_acm_certificate`, `aws_wafv2_web_acl`. CloudFront distributions, Route 53 zones and CloudFront-scope WAF web ACLs use the region `global`.
+Supported resource types (canonical id = Terraform type): `aws_instance`, `aws_vpc`, `aws_security_group`, `aws_lambda_function`, `aws_db_instance`, `aws_cloudwatch_log_group`, `aws_sfn_state_machine`, `aws_dynamodb_table`, `aws_s3_bucket`, `aws_iam_role`, `aws_subnet`, `aws_route_table`, `aws_internet_gateway`, `aws_nat_gateway`, `aws_vpc_endpoint`, `aws_cloudfront_distribution`, `aws_lb`, `aws_lb_listener`, `aws_lb_target_group`, `aws_route53_zone`, `aws_acm_certificate`, `aws_wafv2_web_acl`, `aws_ecs_cluster`, `aws_ecs_service`, `aws_ecs_task_definition`, `aws_ecr_repository`, `aws_autoscaling_group`, `aws_launch_template`, `aws_elasticache_replication_group`, `aws_sqs_queue`, `aws_sns_topic`, `aws_cloudwatch_event_rule`, `aws_scheduler_schedule`. CloudFront distributions, Route 53 zones and CloudFront-scope WAF web ACLs use the region `global`.
 
 More documentation:
 
@@ -210,11 +210,12 @@ Then ask, for example, "List the Lambda functions and explain which tables they 
 
 ## Known limitations
 
-- Only the resource types above are collected. Patterns no rule can detect (API Gateway + Lambda + DynamoDB, EC2 + Load Balancer, S3 + CloudFront) are listed as undetectable in `analysis.json` with the reason, rather than guessed.
+- Only the resource types above are collected. Patterns no rule can detect (API Gateway + Lambda + DynamoDB, EC2 + Load Balancer with instances registered directly in the target group) are listed as undetectable in `analysis.json` with the reason, rather than guessed.
+- ECS: only the task definition revisions that services run are collected (not every registered revision); services must use the long ARN format (`service/<cluster>/<service>`). ElastiCache: replication groups only (not standalone Memcached clusters); the subnet group, security groups and engine version are read from the first member cluster.
 - CloudFront: only distributions are collected (never edge locations or IP ranges). A load balancer origin is matched to the collected load balancer by DNS name in the analysis, but the dependency closure cannot follow it (a DNS name does not identify an ARN); tag the load balancer or collect without `--project-tag`.
-- Terraform: WAF web ACL rules and extra (non-default) listener certificates are not mapped; web ACL rules are kept out of the plan with `ignore_changes = [rule]`. Imported ACM certificates need `certificate_body`/`private_key` set by hand.
+- Terraform: WAF web ACL rules, extra (non-default) listener certificates, SNS subscriptions, Auto Scaling mixed-instances policies and ECS cluster capacity-provider associations are not mapped; launch template user data is always redacted (and ignored in the plan); web ACL rules are kept out of the plan with `ignore_changes = [rule]`. Imported ACM certificates need `certificate_body`/`private_key` set by hand.
 - The analysis is rule-based and deterministic; there is no embedded LLM. Free-form explanations come from the AI agent connected over MCP.
-- The sanitizer redacts by key name as well as by value, so harmless fields whose names contain `token`, `secret`, `password`, ... (for example EC2 `ClientToken`) appear as `[REDACTED]`.
+- The sanitizer redacts by key name as well as by value, so harmless fields whose names contain `token`, `secret`, `password`, ... (for example EC2 `ClientToken`) appear as `[REDACTED]`; so do ECS container environment values whose `name` looks sensitive, and launch template `UserData`.
 - Terraform: redacted values (for example secret environment variables) are emitted with a `# REDACTED: set manually` comment and listed in `ignore_changes`; Lambda code is a `lambda_<name>.zip` placeholder; the RDS master password is not available. S3 lifecycle/CORS/website/ACL and DynamoDB TTL/point-in-time recovery are not mapped, and security group rules with different per-range descriptions are emitted without descriptions.
 - The zero-change `terraform plan` guarantee is tested against a real account only by the opt-in live test (`AWS_INVENTORY_LIVE_TESTS=1`).
 - Collection of a single resource is not incremental; re-run `collect` to refresh the whole Output_Dir.

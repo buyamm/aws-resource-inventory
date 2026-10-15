@@ -5,7 +5,7 @@
         "AlpnPolicy": [],
         "Certificates": [
           {
-            "CertificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/59f7c298-c41f-48f5-a3db-cb8263d5fcc6"
+            "CertificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/a731cd05-0052-48e0-8889-0431af5b4bbe"
           }
         ],
         "DefaultActions": [
@@ -14,7 +14,7 @@
             "Type": "forward"
           }
         ],
-        "ListenerArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434430983056",
+        "ListenerArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434588500944",
         "LoadBalancerArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188",
         "Port": 443,
         "Protocol": "HTTPS",
@@ -23,13 +23,13 @@
     ],
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Thu, 15 Oct 2026 23:01:58 GMT",
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
         "server": "amazon.com",
-        "x-amzn-requestid": "kKg7urJWUGtbNsmDcNuazsMx1G0aZXMDIZ3VmuJpVW3mNPbfKIag"
+        "x-amzn-requestid": "meFSylZ8ciob8ctnNURnYwdwwzkFep066siBak7Nx9OiMSVjkjGD"
       },
       "HTTPStatusCode": 200,
       "MaxAttemptsReached": true,
-      "RequestId": "kKg7urJWUGtbNsmDcNuazsMx1G0aZXMDIZ3VmuJpVW3mNPbfKIag",
+      "RequestId": "meFSylZ8ciob8ctnNURnYwdwwzkFep066siBak7Nx9OiMSVjkjGD",
       "RetryAttempts": 0
     }
   },
@@ -54,13 +54,13 @@
     ],
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Thu, 15 Oct 2026 23:01:58 GMT",
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
         "server": "amazon.com",
-        "x-amzn-requestid": "r9UVYk731GJsf9wDpQTUsI7OzLCveLGw8dODXujxtcpQtHJYC0JT"
+        "x-amzn-requestid": "LkmbVJZHAMH3Vf4Fv94QoZcMqPDlpbaq1QeetCK2Az34hnGdFmdS"
       },
       "HTTPStatusCode": 200,
       "MaxAttemptsReached": true,
-      "RequestId": "r9UVYk731GJsf9wDpQTUsI7OzLCveLGw8dODXujxtcpQtHJYC0JT",
+      "RequestId": "LkmbVJZHAMH3Vf4Fv94QoZcMqPDlpbaq1QeetCK2Az34hnGdFmdS",
       "RetryAttempts": 0
     }
   },
@@ -69,53 +69,53 @@
       {
         "AvailabilityZones": [
           {
-            "SubnetId": "subnet-dc94c752",
+            "SubnetId": "subnet-d94916f9",
             "ZoneName": "us-east-1a"
           },
           {
-            "SubnetId": "subnet-ee0601cc",
+            "SubnetId": "subnet-b83c8765",
             "ZoneName": "us-east-1b"
           }
         ],
         "CanonicalHostedZoneId": "Z2P70J7EXAMPLE",
-        "CreatedTime": "2026-10-15T16:01:57.250000+00:00",
+        "CreatedTime": "2026-10-15T16:40:02.493000+00:00",
         "DNSName": "storefront-alb-1.us-east-1.elb.amazonaws.com",
         "IpAddressType": "ipv4",
         "LoadBalancerArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188",
         "LoadBalancerName": "storefront-alb",
         "Scheme": "internet-facing",
         "SecurityGroups": [
-          "sg-347a556c97894d9e4"
+          "sg-8c9c7f5f96b0d5fb1"
         ],
         "State": {
           "Code": "active"
         },
         "Type": "application",
-        "VpcId": "vpc-1561eea5"
+        "VpcId": "vpc-b6ee287f"
       }
     ],
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Thu, 15 Oct 2026 23:01:58 GMT",
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
         "server": "amazon.com",
-        "x-amzn-requestid": "bSSDz9Kfdgp9HU00ZVTwW8oHMsB8OF1b45G16N4TxoAkBZ0DkZUx"
+        "x-amzn-requestid": "TO0rhOxkHfyzcmYZqHwg6gFIhyd600c7AsHk3wUysno9ntRwg7T7"
       },
       "HTTPStatusCode": 200,
       "MaxAttemptsReached": true,
-      "RequestId": "bSSDz9Kfdgp9HU00ZVTwW8oHMsB8OF1b45G16N4TxoAkBZ0DkZUx",
+      "RequestId": "TO0rhOxkHfyzcmYZqHwg6gFIhyd600c7AsHk3wUysno9ntRwg7T7",
       "RetryAttempts": 0
     }
   },
   "DescribeTags": {
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Thu, 15 Oct 2026 23:01:58 GMT",
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
         "server": "amazon.com",
-        "x-amzn-requestid": "zolteNvlDeOQcWlECq29iV3J4sa3ZnfLvI0ZW3LsxClMytEF3vyP"
+        "x-amzn-requestid": "rE9Tbg4l94UL0kZ2XSjDlxDCjOkmB8dxtBm2ZDoqgVBsz4qTfQqk"
       },
       "HTTPStatusCode": 200,
       "MaxAttemptsReached": true,
-      "RequestId": "zolteNvlDeOQcWlECq29iV3J4sa3ZnfLvI0ZW3LsxClMytEF3vyP",
+      "RequestId": "rE9Tbg4l94UL0kZ2XSjDlxDCjOkmB8dxtBm2ZDoqgVBsz4qTfQqk",
       "RetryAttempts": 0
     },
     "TagDescriptions": [

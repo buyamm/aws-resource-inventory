@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:rds:us-east-1:123456789012:db:orders-db",
-  "generated_at": "2026-10-15T16:01:58.115386Z",
+  "generated_at": "2026-10-15T16:40:03.851507Z",
   "metadata": {
     "api_version": "2014-10-31",
-    "checksum": "0bbdd86d95b1540bed33fd3c0f51ffa69c2422d21c4cd66028e40d6448e116ea",
-    "collected_at": "2026-10-15T16:01:58Z",
+    "checksum": "f1c30e919db7ed34f2d583e3c89cc86ab9d860c440a8747ec387f848ca7667ad",
+    "collected_at": "2026-10-15T16:40:03Z",
     "collector_version": "0.1.0"
   },
   "region": "us-east-1",
@@ -38,7 +38,7 @@
     "Engine": "postgres",
     "EngineVersion": "9.3.3",
     "IAMDatabaseAuthenticationEnabled": false,
-    "InstanceCreateTime": "2026-10-15T16:01:57.045000+00:00",
+    "InstanceCreateTime": "2026-10-15T16:40:02.370000+00:00",
     "LicenseModel": "None",
     "MasterUsername": "orders_admin",
     "MultiAZ": false,
@@ -64,7 +64,7 @@
     "VpcSecurityGroups": [
       {
         "Status": "active",
-        "VpcSecurityGroupId": "sg-ceb6d3dc119d60702"
+        "VpcSecurityGroupId": "sg-fb454a9efcd634f32"
       }
     ]
   }

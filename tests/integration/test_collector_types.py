@@ -2,7 +2,7 @@
 Integration tests (moto): SpecCollector produces the per-type Specifications
 schema defined in design.md for every Supported_Resource_Type.
 
-Validates: Requirements 2.1, 2.2, 2.3, 2.4, 2.6, 3.3
+Validates: Requirements 2.1, 2.2, 2.3, 2.4, 2.6, 3.3, 14.1, 14.4
 """
 
 from __future__ import annotations
@@ -322,3 +322,157 @@ def test_integration_collector_wafv2_web_acl_spec_req_14_1(sample_account):
     assert "DefaultAction" in s and "VisibilityConfig" in s
     assert {"Key": "service", "Value": "storefront"} in s["Tags"]
     assert "LockToken" not in s
+
+
+# ============================================================================
+# Compute and data types (Requirement 14.4)
+# ============================================================================
+
+
+def test_integration_collector_ecs_cluster_spec_req_14_4(sample_account):
+    session, ids = sample_account
+    spec = _collect_clean(session, "ecs", "aws_ecs_cluster", "storefront", ids.ecs_cluster_arn)
+    s = spec.specifications
+    assert s["clusterArn"] == ids.ecs_cluster_arn and s["clusterName"] == "storefront"
+    assert {"name": "containerInsights", "value": "enabled"} in s["settings"]
+    assert {"key": "service", "value": "storefront"} in s["tags"]
+
+
+def test_integration_collector_ecs_service_spec_req_14_4(sample_account):
+    session, ids = sample_account
+    spec = _collect_clean(session, "ecs", "aws_ecs_service", "storefront/web", ids.ecs_service_arn)
+    s = spec.specifications
+    assert s["serviceArn"] == ids.ecs_service_arn
+    assert s["clusterArn"] == ids.ecs_cluster_arn
+    assert s["taskDefinition"] == ids.task_definition_arn
+    assert s["loadBalancers"][0]["targetGroupArn"] == ids.target_group_arn
+    assert {"key": "service", "value": "storefront"} in s["tags"]
+    # The service event log is operational history, not configuration (raw_response keeps it).
+    assert "events" not in s
+
+
+def test_integration_collector_ecs_task_definition_spec_req_14_4(sample_account):
+    session, ids = sample_account
+    spec = _collect_clean(
+        session, "ecs", "aws_ecs_task_definition", "storefront-web:1", ids.task_definition_arn
+    )
+    s = spec.specifications
+    assert s["taskDefinitionArn"] == ids.task_definition_arn
+    assert s["family"] == "storefront-web" and s["revision"] == 1
+    assert s["taskRoleArn"] == ids.task_role_arn
+    assert s["executionRoleArn"] == ids.execution_role_arn
+    container = s["containerDefinitions"][0]
+    assert container["image"].endswith("/storefront-web:1.4.2")
+    assert container["logConfiguration"]["options"]["awslogs-group"] == ids.ecs_log_group_name
+    assert {"key": "service", "value": "storefront"} in s["tags"]
+
+
+def test_integration_collector_ecr_repository_spec_req_14_4(sample_account):
+    session, ids = sample_account
+    spec = _collect_clean(
+        session, "ecr", "aws_ecr_repository", "storefront-web", ids.ecr_repository_arn
+    )
+    s = spec.specifications
+    assert s["repositoryName"] == "storefront-web"
+    assert s["repositoryUri"].endswith("/storefront-web")
+    assert s["imageScanningConfiguration"] == {"scanOnPush": True}
+    assert {"Key": "service", "Value": "storefront"} in s["tags"]
+
+
+def test_integration_collector_autoscaling_group_spec_req_14_4(sample_account):
+    session, ids = sample_account
+    # A closure target only knows the wildcard ARN; the collector records the real one.
+    wildcard = (
+        f"arn:aws:autoscaling:{REGION}:{ACCOUNT}:autoScalingGroup:*:"
+        "autoScalingGroupName/storefront-workers"
+    )
+    client = session.client("autoscaling", region_name=REGION)
+    result = SpecCollector(client).collect_resource(
+        "aws_autoscaling_group", "storefront-workers", wildcard, REGION, ACCOUNT
+    )
+    assert result.is_ok()
+    spec = result.value
+    assert spec.arn == ids.autoscaling_group_arn
+    s = spec.specifications
+    assert s["AutoScalingGroupName"] == "storefront-workers"
+    assert s["LaunchTemplate"]["LaunchTemplateId"] == ids.launch_template_id
+    assert s["VPCZoneIdentifier"] == ids.subnet_id
+    assert s["MinSize"] == 1 and s["MaxSize"] == 2
+
+
+def test_integration_collector_launch_template_spec_req_14_4(sample_account):
+    session, ids = sample_account
+    lt = ids.launch_template_id
+    arn = f"arn:aws:ec2:{REGION}:{ACCOUNT}:launch-template/{lt}"
+    spec = _collect_clean(session, "ec2", "aws_launch_template", lt, arn)
+    s = spec.specifications
+    assert s["LaunchTemplateId"] == lt
+    assert s["LaunchTemplateName"] == "storefront-worker"
+    # The data of the default version (Req 14.4).
+    assert s["LaunchTemplateData"]["InstanceType"] == "t3.small"
+    assert s["LaunchTemplateData"]["SecurityGroupIds"] == [ids.app_security_group_id]
+    assert {"Key": "service", "Value": "storefront"} in s["Tags"]
+
+
+def test_integration_collector_elasticache_replication_group_spec_req_14_4(sample_account):
+    session, ids = sample_account
+    arn = f"arn:aws:elasticache:{REGION}:{ACCOUNT}:replicationgroup:storefront-cache"
+    spec = _collect_clean(
+        session, "elasticache", "aws_elasticache_replication_group", "storefront-cache", arn
+    )
+    s = spec.specifications
+    assert s["ReplicationGroupId"] == "storefront-cache"
+    assert s["MemberClusters"] == ["storefront-cache-001", "storefront-cache-002"]
+    # Subnet group, security groups and engine version live on the member clusters.
+    assert s["CacheCluster"]["CacheClusterId"] == "storefront-cache-001"
+    assert s["CacheCluster"]["SecurityGroups"][0]["SecurityGroupId"] == ids.app_security_group_id
+    assert s["CacheSubnetGroup"]["VpcId"] == ids.vpc_id
+    assert [x["SubnetIdentifier"] for x in s["CacheSubnetGroup"]["Subnets"]] == [ids.subnet_id]
+    assert {"Key": "service", "Value": "storefront"} in s["TagList"]
+
+
+def test_integration_collector_sqs_queue_spec_req_14_4(sample_account):
+    session, ids = sample_account
+    spec = _collect_clean(session, "sqs", "aws_sqs_queue", "storefront-orders", ids.queue_arn)
+    s = spec.specifications
+    assert s["QueueUrl"] == ids.queue_url
+    assert s["Attributes"]["QueueArn"] == ids.queue_arn
+    assert s["Attributes"]["VisibilityTimeout"] == "60"
+    assert s["Tags"] == {"service": "storefront"}
+
+
+def test_integration_collector_sns_topic_spec_req_14_4(sample_account):
+    session, ids = sample_account
+    spec = _collect_clean(session, "sns", "aws_sns_topic", "storefront-events", ids.topic_arn)
+    s = spec.specifications
+    assert s["Attributes"]["TopicArn"] == ids.topic_arn
+    assert s["Attributes"]["DisplayName"] == "Storefront events"
+    assert [x["Endpoint"] for x in s["Subscriptions"]] == [ids.queue_arn]
+    assert {"Key": "service", "Value": "storefront"} in s["Tags"]
+
+
+def test_integration_collector_event_rule_spec_req_14_4(sample_account):
+    session, ids = sample_account
+    spec = _collect_clean(
+        session, "events", "aws_cloudwatch_event_rule", "storefront-nightly-report",
+        ids.event_rule_arn,
+    )  # fmt: skip
+    s = spec.specifications
+    assert s["Name"] == "storefront-nightly-report"
+    assert s["ScheduleExpression"] == "cron(0 2 * * ? *)"
+    assert [t["Arn"] for t in s["Targets"]] == [
+        f"arn:aws:lambda:{REGION}:{ACCOUNT}:function:{ids.function_name}"
+    ]
+    assert {"Key": "service", "Value": "storefront"} in s["Tags"]
+
+
+def test_integration_collector_scheduler_schedule_spec_req_14_4(sample_account):
+    session, ids = sample_account
+    spec = _collect_clean(
+        session, "scheduler", "aws_scheduler_schedule", "default/storefront-cleanup",
+        ids.schedule_arn,
+    )  # fmt: skip
+    s = spec.specifications
+    assert s["Name"] == "storefront-cleanup" and s["GroupName"] == "default"
+    assert s["Target"]["Arn"] == ids.queue_arn
+    assert s["ScheduleExpression"] == "rate(1 hour)"

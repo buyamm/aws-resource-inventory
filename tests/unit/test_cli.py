@@ -366,6 +366,8 @@ IAM_ACTION_OVERRIDES = {
     "s3:ListBuckets": "s3:ListAllMyBuckets",
     "tagging:GetResources": "tag:GetResources",
 }
+# botocore endpoint prefixes that differ from the IAM service prefix.
+IAM_PREFIX_OVERRIDES = {"api.ecr": "ecr"}
 
 
 def test_cli_api_calls_covered_by_iam_policy_req_9_4(runner, tmp_path, sample_account):
@@ -373,11 +375,15 @@ def test_cli_api_calls_covered_by_iam_policy_req_9_4(runner, tmp_path, sample_ac
     original = BaseClient._make_api_call
 
     def record(self, operation_name, api_params):
-        action = f"{self.meta.service_model.endpoint_prefix}:{operation_name}"
+        prefix = self.meta.service_model.endpoint_prefix
+        action = f"{IAM_PREFIX_OVERRIDES.get(prefix, prefix)}:{operation_name}"
         calls.add(IAM_ACTION_OVERRIDES.get(action, action))
         return original(self, operation_name, api_params)
 
     with patch.object(BaseClient, "_make_api_call", record):
+        # The whole sample account: every collector of every Supported_Resource_Type.
+        result = _collect(runner, tmp_path / "all")
+        assert result.exit_code == 0, result.output
         result = _collect(runner, tmp_path / "out", "--role-arn", "arn:aws:iam::1:role/r")
         assert result.exit_code == 0, result.output
         result = _collect(runner, tmp_path / "scoped", "--project-tag", "team=orders")

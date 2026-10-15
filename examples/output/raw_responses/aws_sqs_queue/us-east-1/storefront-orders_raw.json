@@ -1,0 +1,61 @@
+{
+  "GetQueueAttributes": {
+    "Attributes": {
+      "ApproximateNumberOfMessages": "0",
+      "ApproximateNumberOfMessagesDelayed": "0",
+      "ApproximateNumberOfMessagesNotVisible": "0",
+      "CreatedTimestamp": "1792082402.659784",
+      "DelaySeconds": "0",
+      "LastModifiedTimestamp": "1792082402.659784",
+      "MaximumMessageSize": "262144",
+      "MessageRetentionPeriod": "345600",
+      "QueueArn": "arn:aws:sqs:us-east-1:123456789012:storefront-orders",
+      "ReceiveMessageWaitTimeSeconds": "0",
+      "VisibilityTimeout": "60"
+    },
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
+        "server": "amazon.com",
+        "x-amz-crc32": "907172977",
+        "x-amzn-requestid": "RV1LZstjp9xPQvsn5HfodUiRJ4OU1y28vMaSh5cSeWBSJoo2jZjy"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "RV1LZstjp9xPQvsn5HfodUiRJ4OU1y28vMaSh5cSeWBSJoo2jZjy",
+      "RetryAttempts": 0
+    }
+  },
+  "GetQueueUrl": {
+    "QueueUrl": "https://sqs.us-east-1.amazonaws.com/123456789012/storefront-orders",
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
+        "server": "amazon.com",
+        "x-amz-crc32": "3811116211",
+        "x-amzn-requestid": "QRMLQtojZzn6uUHpg74byb3MkuAm2p5lCR7Do2olY1tLamH1j16l"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "QRMLQtojZzn6uUHpg74byb3MkuAm2p5lCR7Do2olY1tLamH1j16l",
+      "RetryAttempts": 0
+    }
+  },
+  "ListQueueTags": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
+        "server": "amazon.com",
+        "x-amz-crc32": "4132006412",
+        "x-amzn-requestid": "9MNo3i8kzuzKIHt5dXkGESeYxmqBzUURHww82hvW9rNFZpDLfOVV"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "9MNo3i8kzuzKIHt5dXkGESeYxmqBzUURHww82hvW9rNFZpDLfOVV",
+      "RetryAttempts": 0
+    },
+    "Tags": {
+      "service": "storefront"
+    }
+  }
+}

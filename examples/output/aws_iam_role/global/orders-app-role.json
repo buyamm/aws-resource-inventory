@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:iam::123456789012:role/orders-app-role",
-  "generated_at": "2026-10-15T16:01:58.115386Z",
+  "generated_at": "2026-10-15T16:40:03.851507Z",
   "metadata": {
     "api_version": "2010-05-08",
-    "checksum": "80d44983179cc2494b2457d9d7fb2b2dc0c3e2c2965ba4f35cb962801fd9cb0b",
-    "collected_at": "2026-10-15T16:01:58Z",
+    "checksum": "401f57a8b6cd59cc5aedaf19dfbe775f478eb3b48267206fa63761b4a38a9f13",
+    "collected_at": "2026-10-15T16:40:03Z",
     "collector_version": "0.1.0"
   },
   "region": "global",
@@ -25,11 +25,11 @@
       "Version": "2012-10-17"
     },
     "AttachedPolicies": [],
-    "CreateDate": "2026-10-15T16:01:56.945000+00:00",
+    "CreateDate": "2026-10-15T16:40:02.205000+00:00",
     "InlinePolicies": {},
     "MaxSessionDuration": 3600,
     "Path": "/",
-    "RoleId": "AROARZPUZDIKPSYQ3UTIG",
+    "RoleId": "AROARZPUZDIKHSGDM6FBZ",
     "RoleLastUsed": {},
     "RoleName": "orders-app-role"
   }

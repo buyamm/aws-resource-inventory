@@ -456,12 +456,13 @@ Findings from the first live run (account `monetkit-prod`): without `--region` t
   - _Requirements: 1.3 (extended), 14.1–14.3 (new)_
   - Commit: `feat(collect): network, edge and load balancer resource types (Task 28)`
 
-- [ ] 29. Compute and data resource types
-  - [ ] 29.1 `aws_ecs_cluster`, `aws_ecs_service`, `aws_ecs_task_definition` (revisions in use only), `aws_ecr_repository`, `aws_autoscaling_group`, `aws_launch_template`, `aws_elasticache_replication_group`, `aws_sqs_queue`, `aws_sns_topic`, `aws_cloudwatch_event_rule`, `aws_scheduler_schedule` (tests first)
-  - [ ] 29.2 Relationships: cluster→service→task definition→roles/log group/ECR image, TG→ECS service/ASG, ASG→launch template/subnets, ElastiCache/RDS→subnets/SGs, rule/schedule→target
-  - [ ] 29.3 Patterns: "Web app: CloudFront + ALB + ECS", "Static site: S3 + CloudFront"; shrink `UNDETECTABLE_PATTERNS`
-  - [ ] 29.4 `scope.REFERENCE_RULES` for the new types (ECS service→cluster/task definition/TG, task definition→roles/log group, ASG→launch template/subnets/TG, ElastiCache→SGs) — _Req 13.3_
-  - _Requirements: 1.3 (extended), 6.2 (extended), 14.4 (new)_
+- [x] 29. Compute and data resource types
+  - [x] 29.1 `aws_ecs_cluster`, `aws_ecs_service`, `aws_ecs_task_definition` (revisions in use only), `aws_ecr_repository`, `aws_autoscaling_group`, `aws_launch_template`, `aws_elasticache_replication_group`, `aws_sqs_queue`, `aws_sns_topic`, `aws_cloudwatch_event_rule`, `aws_scheduler_schedule` (tests first)
+  - [x] 29.2 Relationships: cluster→service→task definition→roles/log group/ECR image, TG→ECS service/ASG, ASG→launch template/subnets, ElastiCache/RDS→subnets/SGs, rule/schedule→target
+  - [x] 29.3 Patterns: "Web app: CloudFront + ALB + ECS", "Static site: S3 + CloudFront"; shrink `UNDETECTABLE_PATTERNS`
+  - [x] 29.4 `scope.REFERENCE_RULES` for the new types (ECS service→cluster/task definition/TG, task definition→roles/log group, ASG→launch template/subnets/TG, ElastiCache→SGs) — _Req 13.3_
+  - Task definitions are the revisions services run (`DescribeServices`: `taskDefinition` + `deployments[]`); tag seeds skip task definitions and the closure reaches them through the services. ECS services use the long ARN format (`<cluster>/<service>` ids); Auto Scaling group ARNs embed a UUID, so built ARNs use the IAM wildcard form and the collector records the real one. ElastiCache specs add the first member cluster (`CacheCluster`: SGs, subnet group, engine version) and `CacheSubnetGroup`; moto 4.2 lacks replication groups, so `src/moto_compat.py` serves them from memory (botocore `before-call` handler registered last, per account/region) in tests, demo and benchmark. ECS service `events` are dropped from the spec (kept in `raw_response`). Extra relationships beyond 29.2: `container_image`, `subscription` (SNS → SQS/Lambda), launch template SG/instance profile; closure also follows ECS awsvpc subnets/SGs, ECR images (private, same account), launch template SGs, ElastiCache subnets/VPC, SNS subscriptions and rule/schedule targets; ARNs of other accounts are never followed. Sanitizer: `{name, value}` pairs (ECS environments) and `UserData` are redacted (Req 9.5). Terraform mappers for all eleven types (EventBridge targets as companions; empty JSON policy strings emit nothing); the sample account (storefront ECS stack behind the ALB, cache, queue, topic, rule, schedule, worker ASG) passes `terraform validate`. IAM policy, demo/benchmark mocks, requirements 1.3/6.2/9.5/14.4, design, README/guide coverage and examples regenerated
+  - _Requirements: 1.3 (extended), 6.2 (extended), 9.5 (extended), 14.4 (new)_
   - Commit: `feat(collect): compute and data resource types (Task 29)`
 
 - [ ] 30. Architecture diagram (skills: `aws-architecture-diagram`, `drawio`)

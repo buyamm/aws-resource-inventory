@@ -26,7 +26,9 @@
         "ec2:DescribeRouteTables",
         "ec2:DescribeInternetGateways",
         "ec2:DescribeNatGateways",
-        "ec2:DescribeVpcEndpoints"
+        "ec2:DescribeVpcEndpoints",
+        "ec2:DescribeLaunchTemplates",
+        "ec2:DescribeLaunchTemplateVersions"
       ],
       "Resource": "*"
     },
@@ -129,6 +131,76 @@
         "iam:GetRolePolicy",
         "iam:ListRoleTags"
       ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EcsClustersServicesTaskDefinitions",
+      "Effect": "Allow",
+      "Action": [
+        "ecs:ListClusters",
+        "ecs:DescribeClusters",
+        "ecs:ListServices",
+        "ecs:DescribeServices",
+        "ecs:DescribeTaskDefinition"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EcrRepositories",
+      "Effect": "Allow",
+      "Action": ["ecr:DescribeRepositories", "ecr:ListTagsForResource"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AutoScalingGroups",
+      "Effect": "Allow",
+      "Action": ["autoscaling:DescribeAutoScalingGroups"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ElastiCacheReplicationGroups",
+      "Effect": "Allow",
+      "Action": [
+        "elasticache:DescribeReplicationGroups",
+        "elasticache:DescribeCacheClusters",
+        "elasticache:DescribeCacheSubnetGroups",
+        "elasticache:ListTagsForResource"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SqsQueues",
+      "Effect": "Allow",
+      "Action": ["sqs:ListQueues", "sqs:GetQueueUrl", "sqs:GetQueueAttributes", "sqs:ListQueueTags"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SnsTopics",
+      "Effect": "Allow",
+      "Action": [
+        "sns:ListTopics",
+        "sns:GetTopicAttributes",
+        "sns:ListTagsForResource",
+        "sns:ListSubscriptionsByTopic"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EventBridgeRules",
+      "Effect": "Allow",
+      "Action": [
+        "events:ListEventBuses",
+        "events:ListRules",
+        "events:DescribeRule",
+        "events:ListTargetsByRule",
+        "events:ListTagsForResource"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EventBridgeSchedules",
+      "Effect": "Allow",
+      "Action": ["scheduler:ListSchedules", "scheduler:GetSchedule"],
       "Resource": "*"
     },
     {

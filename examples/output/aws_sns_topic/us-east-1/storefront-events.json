@@ -1,0 +1,41 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:sns:us-east-1:123456789012:storefront-events",
+  "generated_at": "2026-10-15T16:40:03.851507Z",
+  "metadata": {
+    "api_version": "2010-03-31",
+    "checksum": "e534e5a3b8acdea2357fdf7ea6cffc4969f1094b1fcd1194798cb0e5d4e1d5ae",
+    "collected_at": "2026-10-15T16:40:03Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_sns_topic",
+  "specifications": {
+    "Attributes": {
+      "DeliveryPolicy": "",
+      "DisplayName": "Storefront events",
+      "EffectiveDeliveryPolicy": "{\"defaultHealthyRetryPolicy\": {\"numNoDelayRetries\": 0, \"numMinDelayRetries\": 0, \"minDelayTarget\": 20, \"maxDelayTarget\": 20, \"numMaxDelayRetries\": 0, \"numRetries\": 3, \"backoffFunction\": \"linear\"}, \"sicklyRetryPolicy\": null, \"throttlePolicy\": null, \"guaranteed\": false}",
+      "Owner": "123456789012",
+      "Policy": "{\"Version\":\"2008-10-17\",\"Id\":\"__default_policy_ID\",\"Statement\":[{\"Effect\":\"Allow\",\"Sid\":\"__default_statement_ID\",\"Principal\":{\"AWS\":\"*\"},\"Action\":[\"SNS:GetTopicAttributes\",\"SNS:SetTopicAttributes\",\"SNS:AddPermission\",\"SNS:RemovePermission\",\"SNS:DeleteTopic\",\"SNS:Subscribe\",\"SNS:ListSubscriptionsByTopic\",\"SNS:Publish\",\"SNS:Receive\"],\"Resource\":\"arn:aws:sns:us-east-1:123456789012:storefront-events\",\"Condition\":{\"StringEquals\":{\"AWS:SourceOwner\":\"123456789012\"}}}]}",
+      "SubscriptionsConfirmed": "0",
+      "SubscriptionsDeleted": "0",
+      "SubscriptionsPending": "0",
+      "TopicArn": "arn:aws:sns:us-east-1:123456789012:storefront-events"
+    },
+    "Subscriptions": [
+      {
+        "Endpoint": "arn:aws:sqs:us-east-1:123456789012:storefront-orders",
+        "Owner": "123456789012",
+        "Protocol": "sqs",
+        "SubscriptionArn": "arn:aws:sns:us-east-1:123456789012:storefront-events:e79337ef-6785-4a3a-867b-d14f88d2396f",
+        "TopicArn": "arn:aws:sns:us-east-1:123456789012:storefront-events"
+      }
+    ],
+    "Tags": [
+      {
+        "Key": "service",
+        "Value": "storefront"
+      }
+    ]
+  }
+}

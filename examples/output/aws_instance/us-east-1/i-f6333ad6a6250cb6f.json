@@ -1,0 +1,106 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-f6333ad6a6250cb6f",
+  "generated_at": "2026-10-15T16:40:03.851507Z",
+  "metadata": {
+    "api_version": "2016-11-15",
+    "checksum": "74aadad0fb9c5e22545e93181947a3332ac8b0bc1f315938d1aa5ab89d541ac4",
+    "collected_at": "2026-10-15T16:40:03Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_instance",
+  "specifications": {
+    "AmiLaunchIndex": 0,
+    "Architecture": "x86_64",
+    "BlockDeviceMappings": [
+      {
+        "DeviceName": "/dev/sda1",
+        "Ebs": {
+          "AttachTime": "2026-10-15T16:40:02+00:00",
+          "DeleteOnTermination": true,
+          "Status": "in-use",
+          "VolumeId": "vol-8428f813"
+        }
+      }
+    ],
+    "ClientToken": "[REDACTED]",
+    "EbsOptimized": false,
+    "Hypervisor": "xen",
+    "ImageId": "ami-12c6146b",
+    "InstanceId": "i-f6333ad6a6250cb6f",
+    "InstanceType": "t3.small",
+    "KernelId": "None",
+    "LaunchTime": "2026-10-15T16:40:02+00:00",
+    "Monitoring": {
+      "State": "disabled"
+    },
+    "NetworkInterfaces": [
+      {
+        "Attachment": {
+          "AttachTime": "2015-01-01T00:00:00+00:00",
+          "AttachmentId": "eni-attach-c55fb339",
+          "DeleteOnTermination": true,
+          "DeviceIndex": 0,
+          "Status": "attached"
+        },
+        "Description": "Primary network interface",
+        "Groups": [
+          {
+            "GroupId": "sg-67ee3adaaa05cd07e",
+            "GroupName": "default"
+          }
+        ],
+        "MacAddress": "1b:2b:3c:4d:5e:6f",
+        "NetworkInterfaceId": "eni-8e0426cc",
+        "OwnerId": "123456789012",
+        "PrivateIpAddress": "10.0.1.5",
+        "PrivateIpAddresses": [
+          {
+            "Primary": true,
+            "PrivateIpAddress": "10.0.1.5"
+          }
+        ],
+        "SourceDestCheck": true,
+        "Status": "in-use",
+        "SubnetId": "subnet-a6e131f6",
+        "VpcId": "vpc-b6ee287f"
+      }
+    ],
+    "Placement": {
+      "AvailabilityZone": "us-east-1a",
+      "GroupName": "",
+      "Tenancy": "default"
+    },
+    "Platform": "windows",
+    "PrivateDnsName": "ip-10-0-1-5.ec2.internal",
+    "PrivateIpAddress": "10.0.1.5",
+    "PublicDnsName": "None",
+    "RootDeviceName": "/dev/sda1",
+    "RootDeviceType": "ebs",
+    "SecurityGroups": [],
+    "SourceDestCheck": true,
+    "State": {
+      "Code": 16,
+      "Name": "running"
+    },
+    "StateReason": {
+      "Code": "",
+      "Message": ""
+    },
+    "StateTransitionReason": "",
+    "SubnetId": "subnet-a6e131f6",
+    "Tags": [
+      {
+        "Key": "service",
+        "Value": "storefront"
+      },
+      {
+        "Key": "aws:autoscaling:groupName",
+        "Value": "storefront-workers"
+      }
+    ],
+    "VirtualizationType": "hvm",
+    "VpcId": "vpc-b6ee287f"
+  }
+}

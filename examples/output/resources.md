@@ -1,93 +1,121 @@
 # AWS Infrastructure Resource Inventory
 
-**Generated:** 2026-10-15T16:01:58.140875Z  
-**Total Resources Discovered:** 30
+**Generated:** 2026-10-15T16:40:03.890559Z  
+**Total Resources Discovered:** 47
 
 ## Summary by Resource Type
 
-| Resource Type               | Count |
-| --------------------------- | ----- |
-| aws_acm_certificate         | 1     |
-| aws_cloudfront_distribution | 1     |
-| aws_cloudwatch_log_group    | 1     |
-| aws_db_instance             | 1     |
-| aws_dynamodb_table          | 1     |
-| aws_iam_role                | 2     |
-| aws_instance                | 1     |
-| aws_internet_gateway        | 1     |
-| aws_lambda_function         | 1     |
-| aws_lb                      | 1     |
-| aws_lb_listener             | 1     |
-| aws_lb_target_group         | 1     |
-| aws_nat_gateway             | 1     |
-| aws_route53_zone            | 1     |
-| aws_route_table             | 3     |
-| aws_s3_bucket               | 2     |
-| aws_security_group          | 3     |
-| aws_sfn_state_machine       | 1     |
-| aws_subnet                  | 3     |
-| aws_vpc                     | 1     |
-| aws_vpc_endpoint            | 1     |
-| aws_wafv2_web_acl           | 1     |
+| Resource Type                     | Count |
+| --------------------------------- | ----- |
+| aws_acm_certificate               | 1     |
+| aws_autoscaling_group             | 1     |
+| aws_cloudfront_distribution       | 1     |
+| aws_cloudwatch_event_rule         | 1     |
+| aws_cloudwatch_log_group          | 2     |
+| aws_db_instance                   | 1     |
+| aws_dynamodb_table                | 1     |
+| aws_ecr_repository                | 1     |
+| aws_ecs_cluster                   | 1     |
+| aws_ecs_service                   | 1     |
+| aws_ecs_task_definition           | 1     |
+| aws_elasticache_replication_group | 1     |
+| aws_iam_role                      | 5     |
+| aws_instance                      | 2     |
+| aws_internet_gateway              | 1     |
+| aws_lambda_function               | 1     |
+| aws_launch_template               | 1     |
+| aws_lb                            | 1     |
+| aws_lb_listener                   | 1     |
+| aws_lb_target_group               | 1     |
+| aws_nat_gateway                   | 1     |
+| aws_route53_zone                  | 1     |
+| aws_route_table                   | 3     |
+| aws_s3_bucket                     | 2     |
+| aws_scheduler_schedule            | 1     |
+| aws_security_group                | 4     |
+| aws_sfn_state_machine             | 1     |
+| aws_sns_topic                     | 1     |
+| aws_sqs_queue                     | 1     |
+| aws_subnet                        | 3     |
+| aws_vpc                           | 1     |
+| aws_vpc_endpoint                  | 1     |
+| aws_wafv2_web_acl                 | 1     |
 
 
 ## Regional Distribution
 
 | Region    | Resource Count |
 | --------- | -------------- |
-| global    | 7              |
-| us-east-1 | 23             |
+| global    | 10             |
+| us-east-1 | 37             |
 
 
 ## Discovered Resources List
 
-| Resource Type               | Identifier                                          | Region    | ARN                                                                                                            |
-| --------------------------- | --------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------- |
-| aws_instance                | i-96ebec6d01233d3d7                                 | us-east-1 | arn:aws:ec2:us-east-1:123456789012:instance/i-96ebec6d01233d3d7                                                |
-| aws_vpc                     | vpc-1561eea5                                        | us-east-1 | arn:aws:ec2:us-east-1:123456789012:vpc/vpc-1561eea5                                                            |
-| aws_security_group          | sg-57d34a1b59fbd9d55                                | us-east-1 | arn:aws:ec2:us-east-1:123456789012:security-group/sg-57d34a1b59fbd9d55                                         |
-| aws_security_group          | sg-ceb6d3dc119d60702                                | us-east-1 | arn:aws:ec2:us-east-1:123456789012:security-group/sg-ceb6d3dc119d60702                                         |
-| aws_security_group          | sg-347a556c97894d9e4                                | us-east-1 | arn:aws:ec2:us-east-1:123456789012:security-group/sg-347a556c97894d9e4                                         |
-| aws_lambda_function         | order-processor                                     | us-east-1 | arn:aws:lambda:us-east-1:123456789012:function:order-processor                                                 |
-| aws_db_instance             | orders-db                                           | us-east-1 | arn:aws:rds:us-east-1:123456789012:db:orders-db                                                                |
-| aws_cloudwatch_log_group    | aws_lambda_order-processor                          | us-east-1 | arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor                                      |
-| aws_sfn_state_machine       | order-flow                                          | us-east-1 | arn:aws:states:us-east-1:123456789012:stateMachine:order-flow                                                  |
-| aws_dynamodb_table          | orders                                              | us-east-1 | arn:aws:dynamodb:us-east-1:123456789012:table/orders                                                           |
-| aws_subnet                  | subnet-86551e9d                                     | us-east-1 | arn:aws:ec2:us-east-1:123456789012:subnet/subnet-86551e9d                                                      |
-| aws_subnet                  | subnet-dc94c752                                     | us-east-1 | arn:aws:ec2:us-east-1:123456789012:subnet/subnet-dc94c752                                                      |
-| aws_subnet                  | subnet-ee0601cc                                     | us-east-1 | arn:aws:ec2:us-east-1:123456789012:subnet/subnet-ee0601cc                                                      |
-| aws_route_table             | rtb-57076453                                        | us-east-1 | arn:aws:ec2:us-east-1:123456789012:route-table/rtb-57076453                                                    |
-| aws_route_table             | rtb-395e2831                                        | us-east-1 | arn:aws:ec2:us-east-1:123456789012:route-table/rtb-395e2831                                                    |
-| aws_route_table             | rtb-590d89f0                                        | us-east-1 | arn:aws:ec2:us-east-1:123456789012:route-table/rtb-590d89f0                                                    |
-| aws_internet_gateway        | igw-e27d9033                                        | us-east-1 | arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-e27d9033                                               |
-| aws_nat_gateway             | nat-3e17f5a22ce211a96                               | us-east-1 | arn:aws:ec2:us-east-1:123456789012:natgateway/nat-3e17f5a22ce211a96                                            |
-| aws_vpc_endpoint            | vpce-a3573b69                                       | us-east-1 | arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-a3573b69                                                  |
-| aws_lb                      | app_storefront-alb_50dc6c495c0c9188                 | us-east-1 | arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188           |
-| aws_lb_target_group         | storefront-tg_50dc6c495c0c9188                      | us-east-1 | arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188                 |
-| aws_acm_certificate         | 59f7c298-c41f-48f5-a3db-cb8263d5fcc6                | us-east-1 | arn:aws:acm:us-east-1:123456789012:certificate/59f7c298-c41f-48f5-a3db-cb8263d5fcc6                            |
-| aws_lb_listener             | app_storefront-alb_50dc6c495c0c9188_4434430983056   | us-east-1 | arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434430983056 |
-| aws_s3_bucket               | orders-public-assets                                | global    | arn:aws:s3:::orders-public-assets                                                                              |
-| aws_s3_bucket               | storefront-static                                   | global    | arn:aws:s3:::storefront-static                                                                                 |
-| aws_iam_role                | order-lambda-role                                   | global    | arn:aws:iam::123456789012:role/order-lambda-role                                                               |
-| aws_iam_role                | orders-app-role                                     | global    | arn:aws:iam::123456789012:role/orders-app-role                                                                 |
-| aws_cloudfront_distribution | K4SJFH541UU7J                                       | global    | arn:aws:cloudfront::123456789012:distribution/K4SJFH541UU7J                                                    |
-| aws_route53_zone            | JX2QH3ZSOFDJU6N                                     | global    | arn:aws:route53:::hostedzone/JX2QH3ZSOFDJU6N                                                                   |
-| aws_wafv2_web_acl           | storefront-waf_45c1df2a-6eb9-40fa-a6ea-d3054f42d04c | global    | arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/45c1df2a-6eb9-40fa-a6ea-d3054f42d04c            |
+| Resource Type                     | Identifier                                          | Region    | ARN                                                                                                                                      |
+| --------------------------------- | --------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| aws_instance                      | i-685e30ac4d43a0d83                                 | us-east-1 | arn:aws:ec2:us-east-1:123456789012:instance/i-685e30ac4d43a0d83                                                                          |
+| aws_instance                      | i-f6333ad6a6250cb6f                                 | us-east-1 | arn:aws:ec2:us-east-1:123456789012:instance/i-f6333ad6a6250cb6f                                                                          |
+| aws_vpc                           | vpc-b6ee287f                                        | us-east-1 | arn:aws:ec2:us-east-1:123456789012:vpc/vpc-b6ee287f                                                                                      |
+| aws_security_group                | sg-67ee3adaaa05cd07e                                | us-east-1 | arn:aws:ec2:us-east-1:123456789012:security-group/sg-67ee3adaaa05cd07e                                                                   |
+| aws_security_group                | sg-fb454a9efcd634f32                                | us-east-1 | arn:aws:ec2:us-east-1:123456789012:security-group/sg-fb454a9efcd634f32                                                                   |
+| aws_security_group                | sg-8c9c7f5f96b0d5fb1                                | us-east-1 | arn:aws:ec2:us-east-1:123456789012:security-group/sg-8c9c7f5f96b0d5fb1                                                                   |
+| aws_security_group                | sg-eaaa2c57ac5ecc98e                                | us-east-1 | arn:aws:ec2:us-east-1:123456789012:security-group/sg-eaaa2c57ac5ecc98e                                                                   |
+| aws_lambda_function               | order-processor                                     | us-east-1 | arn:aws:lambda:us-east-1:123456789012:function:order-processor                                                                           |
+| aws_db_instance                   | orders-db                                           | us-east-1 | arn:aws:rds:us-east-1:123456789012:db:orders-db                                                                                          |
+| aws_cloudwatch_log_group          | aws_lambda_order-processor                          | us-east-1 | arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor                                                                |
+| aws_cloudwatch_log_group          | ecs_storefront-web                                  | us-east-1 | arn:aws:logs:us-east-1:123456789012:log-group:/ecs/storefront-web                                                                        |
+| aws_sfn_state_machine             | order-flow                                          | us-east-1 | arn:aws:states:us-east-1:123456789012:stateMachine:order-flow                                                                            |
+| aws_dynamodb_table                | orders                                              | us-east-1 | arn:aws:dynamodb:us-east-1:123456789012:table/orders                                                                                     |
+| aws_subnet                        | subnet-a6e131f6                                     | us-east-1 | arn:aws:ec2:us-east-1:123456789012:subnet/subnet-a6e131f6                                                                                |
+| aws_subnet                        | subnet-d94916f9                                     | us-east-1 | arn:aws:ec2:us-east-1:123456789012:subnet/subnet-d94916f9                                                                                |
+| aws_subnet                        | subnet-b83c8765                                     | us-east-1 | arn:aws:ec2:us-east-1:123456789012:subnet/subnet-b83c8765                                                                                |
+| aws_route_table                   | rtb-fc59c9b7                                        | us-east-1 | arn:aws:ec2:us-east-1:123456789012:route-table/rtb-fc59c9b7                                                                              |
+| aws_route_table                   | rtb-590047f7                                        | us-east-1 | arn:aws:ec2:us-east-1:123456789012:route-table/rtb-590047f7                                                                              |
+| aws_route_table                   | rtb-52dac71b                                        | us-east-1 | arn:aws:ec2:us-east-1:123456789012:route-table/rtb-52dac71b                                                                              |
+| aws_internet_gateway              | igw-bd38647b                                        | us-east-1 | arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-bd38647b                                                                         |
+| aws_nat_gateway                   | nat-8604a604f3c5a3cf0                               | us-east-1 | arn:aws:ec2:us-east-1:123456789012:natgateway/nat-8604a604f3c5a3cf0                                                                      |
+| aws_vpc_endpoint                  | vpce-073f3c1e                                       | us-east-1 | arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-073f3c1e                                                                            |
+| aws_lb                            | app_storefront-alb_50dc6c495c0c9188                 | us-east-1 | arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188                                     |
+| aws_lb_target_group               | storefront-tg_50dc6c495c0c9188                      | us-east-1 | arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188                                           |
+| aws_acm_certificate               | a731cd05-0052-48e0-8889-0431af5b4bbe                | us-east-1 | arn:aws:acm:us-east-1:123456789012:certificate/a731cd05-0052-48e0-8889-0431af5b4bbe                                                      |
+| aws_ecs_cluster                   | storefront                                          | us-east-1 | arn:aws:ecs:us-east-1:123456789012:cluster/storefront                                                                                    |
+| aws_ecr_repository                | storefront-web                                      | us-east-1 | arn:aws:ecr:us-east-1:123456789012:repository/storefront-web                                                                             |
+| aws_autoscaling_group             | storefront-workers                                  | us-east-1 | arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:d7e19156-0c83-434b-b8e0-a1b67c604518:autoScalingGroupName/storefront-workers |
+| aws_launch_template               | lt-254efd878ee151eb7                                | us-east-1 | arn:aws:ec2:us-east-1:123456789012:launch-template/lt-254efd878ee151eb7                                                                  |
+| aws_elasticache_replication_group | storefront-cache                                    | us-east-1 | arn:aws:elasticache:us-east-1:123456789012:replicationgroup:storefront-cache                                                             |
+| aws_sqs_queue                     | storefront-orders                                   | us-east-1 | arn:aws:sqs:us-east-1:123456789012:storefront-orders                                                                                     |
+| aws_sns_topic                     | storefront-events                                   | us-east-1 | arn:aws:sns:us-east-1:123456789012:storefront-events                                                                                     |
+| aws_scheduler_schedule            | default_storefront-cleanup                          | us-east-1 | arn:aws:scheduler:us-east-1:123456789012:schedule/default/storefront-cleanup                                                             |
+| aws_lb_listener                   | app_storefront-alb_50dc6c495c0c9188_4434588500944   | us-east-1 | arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434588500944                           |
+| aws_ecs_service                   | storefront_web                                      | us-east-1 | arn:aws:ecs:us-east-1:123456789012:service/storefront/web                                                                                |
+| aws_ecs_task_definition           | storefront-web_1                                    | us-east-1 | arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1                                                                      |
+| aws_cloudwatch_event_rule         | storefront-nightly-report                           | us-east-1 | arn:aws:events:us-east-1:123456789012:rule/storefront-nightly-report                                                                     |
+| aws_s3_bucket                     | orders-public-assets                                | global    | arn:aws:s3:::orders-public-assets                                                                                                        |
+| aws_s3_bucket                     | storefront-static                                   | global    | arn:aws:s3:::storefront-static                                                                                                           |
+| aws_iam_role                      | storefront-scheduler-role                           | global    | arn:aws:iam::123456789012:role/storefront-scheduler-role                                                                                 |
+| aws_iam_role                      | order-lambda-role                                   | global    | arn:aws:iam::123456789012:role/order-lambda-role                                                                                         |
+| aws_iam_role                      | orders-app-role                                     | global    | arn:aws:iam::123456789012:role/orders-app-role                                                                                           |
+| aws_iam_role                      | storefront-task-role                                | global    | arn:aws:iam::123456789012:role/storefront-task-role                                                                                      |
+| aws_iam_role                      | storefront-exec-role                                | global    | arn:aws:iam::123456789012:role/storefront-exec-role                                                                                      |
+| aws_cloudfront_distribution       | WUDV5OCSQIBBJ                                       | global    | arn:aws:cloudfront::123456789012:distribution/WUDV5OCSQIBBJ                                                                              |
+| aws_route53_zone                  | 0QZOTUEJO46KDTZ                                     | global    | arn:aws:route53:::hostedzone/0QZOTUEJO46KDTZ                                                                                             |
+| aws_wafv2_web_acl                 | storefront-waf_e910f120-ccdb-46a7-bbb2-4e34585f73b5 | global    | arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/e910f120-ccdb-46a7-bbb2-4e34585f73b5                                      |
 
 
 ## Detailed Resource Specifications
 
-# AWS Resource: `aws_instance` - `i-96ebec6d01233d3d7`
+# AWS Resource: `aws_instance` - `i-685e30ac4d43a0d83`
 
 ## Overview
 
 | Property          | Value                                                           |
 | ----------------- | --------------------------------------------------------------- |
 | Resource Type     | aws_instance                                                    |
-| ARN               | arn:aws:ec2:us-east-1:123456789012:instance/i-96ebec6d01233d3d7 |
+| ARN               | arn:aws:ec2:us-east-1:123456789012:instance/i-685e30ac4d43a0d83 |
 | Region            | us-east-1                                                       |
 | Account ID        | 123456789012                                                    |
-| Collected At      | 2026-10-15T16:01:57Z                                            |
+| Collected At      | 2026-10-15T16:40:03Z                                            |
 | Collector Version | 0.1.0                                                           |
 
 
@@ -101,10 +129,10 @@
 | EbsOptimized          | False                     |
 | Hypervisor            | xen                       |
 | ImageId               | ami-12c6146b              |
-| InstanceId            | i-96ebec6d01233d3d7       |
+| InstanceId            | i-685e30ac4d43a0d83       |
 | InstanceType          | t3.micro                  |
 | KernelId              | None                      |
-| LaunchTime            | 2026-10-15T16:01:56+00:00 |
+| LaunchTime            | 2026-10-15T16:40:02+00:00 |
 | Platform              | windows                   |
 | PrivateDnsName        | ip-10-0-1-4.ec2.internal  |
 | PrivateIpAddress      | 10.0.1.4                  |
@@ -113,9 +141,9 @@
 | RootDeviceType        | ebs                       |
 | SourceDestCheck       | True                      |
 | StateTransitionReason |                           |
-| SubnetId              | subnet-86551e9d           |
+| SubnetId              | subnet-a6e131f6           |
 | VirtualizationType    | hvm                       |
-| VpcId                 | vpc-1561eea5              |
+| VpcId                 | vpc-b6ee287f              |
 
 
 ## Resource Tags
@@ -129,7 +157,7 @@
 
 | DeviceName | Ebs                                                                                                                      |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------ |
-| /dev/sda1  | {'AttachTime': '2026-10-15T16:01:56+00:00', 'DeleteOnTermination': True, 'Status': 'in-use', 'VolumeId': 'vol-4fd9a55f'} |
+| /dev/sda1  | {'AttachTime': '2026-10-15T16:40:02+00:00', 'DeleteOnTermination': True, 'Status': 'in-use', 'VolumeId': 'vol-4c603ca0'} |
 
 
 ### Iaminstanceprofile
@@ -137,7 +165,7 @@
 ```json
 {
   "Arn": "arn:aws:iam::123456789012:instance-profile/orders-app-role",
-  "Id": "iip-assoc-fd82cc70"
+  "Id": "iip-assoc-b9568f33"
 }
 ```
 
@@ -155,7 +183,7 @@
 
 | Attachment                                                                                                                                              | Description               | Groups                                                              | MacAddress        | NetworkInterfaceId | OwnerId      | PrivateIpAddress | PrivateIpAddresses                                  | SourceDestCheck | Status | SubnetId        | VpcId        |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------- | ----------------- | ------------------ | ------------ | ---------------- | --------------------------------------------------- | --------------- | ------ | --------------- | ------------ |
-| {'AttachTime': '2015-01-01T00:00:00+00:00', 'AttachmentId': 'eni-attach-27fef115', 'DeleteOnTermination': True, 'DeviceIndex': 0, 'Status': 'attached'} | Primary network interface | [{'GroupId': 'sg-ceb6d3dc119d60702', 'GroupName': 'orders-web-sg'}] | 1b:2b:3c:4d:5e:6f | eni-64dfa24f       | 123456789012 | 10.0.1.4         | [{'Primary': True, 'PrivateIpAddress': '10.0.1.4'}] | True            | in-use | subnet-86551e9d | vpc-1561eea5 |
+| {'AttachTime': '2015-01-01T00:00:00+00:00', 'AttachmentId': 'eni-attach-9136c5dc', 'DeleteOnTermination': True, 'DeviceIndex': 0, 'Status': 'attached'} | Primary network interface | [{'GroupId': 'sg-fb454a9efcd634f32', 'GroupName': 'orders-web-sg'}] | 1b:2b:3c:4d:5e:6f | eni-73afcfee       | 123456789012 | 10.0.1.4         | [{'Primary': True, 'PrivateIpAddress': '10.0.1.4'}] | True            | in-use | subnet-a6e131f6 | vpc-b6ee287f |
 
 
 ### Placement
@@ -173,7 +201,7 @@
 
 | GroupId              | GroupName     |
 | -------------------- | ------------- |
-| sg-ceb6d3dc119d60702 | orders-web-sg |
+| sg-fb454a9efcd634f32 | orders-web-sg |
 
 
 ### State
@@ -199,17 +227,130 @@
 
 ---
 
-# AWS Resource: `aws_vpc` - `vpc-1561eea5`
+# AWS Resource: `aws_instance` - `i-f6333ad6a6250cb6f`
+
+## Overview
+
+| Property          | Value                                                           |
+| ----------------- | --------------------------------------------------------------- |
+| Resource Type     | aws_instance                                                    |
+| ARN               | arn:aws:ec2:us-east-1:123456789012:instance/i-f6333ad6a6250cb6f |
+| Region            | us-east-1                                                       |
+| Account ID        | 123456789012                                                    |
+| Collected At      | 2026-10-15T16:40:03Z                                            |
+| Collector Version | 0.1.0                                                           |
+
+
+## Configuration Specifications
+
+| Configuration Key     | Value                     |
+| --------------------- | ------------------------- |
+| AmiLaunchIndex        | 0                         |
+| Architecture          | x86_64                    |
+| ClientToken           | [REDACTED]                |
+| EbsOptimized          | False                     |
+| Hypervisor            | xen                       |
+| ImageId               | ami-12c6146b              |
+| InstanceId            | i-f6333ad6a6250cb6f       |
+| InstanceType          | t3.small                  |
+| KernelId              | None                      |
+| LaunchTime            | 2026-10-15T16:40:02+00:00 |
+| Platform              | windows                   |
+| PrivateDnsName        | ip-10-0-1-5.ec2.internal  |
+| PrivateIpAddress      | 10.0.1.5                  |
+| PublicDnsName         | None                      |
+| RootDeviceName        | /dev/sda1                 |
+| RootDeviceType        | ebs                       |
+| SourceDestCheck       | True                      |
+| StateTransitionReason |                           |
+| SubnetId              | subnet-a6e131f6           |
+| VirtualizationType    | hvm                       |
+| VpcId                 | vpc-b6ee287f              |
+
+
+## Resource Tags
+
+| Tag Key                   | Tag Value          |
+| ------------------------- | ------------------ |
+| aws:autoscaling:groupName | storefront-workers |
+| service                   | storefront         |
+
+
+### Blockdevicemappings
+
+| DeviceName | Ebs                                                                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------ |
+| /dev/sda1  | {'AttachTime': '2026-10-15T16:40:02+00:00', 'DeleteOnTermination': True, 'Status': 'in-use', 'VolumeId': 'vol-8428f813'} |
+
+
+### Monitoring
+
+```json
+{
+  "State": "disabled"
+}
+```
+
+
+### Networkinterfaces
+
+| Attachment                                                                                                                                              | Description               | Groups                                                        | MacAddress        | NetworkInterfaceId | OwnerId      | PrivateIpAddress | PrivateIpAddresses                                  | SourceDestCheck | Status | SubnetId        | VpcId        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------- | ----------------- | ------------------ | ------------ | ---------------- | --------------------------------------------------- | --------------- | ------ | --------------- | ------------ |
+| {'AttachTime': '2015-01-01T00:00:00+00:00', 'AttachmentId': 'eni-attach-c55fb339', 'DeleteOnTermination': True, 'DeviceIndex': 0, 'Status': 'attached'} | Primary network interface | [{'GroupId': 'sg-67ee3adaaa05cd07e', 'GroupName': 'default'}] | 1b:2b:3c:4d:5e:6f | eni-8e0426cc       | 123456789012 | 10.0.1.5         | [{'Primary': True, 'PrivateIpAddress': '10.0.1.5'}] | True            | in-use | subnet-a6e131f6 | vpc-b6ee287f |
+
+
+### Placement
+
+```json
+{
+  "AvailabilityZone": "us-east-1a",
+  "GroupName": "",
+  "Tenancy": "default"
+}
+```
+
+
+### Securitygroups
+
+```json
+[]
+```
+
+
+### State
+
+```json
+{
+  "Code": 16,
+  "Name": "running"
+}
+```
+
+
+### Statereason
+
+```json
+{
+  "Code": "",
+  "Message": ""
+}
+```
+
+
+
+---
+
+# AWS Resource: `aws_vpc` - `vpc-b6ee287f`
 
 ## Overview
 
 | Property          | Value                                               |
 | ----------------- | --------------------------------------------------- |
 | Resource Type     | aws_vpc                                             |
-| ARN               | arn:aws:ec2:us-east-1:123456789012:vpc/vpc-1561eea5 |
+| ARN               | arn:aws:ec2:us-east-1:123456789012:vpc/vpc-b6ee287f |
 | Region            | us-east-1                                           |
 | Account ID        | 123456789012                                        |
-| Collected At      | 2026-10-15T16:01:57Z                                |
+| Collected At      | 2026-10-15T16:40:03Z                                |
 | Collector Version | 0.1.0                                               |
 
 
@@ -225,7 +366,7 @@
 | IsDefault          | False        |
 | OwnerId            | 123456789012 |
 | State              | available    |
-| VpcId              | vpc-1561eea5 |
+| VpcId              | vpc-b6ee287f |
 
 
 ## Resource Tags
@@ -239,7 +380,7 @@
 
 | AssociationId           | CidrBlock   | CidrBlockState          |
 | ----------------------- | ----------- | ----------------------- |
-| vpc-cidr-assoc-1445e8d5 | 10.0.0.0/16 | {'State': 'associated'} |
+| vpc-cidr-assoc-939f32a6 | 10.0.0.0/16 | {'State': 'associated'} |
 
 
 ### Ipv6Cidrblockassociationset
@@ -252,17 +393,17 @@
 
 ---
 
-# AWS Resource: `aws_security_group` - `sg-57d34a1b59fbd9d55`
+# AWS Resource: `aws_security_group` - `sg-67ee3adaaa05cd07e`
 
 ## Overview
 
 | Property          | Value                                                                  |
 | ----------------- | ---------------------------------------------------------------------- |
 | Resource Type     | aws_security_group                                                     |
-| ARN               | arn:aws:ec2:us-east-1:123456789012:security-group/sg-57d34a1b59fbd9d55 |
+| ARN               | arn:aws:ec2:us-east-1:123456789012:security-group/sg-67ee3adaaa05cd07e |
 | Region            | us-east-1                                                              |
 | Account ID        | 123456789012                                                           |
-| Collected At      | 2026-10-15T16:01:57Z                                                   |
+| Collected At      | 2026-10-15T16:40:03Z                                                   |
 | Collector Version | 0.1.0                                                                  |
 
 
@@ -271,10 +412,10 @@
 | Configuration Key | Value                      |
 | ----------------- | -------------------------- |
 | Description       | default VPC security group |
-| GroupId           | sg-57d34a1b59fbd9d55       |
+| GroupId           | sg-67ee3adaaa05cd07e       |
 | GroupName         | default                    |
 | OwnerId           | 123456789012               |
-| VpcId             | vpc-1561eea5               |
+| VpcId             | vpc-b6ee287f               |
 
 
 ### Ippermissions
@@ -301,17 +442,17 @@
 
 ---
 
-# AWS Resource: `aws_security_group` - `sg-ceb6d3dc119d60702`
+# AWS Resource: `aws_security_group` - `sg-fb454a9efcd634f32`
 
 ## Overview
 
 | Property          | Value                                                                  |
 | ----------------- | ---------------------------------------------------------------------- |
 | Resource Type     | aws_security_group                                                     |
-| ARN               | arn:aws:ec2:us-east-1:123456789012:security-group/sg-ceb6d3dc119d60702 |
+| ARN               | arn:aws:ec2:us-east-1:123456789012:security-group/sg-fb454a9efcd634f32 |
 | Region            | us-east-1                                                              |
 | Account ID        | 123456789012                                                           |
-| Collected At      | 2026-10-15T16:01:57Z                                                   |
+| Collected At      | 2026-10-15T16:40:03Z                                                   |
 | Collector Version | 0.1.0                                                                  |
 
 
@@ -320,10 +461,10 @@
 | Configuration Key | Value                |
 | ----------------- | -------------------- |
 | Description       | Web tier             |
-| GroupId           | sg-ceb6d3dc119d60702 |
+| GroupId           | sg-fb454a9efcd634f32 |
 | GroupName         | orders-web-sg        |
 | OwnerId           | 123456789012         |
-| VpcId             | vpc-1561eea5         |
+| VpcId             | vpc-b6ee287f         |
 
 
 ### Ippermissions
@@ -350,17 +491,17 @@
 
 ---
 
-# AWS Resource: `aws_security_group` - `sg-347a556c97894d9e4`
+# AWS Resource: `aws_security_group` - `sg-8c9c7f5f96b0d5fb1`
 
 ## Overview
 
 | Property          | Value                                                                  |
 | ----------------- | ---------------------------------------------------------------------- |
 | Resource Type     | aws_security_group                                                     |
-| ARN               | arn:aws:ec2:us-east-1:123456789012:security-group/sg-347a556c97894d9e4 |
+| ARN               | arn:aws:ec2:us-east-1:123456789012:security-group/sg-8c9c7f5f96b0d5fb1 |
 | Region            | us-east-1                                                              |
 | Account ID        | 123456789012                                                           |
-| Collected At      | 2026-10-15T16:01:57Z                                                   |
+| Collected At      | 2026-10-15T16:40:03Z                                                   |
 | Collector Version | 0.1.0                                                                  |
 
 
@@ -369,10 +510,10 @@
 | Configuration Key | Value                |
 | ----------------- | -------------------- |
 | Description       | Public HTTPS         |
-| GroupId           | sg-347a556c97894d9e4 |
+| GroupId           | sg-8c9c7f5f96b0d5fb1 |
 | GroupName         | storefront-alb-sg    |
 | OwnerId           | 123456789012         |
-| VpcId             | vpc-1561eea5         |
+| VpcId             | vpc-b6ee287f         |
 
 
 ### Ippermissions
@@ -399,6 +540,57 @@
 
 ---
 
+# AWS Resource: `aws_security_group` - `sg-eaaa2c57ac5ecc98e`
+
+## Overview
+
+| Property          | Value                                                                  |
+| ----------------- | ---------------------------------------------------------------------- |
+| Resource Type     | aws_security_group                                                     |
+| ARN               | arn:aws:ec2:us-east-1:123456789012:security-group/sg-eaaa2c57ac5ecc98e |
+| Region            | us-east-1                                                              |
+| Account ID        | 123456789012                                                           |
+| Collected At      | 2026-10-15T16:40:03Z                                                   |
+| Collector Version | 0.1.0                                                                  |
+
+
+## Configuration Specifications
+
+| Configuration Key | Value                      |
+| ----------------- | -------------------------- |
+| Description       | Storefront tasks and cache |
+| GroupId           | sg-eaaa2c57ac5ecc98e       |
+| GroupName         | storefront-app-sg          |
+| OwnerId           | 123456789012               |
+| VpcId             | vpc-b6ee287f               |
+
+
+## Resource Tags
+
+| Tag Key | Tag Value      |
+| ------- | -------------- |
+| Name    | storefront-app |
+| service | storefront     |
+
+
+### Ippermissions
+
+| FromPort | IpProtocol | IpRanges | Ipv6Ranges | PrefixListIds | ToPort | UserIdGroupPairs                                                |
+| -------- | ---------- | -------- | ---------- | ------------- | ------ | --------------------------------------------------------------- |
+| 80       | tcp        | []       | []         | []            | 80     | [{'UserId': '123456789012', 'GroupId': 'sg-8c9c7f5f96b0d5fb1'}] |
+| 6379     | tcp        | []       | []         | []            | 6379   | [{'UserId': '123456789012', 'GroupId': 'sg-eaaa2c57ac5ecc98e'}] |
+
+
+### Ippermissionsegress
+
+| IpProtocol | IpRanges                  | Ipv6Ranges | PrefixListIds | UserIdGroupPairs |
+| ---------- | ------------------------- | ---------- | ------------- | ---------------- |
+| -1         | [{'CidrIp': '0.0.0.0/0'}] | []         | []            | []               |
+
+
+
+---
+
 # AWS Resource: `aws_lambda_function` - `order-processor`
 
 ## Overview
@@ -409,7 +601,7 @@
 | ARN               | arn:aws:lambda:us-east-1:123456789012:function:order-processor |
 | Region            | us-east-1                                                      |
 | Account ID        | 123456789012                                                   |
-| Collected At      | 2026-10-15T16:01:57Z                                           |
+| Collected At      | 2026-10-15T16:40:03Z                                           |
 | Collector Version | 0.1.0                                                          |
 
 
@@ -417,13 +609,13 @@
 
 | Configuration Key | Value                                                          |
 | ----------------- | -------------------------------------------------------------- |
-| CodeSha256        | waOhCdKJrCL2WZOuy/VNi88bTRKaUrp+2whtIFlUFf8=                   |
+| CodeSha256        | bB8dektm2MaANdR9fw5rs+E0sn1aNkRalv+xIm8ygpQ=                   |
 | CodeSize          | 164                                                            |
 | Description       |                                                                |
 | FunctionArn       | arn:aws:lambda:us-east-1:123456789012:function:order-processor |
 | FunctionName      | order-processor                                                |
 | Handler           | handler.handler                                                |
-| LastModified      | 2026-10-15T16:01:56.987439000Z                                 |
+| LastModified      | 2026-10-15T16:40:02.246947000Z                                 |
 | LastUpdateStatus  | Successful                                                     |
 | MemorySize        | 256                                                            |
 | PackageType       | Zip                                                            |
@@ -520,7 +712,7 @@
 | ARN               | arn:aws:rds:us-east-1:123456789012:db:orders-db |
 | Region            | us-east-1                                       |
 | Account ID        | 123456789012                                    |
-| Collected At      | 2026-10-15T16:01:58Z                            |
+| Collected At      | 2026-10-15T16:40:03Z                            |
 | Collector Version | 0.1.0                                           |
 
 
@@ -543,7 +735,7 @@
 | Engine                           | postgres                                        |
 | EngineVersion                    | 9.3.3                                           |
 | IAMDatabaseAuthenticationEnabled | False                                           |
-| InstanceCreateTime               | 2026-10-15T16:01:57.045000+00:00                |
+| InstanceCreateTime               | 2026-10-15T16:40:02.370000+00:00                |
 | LicenseModel                     | None                                            |
 | MasterUsername                   | orders_admin                                    |
 | MultiAZ                          | False                                           |
@@ -617,7 +809,7 @@
 
 | Status | VpcSecurityGroupId   |
 | ------ | -------------------- |
-| active | sg-ceb6d3dc119d60702 |
+| active | sg-fb454a9efcd634f32 |
 
 
 
@@ -633,7 +825,7 @@
 | ARN               | arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor |
 | Region            | us-east-1                                                                 |
 | Account ID        | 123456789012                                                              |
-| Collected At      | 2026-10-15T16:01:57Z                                                      |
+| Collected At      | 2026-10-15T16:40:03Z                                                      |
 | Collector Version | 0.1.0                                                                     |
 
 
@@ -642,7 +834,7 @@
 | Configuration Key | Value                                                                     |
 | ----------------- | ------------------------------------------------------------------------- |
 | arn               | arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor |
-| creationTime      | 1792080116997                                                             |
+| creationTime      | 1792082402256                                                             |
 | logGroupName      | /aws/lambda/order-processor                                               |
 | metricFilterCount | 0                                                                         |
 | retentionInDays   | 14                                                                        |
@@ -659,6 +851,42 @@
 
 ---
 
+# AWS Resource: `aws_cloudwatch_log_group` - `ecs_storefront-web`
+
+## Overview
+
+| Property          | Value                                                             |
+| ----------------- | ----------------------------------------------------------------- |
+| Resource Type     | aws_cloudwatch_log_group                                          |
+| ARN               | arn:aws:logs:us-east-1:123456789012:log-group:/ecs/storefront-web |
+| Region            | us-east-1                                                         |
+| Account ID        | 123456789012                                                      |
+| Collected At      | 2026-10-15T16:40:03Z                                              |
+| Collector Version | 0.1.0                                                             |
+
+
+## Configuration Specifications
+
+| Configuration Key | Value                                                             |
+| ----------------- | ----------------------------------------------------------------- |
+| arn               | arn:aws:logs:us-east-1:123456789012:log-group:/ecs/storefront-web |
+| creationTime      | 1792082402598                                                     |
+| logGroupName      | /ecs/storefront-web                                               |
+| metricFilterCount | 0                                                                 |
+| retentionInDays   | 30                                                                |
+| storedBytes       | 0                                                                 |
+
+
+## Resource Tags
+
+| Tag Key | Tag Value  |
+| ------- | ---------- |
+| service | storefront |
+
+
+
+---
+
 # AWS Resource: `aws_sfn_state_machine` - `order-flow`
 
 ## Overview
@@ -669,7 +897,7 @@
 | ARN               | arn:aws:states:us-east-1:123456789012:stateMachine:order-flow |
 | Region            | us-east-1                                                     |
 | Account ID        | 123456789012                                                  |
-| Collected At      | 2026-10-15T16:01:57Z                                          |
+| Collected At      | 2026-10-15T16:40:03Z                                          |
 | Collector Version | 0.1.0                                                         |
 
 
@@ -677,7 +905,7 @@
 
 | Configuration Key | Value                                                                                                                                                      |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| creationDate      | 2026-10-15T16:01:57.031000+00:00                                                                                                                           |
+| creationDate      | 2026-10-15T16:40:02.287000+00:00                                                                                                                           |
 | definition        | {"StartAt": "Process", "States": {"Process": {"Type": "Task", "Resource": "arn:aws:lambda:us-east-1:123456789012:function:order-processor", "End": true}}} |
 | name              | order-flow                                                                                                                                                 |
 | roleArn           | arn:aws:iam::123456789012:role/order-lambda-role                                                                                                           |
@@ -705,7 +933,7 @@
 | ARN               | arn:aws:dynamodb:us-east-1:123456789012:table/orders |
 | Region            | us-east-1                                            |
 | Account ID        | 123456789012                                         |
-| Collected At      | 2026-10-15T16:01:58Z                                 |
+| Collected At      | 2026-10-15T16:40:03Z                                 |
 | Collector Version | 0.1.0                                                |
 
 
@@ -713,7 +941,7 @@
 
 | Configuration Key | Value                                                |
 | ----------------- | ---------------------------------------------------- |
-| CreationDateTime  | 2026-10-15T23:01:56.977657+07:00                     |
+| CreationDateTime  | 2026-10-15T23:40:02.238292+07:00                     |
 | ItemCount         | 0                                                    |
 | TableArn          | arn:aws:dynamodb:us-east-1:123456789012:table/orders |
 | TableName         | orders                                               |
@@ -779,17 +1007,17 @@
 
 ---
 
-# AWS Resource: `aws_subnet` - `subnet-86551e9d`
+# AWS Resource: `aws_subnet` - `subnet-a6e131f6`
 
 ## Overview
 
 | Property          | Value                                                     |
 | ----------------- | --------------------------------------------------------- |
 | Resource Type     | aws_subnet                                                |
-| ARN               | arn:aws:ec2:us-east-1:123456789012:subnet/subnet-86551e9d |
+| ARN               | arn:aws:ec2:us-east-1:123456789012:subnet/subnet-a6e131f6 |
 | Region            | us-east-1                                                 |
 | Account ID        | 123456789012                                              |
-| Collected At      | 2026-10-15T16:01:58Z                                      |
+| Collected At      | 2026-10-15T16:40:03Z                                      |
 | Collector Version | 0.1.0                                                     |
 
 
@@ -800,16 +1028,16 @@
 | AssignIpv6AddressOnCreation | False                                                     |
 | AvailabilityZone            | us-east-1a                                                |
 | AvailabilityZoneId          | use1-az6                                                  |
-| AvailableIpAddressCount     | 250                                                       |
+| AvailableIpAddressCount     | 249                                                       |
 | CidrBlock                   | 10.0.1.0/24                                               |
 | DefaultForAz                | False                                                     |
 | Ipv6Native                  | False                                                     |
 | MapPublicIpOnLaunch         | False                                                     |
 | OwnerId                     | 123456789012                                              |
 | State                       | available                                                 |
-| SubnetArn                   | arn:aws:ec2:us-east-1:123456789012:subnet/subnet-86551e9d |
-| SubnetId                    | subnet-86551e9d                                           |
-| VpcId                       | vpc-1561eea5                                              |
+| SubnetArn                   | arn:aws:ec2:us-east-1:123456789012:subnet/subnet-a6e131f6 |
+| SubnetId                    | subnet-a6e131f6                                           |
+| VpcId                       | vpc-b6ee287f                                              |
 
 
 ## Resource Tags
@@ -829,17 +1057,17 @@
 
 ---
 
-# AWS Resource: `aws_subnet` - `subnet-dc94c752`
+# AWS Resource: `aws_subnet` - `subnet-d94916f9`
 
 ## Overview
 
 | Property          | Value                                                     |
 | ----------------- | --------------------------------------------------------- |
 | Resource Type     | aws_subnet                                                |
-| ARN               | arn:aws:ec2:us-east-1:123456789012:subnet/subnet-dc94c752 |
+| ARN               | arn:aws:ec2:us-east-1:123456789012:subnet/subnet-d94916f9 |
 | Region            | us-east-1                                                 |
 | Account ID        | 123456789012                                              |
-| Collected At      | 2026-10-15T16:01:58Z                                      |
+| Collected At      | 2026-10-15T16:40:03Z                                      |
 | Collector Version | 0.1.0                                                     |
 
 
@@ -857,9 +1085,9 @@
 | MapPublicIpOnLaunch         | False                                                     |
 | OwnerId                     | 123456789012                                              |
 | State                       | available                                                 |
-| SubnetArn                   | arn:aws:ec2:us-east-1:123456789012:subnet/subnet-dc94c752 |
-| SubnetId                    | subnet-dc94c752                                           |
-| VpcId                       | vpc-1561eea5                                              |
+| SubnetArn                   | arn:aws:ec2:us-east-1:123456789012:subnet/subnet-d94916f9 |
+| SubnetId                    | subnet-d94916f9                                           |
+| VpcId                       | vpc-b6ee287f                                              |
 
 
 ## Resource Tags
@@ -880,17 +1108,17 @@
 
 ---
 
-# AWS Resource: `aws_subnet` - `subnet-ee0601cc`
+# AWS Resource: `aws_subnet` - `subnet-b83c8765`
 
 ## Overview
 
 | Property          | Value                                                     |
 | ----------------- | --------------------------------------------------------- |
 | Resource Type     | aws_subnet                                                |
-| ARN               | arn:aws:ec2:us-east-1:123456789012:subnet/subnet-ee0601cc |
+| ARN               | arn:aws:ec2:us-east-1:123456789012:subnet/subnet-b83c8765 |
 | Region            | us-east-1                                                 |
 | Account ID        | 123456789012                                              |
-| Collected At      | 2026-10-15T16:01:58Z                                      |
+| Collected At      | 2026-10-15T16:40:03Z                                      |
 | Collector Version | 0.1.0                                                     |
 
 
@@ -908,9 +1136,9 @@
 | MapPublicIpOnLaunch         | False                                                     |
 | OwnerId                     | 123456789012                                              |
 | State                       | available                                                 |
-| SubnetArn                   | arn:aws:ec2:us-east-1:123456789012:subnet/subnet-ee0601cc |
-| SubnetId                    | subnet-ee0601cc                                           |
-| VpcId                       | vpc-1561eea5                                              |
+| SubnetArn                   | arn:aws:ec2:us-east-1:123456789012:subnet/subnet-b83c8765 |
+| SubnetId                    | subnet-b83c8765                                           |
+| VpcId                       | vpc-b6ee287f                                              |
 
 
 ## Resource Tags
@@ -931,17 +1159,17 @@
 
 ---
 
-# AWS Resource: `aws_route_table` - `rtb-57076453`
+# AWS Resource: `aws_route_table` - `rtb-fc59c9b7`
 
 ## Overview
 
 | Property          | Value                                                       |
 | ----------------- | ----------------------------------------------------------- |
 | Resource Type     | aws_route_table                                             |
-| ARN               | arn:aws:ec2:us-east-1:123456789012:route-table/rtb-57076453 |
+| ARN               | arn:aws:ec2:us-east-1:123456789012:route-table/rtb-fc59c9b7 |
 | Region            | us-east-1                                                   |
 | Account ID        | 123456789012                                                |
-| Collected At      | 2026-10-15T16:01:58Z                                        |
+| Collected At      | 2026-10-15T16:40:03Z                                        |
 | Collector Version | 0.1.0                                                       |
 
 
@@ -950,15 +1178,15 @@
 | Configuration Key | Value        |
 | ----------------- | ------------ |
 | OwnerId           | 123456789012 |
-| RouteTableId      | rtb-57076453 |
-| VpcId             | vpc-1561eea5 |
+| RouteTableId      | rtb-fc59c9b7 |
+| VpcId             | vpc-b6ee287f |
 
 
 ### Associations
 
 | AssociationState        | Main | RouteTableAssociationId | RouteTableId |
 | ----------------------- | ---- | ----------------------- | ------------ |
-| {'State': 'associated'} | True | rtbassoc-063aebf2       | rtb-57076453 |
+| {'State': 'associated'} | True | rtbassoc-0652b6d7       | rtb-fc59c9b7 |
 
 
 ### Routes
@@ -978,17 +1206,17 @@
 
 ---
 
-# AWS Resource: `aws_route_table` - `rtb-395e2831`
+# AWS Resource: `aws_route_table` - `rtb-590047f7`
 
 ## Overview
 
 | Property          | Value                                                       |
 | ----------------- | ----------------------------------------------------------- |
 | Resource Type     | aws_route_table                                             |
-| ARN               | arn:aws:ec2:us-east-1:123456789012:route-table/rtb-395e2831 |
+| ARN               | arn:aws:ec2:us-east-1:123456789012:route-table/rtb-590047f7 |
 | Region            | us-east-1                                                   |
 | Account ID        | 123456789012                                                |
-| Collected At      | 2026-10-15T16:01:58Z                                        |
+| Collected At      | 2026-10-15T16:40:03Z                                        |
 | Collector Version | 0.1.0                                                       |
 
 
@@ -997,8 +1225,8 @@
 | Configuration Key | Value        |
 | ----------------- | ------------ |
 | OwnerId           | 123456789012 |
-| RouteTableId      | rtb-395e2831 |
-| VpcId             | vpc-1561eea5 |
+| RouteTableId      | rtb-590047f7 |
+| VpcId             | vpc-b6ee287f |
 
 
 ## Resource Tags
@@ -1013,8 +1241,8 @@
 
 | AssociationState        | Main  | RouteTableAssociationId | RouteTableId | SubnetId        |
 | ----------------------- | ----- | ----------------------- | ------------ | --------------- |
-| {'State': 'associated'} | False | rtbassoc-4ed8ef43       | rtb-395e2831 | subnet-dc94c752 |
-| {'State': 'associated'} | False | rtbassoc-e27cd101       | rtb-395e2831 | subnet-ee0601cc |
+| {'State': 'associated'} | False | rtbassoc-183e4185       | rtb-590047f7 | subnet-d94916f9 |
+| {'State': 'associated'} | False | rtbassoc-a0b52547       | rtb-590047f7 | subnet-b83c8765 |
 
 
 ### Routes
@@ -1022,23 +1250,23 @@
 | DestinationCidrBlock | GatewayId    | Origin           | State  |
 | -------------------- | ------------ | ---------------- | ------ |
 | 10.0.0.0/16          | local        | CreateRouteTable | active |
-| 0.0.0.0/0            | igw-e27d9033 | CreateRoute      | active |
+| 0.0.0.0/0            | igw-bd38647b | CreateRoute      | active |
 
 
 
 ---
 
-# AWS Resource: `aws_route_table` - `rtb-590d89f0`
+# AWS Resource: `aws_route_table` - `rtb-52dac71b`
 
 ## Overview
 
 | Property          | Value                                                       |
 | ----------------- | ----------------------------------------------------------- |
 | Resource Type     | aws_route_table                                             |
-| ARN               | arn:aws:ec2:us-east-1:123456789012:route-table/rtb-590d89f0 |
+| ARN               | arn:aws:ec2:us-east-1:123456789012:route-table/rtb-52dac71b |
 | Region            | us-east-1                                                   |
 | Account ID        | 123456789012                                                |
-| Collected At      | 2026-10-15T16:01:58Z                                        |
+| Collected At      | 2026-10-15T16:40:03Z                                        |
 | Collector Version | 0.1.0                                                       |
 
 
@@ -1047,8 +1275,8 @@
 | Configuration Key | Value        |
 | ----------------- | ------------ |
 | OwnerId           | 123456789012 |
-| RouteTableId      | rtb-590d89f0 |
-| VpcId             | vpc-1561eea5 |
+| RouteTableId      | rtb-52dac71b |
+| VpcId             | vpc-b6ee287f |
 
 
 ## Resource Tags
@@ -1063,7 +1291,7 @@
 
 | AssociationState        | Main  | RouteTableAssociationId | RouteTableId | SubnetId        |
 | ----------------------- | ----- | ----------------------- | ------------ | --------------- |
-| {'State': 'associated'} | False | rtbassoc-497b00d3       | rtb-590d89f0 | subnet-86551e9d |
+| {'State': 'associated'} | False | rtbassoc-fe53fe54       | rtb-52dac71b | subnet-a6e131f6 |
 
 
 ### Routes
@@ -1071,24 +1299,24 @@
 | DestinationCidrBlock | DestinationPrefixListId | GatewayId     | NatGatewayId          | Origin           | State  |
 | -------------------- | ----------------------- | ------------- | --------------------- | ---------------- | ------ |
 | 10.0.0.0/16          |                         | local         |                       | CreateRouteTable | active |
-| 0.0.0.0/0            |                         |               | nat-3e17f5a22ce211a96 | CreateRoute      | active |
-|                      | pl-cc234682             | vpce-a3573b69 |                       | CreateRoute      | active |
+| 0.0.0.0/0            |                         |               | nat-8604a604f3c5a3cf0 | CreateRoute      | active |
+|                      | pl-7c659893             | vpce-073f3c1e |                       | CreateRoute      | active |
 
 
 
 ---
 
-# AWS Resource: `aws_internet_gateway` - `igw-e27d9033`
+# AWS Resource: `aws_internet_gateway` - `igw-bd38647b`
 
 ## Overview
 
 | Property          | Value                                                            |
 | ----------------- | ---------------------------------------------------------------- |
 | Resource Type     | aws_internet_gateway                                             |
-| ARN               | arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-e27d9033 |
+| ARN               | arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-bd38647b |
 | Region            | us-east-1                                                        |
 | Account ID        | 123456789012                                                     |
-| Collected At      | 2026-10-15T16:01:58Z                                             |
+| Collected At      | 2026-10-15T16:40:03Z                                             |
 | Collector Version | 0.1.0                                                            |
 
 
@@ -1096,7 +1324,7 @@
 
 | Configuration Key | Value        |
 | ----------------- | ------------ |
-| InternetGatewayId | igw-e27d9033 |
+| InternetGatewayId | igw-bd38647b |
 | OwnerId           | 123456789012 |
 
 
@@ -1112,23 +1340,23 @@
 
 | State     | VpcId        |
 | --------- | ------------ |
-| available | vpc-1561eea5 |
+| available | vpc-b6ee287f |
 
 
 
 ---
 
-# AWS Resource: `aws_nat_gateway` - `nat-3e17f5a22ce211a96`
+# AWS Resource: `aws_nat_gateway` - `nat-8604a604f3c5a3cf0`
 
 ## Overview
 
 | Property          | Value                                                               |
 | ----------------- | ------------------------------------------------------------------- |
 | Resource Type     | aws_nat_gateway                                                     |
-| ARN               | arn:aws:ec2:us-east-1:123456789012:natgateway/nat-3e17f5a22ce211a96 |
+| ARN               | arn:aws:ec2:us-east-1:123456789012:natgateway/nat-8604a604f3c5a3cf0 |
 | Region            | us-east-1                                                           |
 | Account ID        | 123456789012                                                        |
-| Collected At      | 2026-10-15T16:01:58Z                                                |
+| Collected At      | 2026-10-15T16:40:03Z                                                |
 | Collector Version | 0.1.0                                                               |
 
 
@@ -1137,11 +1365,11 @@
 | Configuration Key | Value                            |
 | ----------------- | -------------------------------- |
 | ConnectivityType  | None                             |
-| CreateTime        | 2026-10-15T16:01:57.149000+00:00 |
-| NatGatewayId      | nat-3e17f5a22ce211a96            |
+| CreateTime        | 2026-10-15T16:40:02.399000+00:00 |
+| NatGatewayId      | nat-8604a604f3c5a3cf0            |
 | State             | available                        |
-| SubnetId          | subnet-dc94c752                  |
-| VpcId             | vpc-1561eea5                     |
+| SubnetId          | subnet-d94916f9                  |
+| VpcId             | vpc-b6ee287f                     |
 
 
 ## Resource Tags
@@ -1154,25 +1382,25 @@
 
 ### Natgatewayaddresses
 
-| AllocationId      | AssociationId     | NetworkInterfaceId | PrivateIp      | PublicIp        |
-| ----------------- | ----------------- | ------------------ | -------------- | --------------- |
-| eipalloc-df1cdc26 | eipassoc-19f138f8 | eni-8085a8fe       | 10.166.137.104 | 127.223.174.226 |
+| AllocationId      | AssociationId     | NetworkInterfaceId | PrivateIp     | PublicIp      |
+| ----------------- | ----------------- | ------------------ | ------------- | ------------- |
+| eipalloc-53f35655 | eipassoc-fd5e2d9f | eni-39f28b69       | 10.102.224.36 | 127.111.0.103 |
 
 
 
 ---
 
-# AWS Resource: `aws_vpc_endpoint` - `vpce-a3573b69`
+# AWS Resource: `aws_vpc_endpoint` - `vpce-073f3c1e`
 
 ## Overview
 
 | Property          | Value                                                         |
 | ----------------- | ------------------------------------------------------------- |
 | Resource Type     | aws_vpc_endpoint                                              |
-| ARN               | arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-a3573b69 |
+| ARN               | arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-073f3c1e |
 | Region            | us-east-1                                                     |
 | Account ID        | 123456789012                                                  |
-| Collected At      | 2026-10-15T16:01:58Z                                          |
+| Collected At      | 2026-10-15T16:40:03Z                                          |
 | Collector Version | 0.1.0                                                         |
 
 
@@ -1180,15 +1408,15 @@
 
 | Configuration Key | Value                                                                                                           |
 | ----------------- | --------------------------------------------------------------------------------------------------------------- |
-| CreationTimestamp | 2026-10-15T16:01:57+00:00                                                                                       |
+| CreationTimestamp | 2026-10-15T16:40:02+00:00                                                                                       |
 | OwnerId           | 123456789012                                                                                                    |
 | PolicyDocument    | {"Version": "2008-10-17", "Statement": [{"Effect": "Allow", "Principal": "*", "Action": "*", "Resource": "*"}]} |
 | PrivateDnsEnabled | True                                                                                                            |
 | ServiceName       | com.amazonaws.us-east-1.s3                                                                                      |
 | State             | available                                                                                                       |
-| VpcEndpointId     | vpce-a3573b69                                                                                                   |
+| VpcEndpointId     | vpce-073f3c1e                                                                                                   |
 | VpcEndpointType   | Gateway                                                                                                         |
-| VpcId             | vpc-1561eea5                                                                                                    |
+| VpcId             | vpc-b6ee287f                                                                                                    |
 
 
 ## Resource Tags
@@ -1210,7 +1438,7 @@
 
 ```json
 [
-  "rtb-590d89f0"
+  "rtb-52dac71b"
 ]
 ```
 
@@ -1228,7 +1456,7 @@
 | ARN               | arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188 |
 | Region            | us-east-1                                                                                            |
 | Account ID        | 123456789012                                                                                         |
-| Collected At      | 2026-10-15T16:01:58Z                                                                                 |
+| Collected At      | 2026-10-15T16:40:03Z                                                                                 |
 | Collector Version | 0.1.0                                                                                                |
 
 
@@ -1237,14 +1465,14 @@
 | Configuration Key     | Value                                                                                                |
 | --------------------- | ---------------------------------------------------------------------------------------------------- |
 | CanonicalHostedZoneId | Z2P70J7EXAMPLE                                                                                       |
-| CreatedTime           | 2026-10-15T16:01:57.250000+00:00                                                                     |
+| CreatedTime           | 2026-10-15T16:40:02.493000+00:00                                                                     |
 | DNSName               | storefront-alb-1.us-east-1.elb.amazonaws.com                                                         |
 | IpAddressType         | ipv4                                                                                                 |
 | LoadBalancerArn       | arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188 |
 | LoadBalancerName      | storefront-alb                                                                                       |
 | Scheme                | internet-facing                                                                                      |
 | Type                  | application                                                                                          |
-| VpcId                 | vpc-1561eea5                                                                                         |
+| VpcId                 | vpc-b6ee287f                                                                                         |
 
 
 ## Resource Tags
@@ -1268,22 +1496,22 @@
 
 | SubnetId        | ZoneName   |
 | --------------- | ---------- |
-| subnet-dc94c752 | us-east-1a |
-| subnet-ee0601cc | us-east-1b |
+| subnet-d94916f9 | us-east-1a |
+| subnet-b83c8765 | us-east-1b |
 
 
 ### Listeners
 
 | AlpnPolicy | Certificates                                                                                                | DefaultActions                                                                                                                            | ListenerArn                                                                                                    | LoadBalancerArn                                                                                      | Port | Protocol | SslPolicy                 |
 | ---------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---- | -------- | ------------------------- |
-| []         | [{'CertificateArn': 'arn:aws:acm:us-east-1:123456789012:certificate/59f7c298-c41f-48f5-a3db-cb8263d5fcc6'}] | [{'Type': 'forward', 'TargetGroupArn': 'arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188'}] | arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434430983056 | arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188 | 443  | HTTPS    | ELBSecurityPolicy-2016-08 |
+| []         | [{'CertificateArn': 'arn:aws:acm:us-east-1:123456789012:certificate/a731cd05-0052-48e0-8889-0431af5b4bbe'}] | [{'Type': 'forward', 'TargetGroupArn': 'arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188'}] | arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434588500944 | arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188 | 443  | HTTPS    | ELBSecurityPolicy-2016-08 |
 
 
 ### Securitygroups
 
 ```json
 [
-  "sg-347a556c97894d9e4"
+  "sg-8c9c7f5f96b0d5fb1"
 ]
 ```
 
@@ -1310,7 +1538,7 @@
 | ARN               | arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188 |
 | Region            | us-east-1                                                                                      |
 | Account ID        | 123456789012                                                                                   |
-| Collected At      | 2026-10-15T16:01:58Z                                                                           |
+| Collected At      | 2026-10-15T16:40:03Z                                                                           |
 | Collector Version | 0.1.0                                                                                          |
 
 
@@ -1333,7 +1561,7 @@
 | TargetGroupName            | storefront-tg                                                                                  |
 | TargetType                 | ip                                                                                             |
 | UnhealthyThresholdCount    | 2                                                                                              |
-| VpcId                      | vpc-1561eea5                                                                                   |
+| VpcId                      | vpc-b6ee287f                                                                                   |
 
 
 ## Resource Tags
@@ -1377,17 +1605,17 @@
 
 ---
 
-# AWS Resource: `aws_acm_certificate` - `59f7c298-c41f-48f5-a3db-cb8263d5fcc6`
+# AWS Resource: `aws_acm_certificate` - `a731cd05-0052-48e0-8889-0431af5b4bbe`
 
 ## Overview
 
 | Property          | Value                                                                               |
 | ----------------- | ----------------------------------------------------------------------------------- |
 | Resource Type     | aws_acm_certificate                                                                 |
-| ARN               | arn:aws:acm:us-east-1:123456789012:certificate/59f7c298-c41f-48f5-a3db-cb8263d5fcc6 |
+| ARN               | arn:aws:acm:us-east-1:123456789012:certificate/a731cd05-0052-48e0-8889-0431af5b4bbe |
 | Region            | us-east-1                                                                           |
 | Account ID        | 123456789012                                                                        |
-| Collected At      | 2026-10-15T16:01:58Z                                                                |
+| Collected At      | 2026-10-15T16:40:03Z                                                                |
 | Collector Version | 0.1.0                                                                               |
 
 
@@ -1395,16 +1623,16 @@
 
 | Configuration Key  | Value                                                                               |
 | ------------------ | ----------------------------------------------------------------------------------- |
-| CertificateArn     | arn:aws:acm:us-east-1:123456789012:certificate/59f7c298-c41f-48f5-a3db-cb8263d5fcc6 |
-| CreatedAt          | 2026-10-15T16:01:57.207985+07:00                                                    |
+| CertificateArn     | arn:aws:acm:us-east-1:123456789012:certificate/a731cd05-0052-48e0-8889-0431af5b4bbe |
+| CreatedAt          | 2026-10-15T16:40:02.451773+07:00                                                    |
 | DomainName         | shop.example.com                                                                    |
-| IssuedAt           | 2026-10-15T16:01:57.207985+07:00                                                    |
+| IssuedAt           | 2026-10-15T16:40:02.451773+07:00                                                    |
 | Issuer             | Amazon                                                                              |
 | KeyAlgorithm       | RSA_2048                                                                            |
-| NotAfter           | 2027-10-15T16:01:57+07:00                                                           |
-| NotBefore          | 2026-10-15T16:01:57+07:00                                                           |
+| NotAfter           | 2027-10-15T16:40:02+07:00                                                           |
+| NotBefore          | 2026-10-15T16:40:02+07:00                                                           |
 | RenewalEligibility | INELIGIBLE                                                                          |
-| Serial             | 67421154526262129659220035070403335987261677817                                     |
+| Serial             | 301918283559421105376956747537191903472248918439                                    |
 | SignatureAlgorithm | SHA512WITHRSA                                                                       |
 | Status             | PENDING_VALIDATION                                                                  |
 | Subject            | CN=shop.example.com                                                                 |
@@ -1422,8 +1650,8 @@
 
 | DomainName       | ResourceRecord                                                                                                                                                 | ValidationDomain | ValidationMethod | ValidationStatus   |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ---------------- | ------------------ |
-| api.example.com  | {'Name': '_d930b28be6c5927595552b219965053e.api.example.com.', 'Type': 'CNAME', 'Value': '_c9edd76ee4a0e2a74388032f3861cc50.ykybfrwcxw.acm-validations.aws.'}  | api.example.com  | DNS              | PENDING_VALIDATION |
 | shop.example.com | {'Name': '_d930b28be6c5927595552b219965053e.shop.example.com.', 'Type': 'CNAME', 'Value': '_c9edd76ee4a0e2a74388032f3861cc50.ykybfrwcxw.acm-validations.aws.'} | shop.example.com | DNS              | PENDING_VALIDATION |
+| api.example.com  | {'Name': '_d930b28be6c5927595552b219965053e.api.example.com.', 'Type': 'CNAME', 'Value': '_c9edd76ee4a0e2a74388032f3861cc50.ykybfrwcxw.acm-validations.aws.'}  | api.example.com  | DNS              | PENDING_VALIDATION |
 
 
 ### Extendedkeyusages
@@ -1453,8 +1681,8 @@
 
 ```json
 [
-  "api.example.com",
-  "shop.example.com"
+  "shop.example.com",
+  "api.example.com"
 ]
 ```
 
@@ -1462,17 +1690,588 @@
 
 ---
 
-# AWS Resource: `aws_lb_listener` - `app_storefront-alb_50dc6c495c0c9188_4434430983056`
+# AWS Resource: `aws_ecs_cluster` - `storefront`
+
+## Overview
+
+| Property          | Value                                                 |
+| ----------------- | ----------------------------------------------------- |
+| Resource Type     | aws_ecs_cluster                                       |
+| ARN               | arn:aws:ecs:us-east-1:123456789012:cluster/storefront |
+| Region            | us-east-1                                             |
+| Account ID        | 123456789012                                          |
+| Collected At      | 2026-10-15T16:40:03Z                                  |
+| Collector Version | 0.1.0                                                 |
+
+
+## Configuration Specifications
+
+| Configuration Key                 | Value                                                 |
+| --------------------------------- | ----------------------------------------------------- |
+| activeServicesCount               | 0                                                     |
+| clusterArn                        | arn:aws:ecs:us-east-1:123456789012:cluster/storefront |
+| clusterName                       | storefront                                            |
+| pendingTasksCount                 | 0                                                     |
+| registeredContainerInstancesCount | 0                                                     |
+| runningTasksCount                 | 0                                                     |
+| status                            | ACTIVE                                                |
+
+
+## Resource Tags
+
+| Tag Key | Tag Value  |
+| ------- | ---------- |
+| service | storefront |
+
+
+### Settings
+
+| name              | value   |
+| ----------------- | ------- |
+| containerInsights | enabled |
+
+
+
+---
+
+# AWS Resource: `aws_ecr_repository` - `storefront-web`
+
+## Overview
+
+| Property          | Value                                                        |
+| ----------------- | ------------------------------------------------------------ |
+| Resource Type     | aws_ecr_repository                                           |
+| ARN               | arn:aws:ecr:us-east-1:123456789012:repository/storefront-web |
+| Region            | us-east-1                                                    |
+| Account ID        | 123456789012                                                 |
+| Collected At      | 2026-10-15T16:40:03Z                                         |
+| Collector Version | 0.1.0                                                        |
+
+
+## Configuration Specifications
+
+| Configuration Key  | Value                                                        |
+| ------------------ | ------------------------------------------------------------ |
+| createdAt          | 2026-10-15T16:40:02+00:00                                    |
+| imageTagMutability | IMMUTABLE                                                    |
+| registryId         | 123456789012                                                 |
+| repositoryArn      | arn:aws:ecr:us-east-1:123456789012:repository/storefront-web |
+| repositoryName     | storefront-web                                               |
+| repositoryUri      | 123456789012.dkr.ecr.us-east-1.amazonaws.com/storefront-web  |
+
+
+## Resource Tags
+
+| Tag Key | Tag Value  |
+| ------- | ---------- |
+| service | storefront |
+
+
+### Encryptionconfiguration
+
+```json
+{
+  "encryptionType": "AES256"
+}
+```
+
+
+### Imagescanningconfiguration
+
+```json
+{
+  "scanOnPush": true
+}
+```
+
+
+
+---
+
+# AWS Resource: `aws_autoscaling_group` - `storefront-workers`
+
+## Overview
+
+| Property          | Value                                                                                                                                    |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Resource Type     | aws_autoscaling_group                                                                                                                    |
+| ARN               | arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:d7e19156-0c83-434b-b8e0-a1b67c604518:autoScalingGroupName/storefront-workers |
+| Region            | us-east-1                                                                                                                                |
+| Account ID        | 123456789012                                                                                                                             |
+| Collected At      | 2026-10-15T16:40:03Z                                                                                                                     |
+| Collector Version | 0.1.0                                                                                                                                    |
+
+
+## Configuration Specifications
+
+| Configuration Key                | Value                                                                                                                                    |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| AutoScalingGroupARN              | arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:d7e19156-0c83-434b-b8e0-a1b67c604518:autoScalingGroupName/storefront-workers |
+| AutoScalingGroupName             | storefront-workers                                                                                                                       |
+| CapacityRebalance                | False                                                                                                                                    |
+| CreatedTime                      | 2013-05-06T17:47:15.107000+00:00                                                                                                         |
+| DefaultCooldown                  | 300                                                                                                                                      |
+| DesiredCapacity                  | 1                                                                                                                                        |
+| HealthCheckGracePeriod           | 300                                                                                                                                      |
+| HealthCheckType                  | EC2                                                                                                                                      |
+| MaxSize                          | 2                                                                                                                                        |
+| MinSize                          | 1                                                                                                                                        |
+| NewInstancesProtectedFromScaleIn | False                                                                                                                                    |
+| ServiceLinkedRoleARN             | arn:aws:iam::123456789012:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling                                   |
+| VPCZoneIdentifier                | subnet-a6e131f6                                                                                                                          |
+
+
+## Resource Tags
+
+| Tag Key | Tag Value  |
+| ------- | ---------- |
+| service | storefront |
+
+
+### Availabilityzones
+
+```json
+[
+  "us-east-1a"
+]
+```
+
+
+### Instances
+
+| AvailabilityZone | HealthStatus | InstanceId          | InstanceType | LaunchTemplate                                                                                                 | LifecycleState | ProtectedFromScaleIn |
+| ---------------- | ------------ | ------------------- | ------------ | -------------------------------------------------------------------------------------------------------------- | -------------- | -------------------- |
+| us-east-1a       | Healthy      | i-f6333ad6a6250cb6f | t3.small     | {'LaunchTemplateId': 'lt-254efd878ee151eb7', 'LaunchTemplateName': 'storefront-worker', 'Version': '$Default'} | InService      | False                |
+
+
+### Launchtemplate
+
+```json
+{
+  "LaunchTemplateId": "lt-254efd878ee151eb7",
+  "LaunchTemplateName": "storefront-worker",
+  "Version": "$Default"
+}
+```
+
+
+### Loadbalancernames
+
+```json
+[]
+```
+
+
+### Suspendedprocesses
+
+```json
+[]
+```
+
+
+### Targetgrouparns
+
+```json
+[]
+```
+
+
+### Terminationpolicies
+
+```json
+[
+  "Default"
+]
+```
+
+
+
+---
+
+# AWS Resource: `aws_launch_template` - `lt-254efd878ee151eb7`
+
+## Overview
+
+| Property          | Value                                                                   |
+| ----------------- | ----------------------------------------------------------------------- |
+| Resource Type     | aws_launch_template                                                     |
+| ARN               | arn:aws:ec2:us-east-1:123456789012:launch-template/lt-254efd878ee151eb7 |
+| Region            | us-east-1                                                               |
+| Account ID        | 123456789012                                                            |
+| Collected At      | 2026-10-15T16:40:03Z                                                    |
+| Collector Version | 0.1.0                                                                   |
+
+
+## Configuration Specifications
+
+| Configuration Key    | Value                          |
+| -------------------- | ------------------------------ |
+| CreateTime           | 2026-10-15T16:40:02+00:00      |
+| CreatedBy            | arn:aws:iam::123456789012:root |
+| DefaultVersionNumber | 1                              |
+| LatestVersionNumber  | 1                              |
+| LaunchTemplateId     | lt-254efd878ee151eb7           |
+| LaunchTemplateName   | storefront-worker              |
+
+
+## Resource Tags
+
+| Tag Key | Tag Value         |
+| ------- | ----------------- |
+| Name    | storefront-worker |
+| service | storefront        |
+
+
+### Launchtemplatedata
+
+```json
+{
+  "IamInstanceProfile": {
+    "Name": "orders-app-role"
+  },
+  "ImageId": "ami-12c6146b",
+  "InstanceType": "t3.small",
+  "SecurityGroupIds": [
+    "sg-eaaa2c57ac5ecc98e"
+  ],
+  "TagSpecifications": [
+    {
+      "ResourceType": "launch-template",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "storefront-worker"
+        },
+        {
+          "Key": "service",
+          "Value": "storefront"
+        }
+      ]
+    }
+  ]
+}
+```
+
+
+
+---
+
+# AWS Resource: `aws_elasticache_replication_group` - `storefront-cache`
+
+## Overview
+
+| Property          | Value                                                                        |
+| ----------------- | ---------------------------------------------------------------------------- |
+| Resource Type     | aws_elasticache_replication_group                                            |
+| ARN               | arn:aws:elasticache:us-east-1:123456789012:replicationgroup:storefront-cache |
+| Region            | us-east-1                                                                    |
+| Account ID        | 123456789012                                                                 |
+| Collected At      | 2026-10-15T16:40:03Z                                                         |
+| Collector Version | 0.1.0                                                                        |
+
+
+## Configuration Specifications
+
+| Configuration Key          | Value                                                                        |
+| -------------------------- | ---------------------------------------------------------------------------- |
+| ARN                        | arn:aws:elasticache:us-east-1:123456789012:replicationgroup:storefront-cache |
+| AtRestEncryptionEnabled    | True                                                                         |
+| AuthTokenEnabled           | False                                                                        |
+| AutoMinorVersionUpgrade    | True                                                                         |
+| AutomaticFailover          | enabled                                                                      |
+| CacheNodeType              | cache.t4g.micro                                                              |
+| ClusterEnabled             | False                                                                        |
+| ClusterMode                | disabled                                                                     |
+| DataTiering                | disabled                                                                     |
+| Description                | Storefront session cache                                                     |
+| Engine                     | redis                                                                        |
+| IpDiscovery                | ipv4                                                                         |
+| MultiAZ                    | enabled                                                                      |
+| NetworkType                | ipv4                                                                         |
+| ReplicationGroupCreateTime | 2026-01-01T00:00:00+00:00                                                    |
+| ReplicationGroupId         | storefront-cache                                                             |
+| SnapshotRetentionLimit     | 0                                                                            |
+| SnapshotWindow             | 05:00-06:00                                                                  |
+| Status                     | available                                                                    |
+| TransitEncryptionEnabled   | True                                                                         |
+
+
+### Cachecluster
+
+```json
+{
+  "ARN": "arn:aws:elasticache:us-east-1:123456789012:cluster:storefront-cache-001",
+  "AtRestEncryptionEnabled": true,
+  "AuthTokenEnabled": false,
+  "AutoMinorVersionUpgrade": true,
+  "CacheClusterCreateTime": "2026-01-01T00:00:00+00:00",
+  "CacheClusterId": "storefront-cache-001",
+  "CacheClusterStatus": "available",
+  "CacheNodeType": "cache.t4g.micro",
+  "CacheParameterGroup": {
+    "CacheNodeIdsToReboot": [],
+    "CacheParameterGroupName": "default.redis7",
+    "ParameterApplyStatus": "in-sync"
+  },
+  "CacheSecurityGroups": [],
+  "CacheSubnetGroupName": "storefront-cache-subnets",
+  "Engine": "redis",
+  "EngineVersion": "7.1",
+  "IpDiscovery": "ipv4",
+  "LogDeliveryConfigurations": [],
+  "NetworkType": "ipv4",
+  "NumCacheNodes": 1,
+  "PendingModifiedValues": {},
+  "PreferredAvailabilityZone": "us-east-1a",
+  "PreferredMaintenanceWindow": "sun:23:00-mon:01:30",
+  "ReplicationGroupId": "storefront-cache",
+  "ReplicationGroupLogDeliveryEnabled": false,
+  "SecurityGroups": [
+    {
+      "SecurityGroupId": "sg-eaaa2c57ac5ecc98e",
+      "Status": "active"
+    }
+  ],
+  "SnapshotRetentionLimit": 0,
+  "SnapshotWindow": "05:00-06:00",
+  "TransitEncryptionEnabled": true
+}
+```
+
+
+### Cachesubnetgroup
+
+```json
+{
+  "ARN": "arn:aws:elasticache:us-east-1:123456789012:subnetgroup:storefront-cache-subnets",
+  "CacheSubnetGroupDescription": "Storefront cache",
+  "CacheSubnetGroupName": "storefront-cache-subnets",
+  "Subnets": [
+    {
+      "SubnetAvailabilityZone": {
+        "Name": "us-east-1a"
+      },
+      "SubnetIdentifier": "subnet-a6e131f6",
+      "SupportedNetworkTypes": [
+        "ipv4"
+      ]
+    }
+  ],
+  "SupportedNetworkTypes": [
+    "ipv4"
+  ],
+  "VpcId": "vpc-b6ee287f"
+}
+```
+
+
+### Logdeliveryconfigurations
+
+```json
+[]
+```
+
+
+### Memberclusters
+
+```json
+[
+  "storefront-cache-001",
+  "storefront-cache-002"
+]
+```
+
+
+### Nodegroups
+
+| NodeGroupId | NodeGroupMembers                                                                                                                                                                                                                                                                 | PrimaryEndpoint                                                                            | ReaderEndpoint                                                                             | Status    |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | --------- |
+| 0001        | [{'CacheClusterId': 'storefront-cache-001', 'CacheNodeId': '0001', 'PreferredAvailabilityZone': 'us-east-1a', 'CurrentRole': 'primary'}, {'CacheClusterId': 'storefront-cache-002', 'CacheNodeId': '0001', 'PreferredAvailabilityZone': 'us-east-1a', 'CurrentRole': 'replica'}] | {'Address': 'storefront-cache.abc123.ng.0001.us-east-1.cache.amazonaws.com', 'Port': 6379} | {'Address': 'storefront-cache.abc123.ro.0001.us-east-1.cache.amazonaws.com', 'Port': 6379} | available |
+
+
+### Pendingmodifiedvalues
+
+```json
+{}
+```
+
+
+### Taglist
+
+| Key     | Value      |
+| ------- | ---------- |
+| service | storefront |
+
+
+
+---
+
+# AWS Resource: `aws_sqs_queue` - `storefront-orders`
+
+## Overview
+
+| Property          | Value                                                |
+| ----------------- | ---------------------------------------------------- |
+| Resource Type     | aws_sqs_queue                                        |
+| ARN               | arn:aws:sqs:us-east-1:123456789012:storefront-orders |
+| Region            | us-east-1                                            |
+| Account ID        | 123456789012                                         |
+| Collected At      | 2026-10-15T16:40:03Z                                 |
+| Collector Version | 0.1.0                                                |
+
+
+## Configuration Specifications
+
+| Configuration Key | Value                                                              |
+| ----------------- | ------------------------------------------------------------------ |
+| QueueUrl          | https://sqs.us-east-1.amazonaws.com/123456789012/storefront-orders |
+
+
+## Resource Tags
+
+| Tag Key | Tag Value  |
+| ------- | ---------- |
+| service | storefront |
+
+
+### Attributes
+
+```json
+{
+  "ApproximateNumberOfMessages": "0",
+  "ApproximateNumberOfMessagesDelayed": "0",
+  "ApproximateNumberOfMessagesNotVisible": "0",
+  "CreatedTimestamp": "1792082402.659784",
+  "DelaySeconds": "0",
+  "LastModifiedTimestamp": "1792082402.659784",
+  "MaximumMessageSize": "262144",
+  "MessageRetentionPeriod": "345600",
+  "QueueArn": "arn:aws:sqs:us-east-1:123456789012:storefront-orders",
+  "ReceiveMessageWaitTimeSeconds": "0",
+  "VisibilityTimeout": "60"
+}
+```
+
+
+
+---
+
+# AWS Resource: `aws_sns_topic` - `storefront-events`
+
+## Overview
+
+| Property          | Value                                                |
+| ----------------- | ---------------------------------------------------- |
+| Resource Type     | aws_sns_topic                                        |
+| ARN               | arn:aws:sns:us-east-1:123456789012:storefront-events |
+| Region            | us-east-1                                            |
+| Account ID        | 123456789012                                         |
+| Collected At      | 2026-10-15T16:40:03Z                                 |
+| Collector Version | 0.1.0                                                |
+
+
+## Configuration Specifications
+
+## Resource Tags
+
+| Tag Key | Tag Value  |
+| ------- | ---------- |
+| service | storefront |
+
+
+### Attributes
+
+```json
+{
+  "DeliveryPolicy": "",
+  "DisplayName": "Storefront events",
+  "EffectiveDeliveryPolicy": "{\"defaultHealthyRetryPolicy\": {\"numNoDelayRetries\": 0, \"numMinDelayRetries\": 0, \"minDelayTarget\": 20, \"maxDelayTarget\": 20, \"numMaxDelayRetries\": 0, \"numRetries\": 3, \"backoffFunction\": \"linear\"}, \"sicklyRetryPolicy\": null, \"throttlePolicy\": null, \"guaranteed\": false}",
+  "Owner": "123456789012",
+  "Policy": "{\"Version\":\"2008-10-17\",\"Id\":\"__default_policy_ID\",\"Statement\":[{\"Effect\":\"Allow\",\"Sid\":\"__default_statement_ID\",\"Principal\":{\"AWS\":\"*\"},\"Action\":[\"SNS:GetTopicAttributes\",\"SNS:SetTopicAttributes\",\"SNS:AddPermission\",\"SNS:RemovePermission\",\"SNS:DeleteTopic\",\"SNS:Subscribe\",\"SNS:ListSubscriptionsByTopic\",\"SNS:Publish\",\"SNS:Receive\"],\"Resource\":\"arn:aws:sns:us-east-1:123456789012:storefront-events\",\"Condition\":{\"StringEquals\":{\"AWS:SourceOwner\":\"123456789012\"}}}]}",
+  "SubscriptionsConfirmed": "0",
+  "SubscriptionsDeleted": "0",
+  "SubscriptionsPending": "0",
+  "TopicArn": "arn:aws:sns:us-east-1:123456789012:storefront-events"
+}
+```
+
+
+### Subscriptions
+
+| Endpoint                                             | Owner        | Protocol | SubscriptionArn                                                                           | TopicArn                                             |
+| ---------------------------------------------------- | ------------ | -------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| arn:aws:sqs:us-east-1:123456789012:storefront-orders | 123456789012 | sqs      | arn:aws:sns:us-east-1:123456789012:storefront-events:e79337ef-6785-4a3a-867b-d14f88d2396f | arn:aws:sns:us-east-1:123456789012:storefront-events |
+
+
+
+---
+
+# AWS Resource: `aws_scheduler_schedule` - `default_storefront-cleanup`
+
+## Overview
+
+| Property          | Value                                                                        |
+| ----------------- | ---------------------------------------------------------------------------- |
+| Resource Type     | aws_scheduler_schedule                                                       |
+| ARN               | arn:aws:scheduler:us-east-1:123456789012:schedule/default/storefront-cleanup |
+| Region            | us-east-1                                                                    |
+| Account ID        | 123456789012                                                                 |
+| Collected At      | 2026-10-15T16:40:03Z                                                         |
+| Collector Version | 0.1.0                                                                        |
+
+
+## Configuration Specifications
+
+| Configuration Key    | Value                                                                        |
+| -------------------- | ---------------------------------------------------------------------------- |
+| Arn                  | arn:aws:scheduler:us-east-1:123456789012:schedule/default/storefront-cleanup |
+| CreationDate         | 2026-10-15T23:40:02.856052+07:00                                             |
+| Description          | Hourly cleanup message                                                       |
+| GroupName            | default                                                                      |
+| LastModificationDate | 2026-10-15T23:40:02.856052+07:00                                             |
+| Name                 | storefront-cleanup                                                           |
+| ScheduleExpression   | rate(1 hour)                                                                 |
+| State                | ENABLED                                                                      |
+
+
+### Flexibletimewindow
+
+```json
+{
+  "Mode": "OFF"
+}
+```
+
+
+### Target
+
+```json
+{
+  "Arn": "arn:aws:sqs:us-east-1:123456789012:storefront-orders",
+  "Input": "{\"task\": \"cleanup\"}",
+  "RetryPolicy": {
+    "MaximumEventAgeInSeconds": 86400,
+    "MaximumRetryAttempts": 185
+  },
+  "RoleArn": "arn:aws:iam::123456789012:role/storefront-scheduler-role"
+}
+```
+
+
+
+---
+
+# AWS Resource: `aws_lb_listener` - `app_storefront-alb_50dc6c495c0c9188_4434588500944`
 
 ## Overview
 
 | Property          | Value                                                                                                          |
 | ----------------- | -------------------------------------------------------------------------------------------------------------- |
 | Resource Type     | aws_lb_listener                                                                                                |
-| ARN               | arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434430983056 |
+| ARN               | arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434588500944 |
 | Region            | us-east-1                                                                                                      |
 | Account ID        | 123456789012                                                                                                   |
-| Collected At      | 2026-10-15T16:01:58Z                                                                                           |
+| Collected At      | 2026-10-15T16:40:03Z                                                                                           |
 | Collector Version | 0.1.0                                                                                                          |
 
 
@@ -1480,7 +2279,7 @@
 
 | Configuration Key | Value                                                                                                          |
 | ----------------- | -------------------------------------------------------------------------------------------------------------- |
-| ListenerArn       | arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434430983056 |
+| ListenerArn       | arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434588500944 |
 | LoadBalancerArn   | arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188           |
 | Port              | 443                                                                                                            |
 | Protocol          | HTTPS                                                                                                          |
@@ -1498,7 +2297,7 @@
 
 | CertificateArn                                                                      |
 | ----------------------------------------------------------------------------------- |
-| arn:aws:acm:us-east-1:123456789012:certificate/59f7c298-c41f-48f5-a3db-cb8263d5fcc6 |
+| arn:aws:acm:us-east-1:123456789012:certificate/a731cd05-0052-48e0-8889-0431af5b4bbe |
 
 
 ### Defaultactions
@@ -1518,6 +2317,190 @@
 
 ---
 
+# AWS Resource: `aws_ecs_service` - `storefront_web`
+
+## Overview
+
+| Property          | Value                                                     |
+| ----------------- | --------------------------------------------------------- |
+| Resource Type     | aws_ecs_service                                           |
+| ARN               | arn:aws:ecs:us-east-1:123456789012:service/storefront/web |
+| Region            | us-east-1                                                 |
+| Account ID        | 123456789012                                              |
+| Collected At      | 2026-10-15T16:40:03Z                                      |
+| Collector Version | 0.1.0                                                     |
+
+
+## Configuration Specifications
+
+| Configuration Key  | Value                                                               |
+| ------------------ | ------------------------------------------------------------------- |
+| clusterArn         | arn:aws:ecs:us-east-1:123456789012:cluster/storefront               |
+| desiredCount       | 2                                                                   |
+| launchType         | FARGATE                                                             |
+| pendingCount       | 2                                                                   |
+| runningCount       | 0                                                                   |
+| schedulingStrategy | REPLICA                                                             |
+| serviceArn         | arn:aws:ecs:us-east-1:123456789012:service/storefront/web           |
+| serviceName        | web                                                                 |
+| status             | ACTIVE                                                              |
+| taskDefinition     | arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1 |
+
+
+## Resource Tags
+
+| Tag Key | Tag Value  |
+| ------- | ---------- |
+| service | storefront |
+
+
+### Deployments
+
+| createdAt                        | desiredCount | id                         | launchType | pendingCount | runningCount | status  | taskDefinition                                                      | updatedAt                        |
+| -------------------------------- | ------------ | -------------------------- | ---------- | ------------ | ------------ | ------- | ------------------------------------------------------------------- | -------------------------------- |
+| 2026-10-15T23:40:02.617837+07:00 | 2            | ecs-svc/614225609518633782 | FARGATE    | 2            | 0            | PRIMARY | arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1 | 2026-10-15T23:40:02.617843+07:00 |
+
+
+### Loadbalancers
+
+| containerName | containerPort | targetGroupArn                                                                                 |
+| ------------- | ------------- | ---------------------------------------------------------------------------------------------- |
+| web           | 80            | arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188 |
+
+
+### Serviceregistries
+
+```json
+[]
+```
+
+
+
+---
+
+# AWS Resource: `aws_ecs_task_definition` - `storefront-web_1`
+
+## Overview
+
+| Property          | Value                                                               |
+| ----------------- | ------------------------------------------------------------------- |
+| Resource Type     | aws_ecs_task_definition                                             |
+| ARN               | arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1 |
+| Region            | us-east-1                                                           |
+| Account ID        | 123456789012                                                        |
+| Collected At      | 2026-10-15T16:40:03Z                                                |
+| Collector Version | 0.1.0                                                               |
+
+
+## Configuration Specifications
+
+| Configuration Key | Value                                                               |
+| ----------------- | ------------------------------------------------------------------- |
+| cpu               | 256                                                                 |
+| executionRoleArn  | arn:aws:iam::123456789012:role/storefront-exec-role                 |
+| family            | storefront-web                                                      |
+| memory            | 512                                                                 |
+| networkMode       | awsvpc                                                              |
+| revision          | 1                                                                   |
+| status            | ACTIVE                                                              |
+| taskDefinitionArn | arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1 |
+| taskRoleArn       | arn:aws:iam::123456789012:role/storefront-task-role                 |
+
+
+## Resource Tags
+
+| Tag Key | Tag Value  |
+| ------- | ---------- |
+| service | storefront |
+
+
+### Compatibilities
+
+```json
+[
+  "EC2",
+  "FARGATE"
+]
+```
+
+
+### Containerdefinitions
+
+| cpu | environment                                                                                              | essential | image                                                             | logConfiguration                                                                                                                             | mountPoints | name | portMappings                               | volumesFrom |
+| --- | -------------------------------------------------------------------------------------------------------- | --------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ---- | ------------------------------------------ | ----------- |
+| 0   | [{'name': 'CACHE_HOST', 'value': 'storefront-cache'}, {'name': 'SESSION_SECRET', 'value': '[REDACTED]'}] | True      | 123456789012.dkr.ecr.us-east-1.amazonaws.com/storefront-web:1.4.2 | {'logDriver': 'awslogs', 'options': {'awslogs-group': '/ecs/storefront-web', 'awslogs-region': 'us-east-1', 'awslogs-stream-prefix': 'web'}} | []          | web  | [{'containerPort': 80, 'protocol': 'tcp'}] | []          |
+
+
+### Placementconstraints
+
+```json
+[]
+```
+
+
+### Requirescompatibilities
+
+```json
+[
+  "FARGATE"
+]
+```
+
+
+### Volumes
+
+```json
+[]
+```
+
+
+
+---
+
+# AWS Resource: `aws_cloudwatch_event_rule` - `storefront-nightly-report`
+
+## Overview
+
+| Property          | Value                                                                |
+| ----------------- | -------------------------------------------------------------------- |
+| Resource Type     | aws_cloudwatch_event_rule                                            |
+| ARN               | arn:aws:events:us-east-1:123456789012:rule/storefront-nightly-report |
+| Region            | us-east-1                                                            |
+| Account ID        | 123456789012                                                         |
+| Collected At      | 2026-10-15T16:40:03Z                                                 |
+| Collector Version | 0.1.0                                                                |
+
+
+## Configuration Specifications
+
+| Configuration Key  | Value                                                                |
+| ------------------ | -------------------------------------------------------------------- |
+| Arn                | arn:aws:events:us-east-1:123456789012:rule/storefront-nightly-report |
+| CreatedBy          | 123456789012                                                         |
+| Description        | Nightly order report                                                 |
+| EventBusName       | default                                                              |
+| Name               | storefront-nightly-report                                            |
+| ScheduleExpression | cron(0 2 * * ? *)                                                    |
+| State              | ENABLED                                                              |
+
+
+## Resource Tags
+
+| Tag Key | Tag Value  |
+| ------- | ---------- |
+| service | storefront |
+
+
+### Targets
+
+| Arn                                                            | Id              |
+| -------------------------------------------------------------- | --------------- |
+| arn:aws:lambda:us-east-1:123456789012:function:order-processor | order-processor |
+
+
+
+---
+
 # AWS Resource: `aws_s3_bucket` - `orders-public-assets`
 
 ## Overview
@@ -1528,7 +2511,7 @@
 | ARN               | arn:aws:s3:::orders-public-assets |
 | Region            | global                            |
 | Account ID        | 123456789012                      |
-| Collected At      | 2026-10-15T16:01:58Z              |
+| Collected At      | 2026-10-15T16:40:03Z              |
 | Collector Version | 0.1.0                             |
 
 
@@ -1603,7 +2586,7 @@
 | ARN               | arn:aws:s3:::storefront-static |
 | Region            | global                         |
 | Account ID        | 123456789012                   |
-| Collected At      | 2026-10-15T16:01:58Z           |
+| Collected At      | 2026-10-15T16:40:03Z           |
 | Collector Version | 0.1.0                          |
 
 
@@ -1659,6 +2642,81 @@
 
 ---
 
+# AWS Resource: `aws_iam_role` - `storefront-scheduler-role`
+
+## Overview
+
+| Property          | Value                                                    |
+| ----------------- | -------------------------------------------------------- |
+| Resource Type     | aws_iam_role                                             |
+| ARN               | arn:aws:iam::123456789012:role/storefront-scheduler-role |
+| Region            | global                                                   |
+| Account ID        | 123456789012                                             |
+| Collected At      | 2026-10-15T16:40:03Z                                     |
+| Collector Version | 0.1.0                                                    |
+
+
+## Configuration Specifications
+
+| Configuration Key  | Value                                                    |
+| ------------------ | -------------------------------------------------------- |
+| Arn                | arn:aws:iam::123456789012:role/storefront-scheduler-role |
+| CreateDate         | 2026-10-15T16:40:02.594000+00:00                         |
+| MaxSessionDuration | 3600                                                     |
+| Path               | /                                                        |
+| RoleId             | AROARZPUZDIKBTYRPCPMR                                    |
+| RoleName           | storefront-scheduler-role                                |
+
+
+## Resource Tags
+
+| Tag Key | Tag Value  |
+| ------- | ---------- |
+| service | storefront |
+
+
+### Assumerolepolicydocument
+
+```json
+{
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "scheduler.amazonaws.com"
+      }
+    }
+  ],
+  "Version": "2012-10-17"
+}
+```
+
+
+### Attachedpolicies
+
+```json
+[]
+```
+
+
+### Inlinepolicies
+
+```json
+{}
+```
+
+
+### Rolelastused
+
+```json
+{}
+```
+
+
+
+---
+
 # AWS Resource: `aws_iam_role` - `order-lambda-role`
 
 ## Overview
@@ -1669,7 +2727,7 @@
 | ARN               | arn:aws:iam::123456789012:role/order-lambda-role |
 | Region            | global                                           |
 | Account ID        | 123456789012                                     |
-| Collected At      | 2026-10-15T16:01:58Z                             |
+| Collected At      | 2026-10-15T16:40:03Z                             |
 | Collector Version | 0.1.0                                            |
 
 
@@ -1678,11 +2736,11 @@
 | Configuration Key  | Value                                            |
 | ------------------ | ------------------------------------------------ |
 | Arn                | arn:aws:iam::123456789012:role/order-lambda-role |
-| CreateDate         | 2026-10-15T16:01:56.952000+00:00                 |
+| CreateDate         | 2026-10-15T16:40:02.213000+00:00                 |
 | Description        | Execution role for order-processor               |
 | MaxSessionDuration | 3600                                             |
 | Path               | /                                                |
-| RoleId             | AROARZPUZDIKI6U4TOXCB                            |
+| RoleId             | AROARZPUZDIKCNGY6FPGT                            |
 | RoleName           | order-lambda-role                                |
 
 
@@ -1749,7 +2807,7 @@
 | ARN               | arn:aws:iam::123456789012:role/orders-app-role |
 | Region            | global                                         |
 | Account ID        | 123456789012                                   |
-| Collected At      | 2026-10-15T16:01:58Z                           |
+| Collected At      | 2026-10-15T16:40:03Z                           |
 | Collector Version | 0.1.0                                          |
 
 
@@ -1758,10 +2816,10 @@
 | Configuration Key  | Value                                          |
 | ------------------ | ---------------------------------------------- |
 | Arn                | arn:aws:iam::123456789012:role/orders-app-role |
-| CreateDate         | 2026-10-15T16:01:56.945000+00:00               |
+| CreateDate         | 2026-10-15T16:40:02.205000+00:00               |
 | MaxSessionDuration | 3600                                           |
 | Path               | /                                              |
-| RoleId             | AROARZPUZDIKPSYQ3UTIG                          |
+| RoleId             | AROARZPUZDIKHSGDM6FBZ                          |
 | RoleName           | orders-app-role                                |
 
 
@@ -1807,17 +2865,167 @@
 
 ---
 
-# AWS Resource: `aws_cloudfront_distribution` - `K4SJFH541UU7J`
+# AWS Resource: `aws_iam_role` - `storefront-task-role`
+
+## Overview
+
+| Property          | Value                                               |
+| ----------------- | --------------------------------------------------- |
+| Resource Type     | aws_iam_role                                        |
+| ARN               | arn:aws:iam::123456789012:role/storefront-task-role |
+| Region            | global                                              |
+| Account ID        | 123456789012                                        |
+| Collected At      | 2026-10-15T16:40:03Z                                |
+| Collector Version | 0.1.0                                               |
+
+
+## Configuration Specifications
+
+| Configuration Key  | Value                                               |
+| ------------------ | --------------------------------------------------- |
+| Arn                | arn:aws:iam::123456789012:role/storefront-task-role |
+| CreateDate         | 2026-10-15T16:40:02.587000+00:00                    |
+| MaxSessionDuration | 3600                                                |
+| Path               | /                                                   |
+| RoleId             | AROARZPUZDIKJ7GG4FITJ                               |
+| RoleName           | storefront-task-role                                |
+
+
+## Resource Tags
+
+| Tag Key | Tag Value  |
+| ------- | ---------- |
+| service | storefront |
+
+
+### Assumerolepolicydocument
+
+```json
+{
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ecs-tasks.amazonaws.com"
+      }
+    }
+  ],
+  "Version": "2012-10-17"
+}
+```
+
+
+### Attachedpolicies
+
+```json
+[]
+```
+
+
+### Inlinepolicies
+
+```json
+{}
+```
+
+
+### Rolelastused
+
+```json
+{}
+```
+
+
+
+---
+
+# AWS Resource: `aws_iam_role` - `storefront-exec-role`
+
+## Overview
+
+| Property          | Value                                               |
+| ----------------- | --------------------------------------------------- |
+| Resource Type     | aws_iam_role                                        |
+| ARN               | arn:aws:iam::123456789012:role/storefront-exec-role |
+| Region            | global                                              |
+| Account ID        | 123456789012                                        |
+| Collected At      | 2026-10-15T16:40:03Z                                |
+| Collector Version | 0.1.0                                               |
+
+
+## Configuration Specifications
+
+| Configuration Key  | Value                                               |
+| ------------------ | --------------------------------------------------- |
+| Arn                | arn:aws:iam::123456789012:role/storefront-exec-role |
+| CreateDate         | 2026-10-15T16:40:02.590000+00:00                    |
+| MaxSessionDuration | 3600                                                |
+| Path               | /                                                   |
+| RoleId             | AROARZPUZDIKLELZ3QLZO                               |
+| RoleName           | storefront-exec-role                                |
+
+
+## Resource Tags
+
+| Tag Key | Tag Value  |
+| ------- | ---------- |
+| service | storefront |
+
+
+### Assumerolepolicydocument
+
+```json
+{
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ecs-tasks.amazonaws.com"
+      }
+    }
+  ],
+  "Version": "2012-10-17"
+}
+```
+
+
+### Attachedpolicies
+
+| PolicyArn                                                             | PolicyName                       |
+| --------------------------------------------------------------------- | -------------------------------- |
+| arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy | AmazonECSTaskExecutionRolePolicy |
+
+
+### Inlinepolicies
+
+```json
+{}
+```
+
+
+### Rolelastused
+
+```json
+{}
+```
+
+
+
+---
+
+# AWS Resource: `aws_cloudfront_distribution` - `WUDV5OCSQIBBJ`
 
 ## Overview
 
 | Property          | Value                                                       |
 | ----------------- | ----------------------------------------------------------- |
 | Resource Type     | aws_cloudfront_distribution                                 |
-| ARN               | arn:aws:cloudfront::123456789012:distribution/K4SJFH541UU7J |
+| ARN               | arn:aws:cloudfront::123456789012:distribution/WUDV5OCSQIBBJ |
 | Region            | global                                                      |
 | Account ID        | 123456789012                                                |
-| Collected At      | 2026-10-15T16:01:58Z                                        |
+| Collected At      | 2026-10-15T16:40:03Z                                        |
 | Collector Version | 0.1.0                                                       |
 
 
@@ -1825,9 +3033,9 @@
 
 | Configuration Key             | Value                                                      |
 | ----------------------------- | ---------------------------------------------------------- |
-| ARN                           | arn:aws:cloudfront:123456789012:distribution/K4SJFH541UU7J |
-| DomainName                    | v7hl68ilxwkby.cloudfront.net                               |
-| Id                            | K4SJFH541UU7J                                              |
+| ARN                           | arn:aws:cloudfront:123456789012:distribution/WUDV5OCSQIBBJ |
+| DomainName                    | v40al5r1v0rte.cloudfront.net                               |
+| Id                            | WUDV5OCSQIBBJ                                              |
 | InProgressInvalidationBatches | 0                                                          |
 | LastModifiedTime              | 2021-11-27T10:34:26.802000+00:00                           |
 | Status                        | Deployed                                                   |
@@ -2024,7 +3232,7 @@
     "MinimumProtocolVersion": "TLSv1",
     "SSLSupportMethod": ""
   },
-  "WebACLId": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/45c1df2a-6eb9-40fa-a6ea-d3054f42d04c"
+  "WebACLId": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/e910f120-ccdb-46a7-bbb2-4e34585f73b5"
 }
 ```
 
@@ -2032,17 +3240,17 @@
 
 ---
 
-# AWS Resource: `aws_route53_zone` - `JX2QH3ZSOFDJU6N`
+# AWS Resource: `aws_route53_zone` - `0QZOTUEJO46KDTZ`
 
 ## Overview
 
 | Property          | Value                                        |
 | ----------------- | -------------------------------------------- |
 | Resource Type     | aws_route53_zone                             |
-| ARN               | arn:aws:route53:::hostedzone/JX2QH3ZSOFDJU6N |
+| ARN               | arn:aws:route53:::hostedzone/0QZOTUEJO46KDTZ |
 | Region            | global                                       |
 | Account ID        | 123456789012                                 |
-| Collected At      | 2026-10-15T16:01:58Z                         |
+| Collected At      | 2026-10-15T16:40:03Z                         |
 | Collector Version | 0.1.0                                        |
 
 
@@ -2051,7 +3259,7 @@
 | Configuration Key      | Value                       |
 | ---------------------- | --------------------------- |
 | CallerReference        | storefront                  |
-| Id                     | /hostedzone/JX2QH3ZSOFDJU6N |
+| Id                     | /hostedzone/0QZOTUEJO46KDTZ |
 | Name                   | example.com.                |
 | ResourceRecordSetCount | 4                           |
 
@@ -2094,23 +3302,23 @@
 |                                                                                                                                       | example.com.      | [{'Value': 'ns-2048.awsdns-64.com'}, {'Value': 'ns-2049.awsdns-65.net'}, {'Value': 'ns-2050.awsdns-66.org'}, {'Value': 'ns-2051.awsdns-67.co.uk'}] | 172800 | NS   |
 |                                                                                                                                       | example.com.      | [{'Value': "{'Value': 'ns-2048.awsdns-64.com. hostmaster.example.com. 1 7200 900 1209600 86400'}"}]                                                | 900    | SOA  |
 | {'HostedZoneId': 'Z2P70J7EXAMPLE', 'DNSName': 'dualstack.storefront-alb-1.us-east-1.elb.amazonaws.com', 'EvaluateTargetHealth': True} | api.example.com.  |                                                                                                                                                    |        | A    |
-| {'HostedZoneId': 'Z2FDTNDATAQYW2', 'DNSName': 'v7hl68ilxwkby.cloudfront.net', 'EvaluateTargetHealth': False}                          | shop.example.com. |                                                                                                                                                    |        | A    |
+| {'HostedZoneId': 'Z2FDTNDATAQYW2', 'DNSName': 'v40al5r1v0rte.cloudfront.net', 'EvaluateTargetHealth': False}                          | shop.example.com. |                                                                                                                                                    |        | A    |
 
 
 
 ---
 
-# AWS Resource: `aws_wafv2_web_acl` - `storefront-waf_45c1df2a-6eb9-40fa-a6ea-d3054f42d04c`
+# AWS Resource: `aws_wafv2_web_acl` - `storefront-waf_e910f120-ccdb-46a7-bbb2-4e34585f73b5`
 
 ## Overview
 
 | Property          | Value                                                                                               |
 | ----------------- | --------------------------------------------------------------------------------------------------- |
 | Resource Type     | aws_wafv2_web_acl                                                                                   |
-| ARN               | arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/45c1df2a-6eb9-40fa-a6ea-d3054f42d04c |
+| ARN               | arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/e910f120-ccdb-46a7-bbb2-4e34585f73b5 |
 | Region            | global                                                                                              |
 | Account ID        | 123456789012                                                                                        |
-| Collected At      | 2026-10-15T16:01:58Z                                                                                |
+| Collected At      | 2026-10-15T16:40:03Z                                                                                |
 | Collector Version | 0.1.0                                                                                               |
 
 
@@ -2118,9 +3326,9 @@
 
 | Configuration Key | Value                                                                                               |
 | ----------------- | --------------------------------------------------------------------------------------------------- |
-| ARN               | arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/45c1df2a-6eb9-40fa-a6ea-d3054f42d04c |
+| ARN               | arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/e910f120-ccdb-46a7-bbb2-4e34585f73b5 |
 | Description       | Edge protection for the storefront                                                                  |
-| Id                | 45c1df2a-6eb9-40fa-a6ea-d3054f42d04c                                                                |
+| Id                | e910f120-ccdb-46a7-bbb2-4e34585f73b5                                                                |
 | Name              | storefront-waf                                                                                      |
 
 
@@ -2169,6 +3377,6 @@
 | Metric          | Manual Effort (Baseline) | Automated Collection      | Savings           |
 | --------------- | ------------------------ | ------------------------- | ----------------- |
 | Baseline Rate   | 5 minutes / resource     | N/A                       | -                 |
-| Total Resources | 30                       | 30                        | -                 |
-| Total Duration  | 2.50 hours (150 min)     | 0.69 seconds (0.0002 hrs) | 2.50 hours saved  |
+| Total Resources | 47                       | 47                        | -                 |
+| Total Duration  | 3.92 hours (235 min)     | 0.92 seconds (0.0003 hrs) | 3.92 hours saved  |
 | Efficiency Gain | Baseline (100%)          | +100.0% faster            | 100.0% time saved |

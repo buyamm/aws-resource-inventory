@@ -17,6 +17,10 @@ Requirements Coverage:
   lb_listener, forwards_to, certificate relationships
 - Requirement 14.3: cdn_origin, waf_protection, certificate (CloudFront) and dns_alias
   (Route 53 alias) relationships
+- Requirement 14.4: ecs_cluster, task_definition, container_image, lb_target,
+  launch_template, subscription and event_target relationships, plus placement, security
+  group, role and log group relationships of the compute and data types; the
+  "Web app: CloudFront + ALB + ECS" and "Static site: S3 + CloudFront" patterns
 """
 
 from __future__ import annotations
@@ -52,7 +56,18 @@ CONFIDENCE = {
     "cdn_origin": 1.0,
     "waf_protection": 1.0,
     "dns_alias": 1.0,
+    # Compute and data (Req 14.4).
+    "ecs_cluster": 1.0,
+    "task_definition": 1.0,
+    "container_image": 1.0,
+    "lb_target": 1.0,
+    "launch_template": 1.0,
+    "subscription": 1.0,
+    "event_target": 1.0,
 }
+
+WEB_APP_PATTERN = "Web app: CloudFront + ALB + ECS"
+STATIC_SITE_PATTERN = "Static site: S3 + CloudFront"
 
 # (pattern, reason): patterns no rule can detect from the collected data.
 UNDETECTABLE_PATTERNS = [
@@ -63,13 +78,9 @@ UNDETECTABLE_PATTERNS = [
     ),
     (
         "EC2 + Load Balancer",
-        "Target group members (elasticloadbalancing:DescribeTargetHealth) are not collected; "
-        "the pattern cannot be detected from collected data.",
-    ),
-    (
-        "S3 + CloudFront",
-        "No pattern rule covers it yet; CloudFront origins in S3 are reported as cdn_origin "
-        "relationships.",
+        "Instances registered directly in a target group (elasticloadbalancing:"
+        "DescribeTargetHealth) are not collected; target groups of Auto Scaling groups and "
+        "ECS services are reported as lb_target relationships.",
     ),
 ]
 
@@ -107,6 +118,57 @@ _REFERENCE_RELATIONSHIPS: dict[str, list[tuple[str, str, str]]] = {
         ("DistributionConfig.WebACLId", "web_acls", "waf_protection"),
         ("DistributionConfig.ViewerCertificate.ACMCertificateArn", "certificates", "certificate"),
     ],
+    "aws_ecs_service": [
+        ("clusterArn", "ecs_clusters", "ecs_cluster"),
+        ("taskDefinition", "task_definitions", "task_definition"),
+        ("networkConfiguration.awsvpcConfiguration.subnets[]", "subnets", "subnet_placement"),
+        (
+            "networkConfiguration.awsvpcConfiguration.securityGroups[]",
+            "security_groups",
+            "security_group",
+        ),
+    ],
+    "aws_ecs_task_definition": [
+        ("taskRoleArn", "roles", "iam_role_usage"),
+        ("executionRoleArn", "roles", "iam_role_usage"),
+        (
+            "containerDefinitions[].logConfiguration.options.awslogs-group",
+            "log_groups",
+            "log_group",
+        ),
+    ],
+    "aws_autoscaling_group": [
+        ("LaunchTemplate.LaunchTemplateId", "launch_templates", "launch_template"),
+        (
+            "MixedInstancesPolicy.LaunchTemplate.LaunchTemplateSpecification.LaunchTemplateId",
+            "launch_templates",
+            "launch_template",
+        ),
+    ],
+    "aws_launch_template": [
+        ("LaunchTemplateData.SecurityGroupIds[]", "security_groups", "security_group"),
+        ("LaunchTemplateData.NetworkInterfaces[].Groups[]", "security_groups", "security_group"),
+        ("LaunchTemplateData.NetworkInterfaces[].SubnetId", "subnets", "subnet_placement"),
+    ],
+    "aws_elasticache_replication_group": [
+        ("CacheCluster.SecurityGroups[].SecurityGroupId", "security_groups", "security_group"),
+        ("CacheSubnetGroup.Subnets[].SubnetIdentifier", "subnets", "subnet_placement"),
+    ],
+    "aws_cloudwatch_event_rule": [("Targets[].RoleArn", "roles", "iam_role_usage")],
+    "aws_scheduler_schedule": [("Target.RoleArn", "roles", "iam_role_usage")],
+}
+
+# source type -> (pattern, relationship type): ARNs matched against every collected spec.
+_ARN_TARGET_RELATIONSHIPS: dict[str, list[tuple[str, str]]] = {
+    "aws_cloudwatch_event_rule": [("Targets[].Arn", "event_target")],
+    "aws_scheduler_schedule": [("Target.Arn", "event_target")],
+    "aws_sns_topic": [("Subscriptions[].Endpoint", "subscription")],
+}
+
+# source type -> pattern of target group ARNs: the target group sends traffic to the source.
+_LB_TARGET_PATHS = {
+    "aws_ecs_service": "loadBalancers[].targetGroupArn",
+    "aws_autoscaling_group": "TargetGroupARNs[]",
 }
 
 
@@ -239,6 +301,21 @@ def _short(arn: str) -> str:
     return tail.split("/")[-1] if "/" in tail else tail
 
 
+def _unqualified(arn: str) -> str:
+    """A Lambda function ARN without its version/alias qualifier; other ARNs unchanged."""
+    parts = arn.split(":")
+    if len(parts) > 7 and parts[2] == "lambda" and parts[5] == "function":
+        return ":".join(parts[:7])
+    return arn
+
+
+def _image_repository(image: Any) -> str:
+    """Repository URI of a container image reference (tag or digest removed)."""
+    text = str(image).split("@")[0]
+    head, _, tag = text.rpartition(":")
+    return head if head and "/" not in tag else text
+
+
 def _dns(name: Any) -> str:
     """Comparable DNS name: lower case, no trailing dot, no ``dualstack.`` prefix."""
     text = str(name).lower().rstrip(".")
@@ -268,19 +345,29 @@ class _Index:
         # Normalized DNS names of load balancers and CloudFront distributions.
         self.lb_dns: dict[str, ResourceSpec] = {}
         self.distribution_dns: dict[str, ResourceSpec] = {}
+        # Compute and data types (Req 14.4).
+        self.ecs_clusters: dict[str, ResourceSpec] = {}
+        self.task_definitions: dict[str, ResourceSpec] = {}
+        self.launch_templates: dict[str, ResourceSpec] = {}
+        self.repository_uris: dict[str, ResourceSpec] = {}
+        self.by_arn: dict[str, ResourceSpec] = {}
         by_id = {
             "aws_subnet": self.subnets,
             "aws_internet_gateway": self.internet_gateways,
             "aws_nat_gateway": self.nat_gateways,
             "aws_vpc_endpoint": self.vpc_endpoints,
+            "aws_launch_template": self.launch_templates,
         }
         by_arn = {
             "aws_lb": self.load_balancers,
             "aws_lb_target_group": self.target_groups,
             "aws_acm_certificate": self.certificates,
             "aws_wafv2_web_acl": self.web_acls,
+            "aws_ecs_cluster": self.ecs_clusters,
+            "aws_ecs_task_definition": self.task_definitions,
         }
         for spec in specs:
+            self.by_arn[spec.arn] = spec
             s = spec.specifications or {}
             kind = _type(spec)
             if kind in by_id:
@@ -293,6 +380,8 @@ class _Index:
                 self.distribution_dns[_dns(s["DomainName"])] = spec
             elif kind == "aws_s3_bucket":
                 self.buckets[resource_id(spec)] = spec
+            elif kind == "aws_ecr_repository" and isinstance(s.get("repositoryUri"), str):
+                self.repository_uris[s["repositoryUri"]] = spec
             if kind == "aws_vpc" and isinstance(s.get("VpcId"), str):
                 self.vpcs[s["VpcId"]] = spec
             elif kind == "aws_security_group" and isinstance(s.get("GroupId"), str):
@@ -358,6 +447,7 @@ class AnalysisEngine:
                 "aws_vpc_endpoint": ("VpcId",),
                 "aws_lb": ("VpcId",),
                 "aws_lb_target_group": ("VpcId",),
+                "aws_elasticache_replication_group": ("CacheSubnetGroup", "VpcId"),
             }.get(kind)
             if vpc_paths:
                 vpc_id = _get(s, *vpc_paths)
@@ -430,12 +520,58 @@ class AnalysisEngine:
             if kind == "aws_lambda_function":
                 self._lambda_relationships(spec, index, add)
             self._reference_relationships(spec, kind, index, add)
+            self._compute_relationships(spec, kind, index, add)
             if kind == "aws_cloudfront_distribution":
                 self._origin_relationships(spec, index, add)
             elif kind == "aws_route53_zone":
                 self._alias_relationships(spec, index, add)
 
         return list(found.values())
+
+    @staticmethod
+    def _compute_relationships(spec: ResourceSpec, kind: str, index: _Index, add: Any) -> None:
+        """Relationships of the compute and data types that need more than a lookup (Req 14.4)."""
+        specs = spec.specifications or {}
+        # Target group -> ECS service / Auto Scaling group, cited at the referencing property.
+        pattern = _LB_TARGET_PATHS.get(kind)
+        for path, arn in iter_property_paths(specs, pattern) if pattern else ():
+            target_group = index.target_groups.get(arn) if isinstance(arn, str) else None
+            if target_group is not None:
+                add(target_group, spec, "lb_target", CONFIDENCE["lb_target"], [cite(spec, path)])
+        # Event targets and SNS subscriptions name any collected resource by ARN.
+        for pattern, relationship in _ARN_TARGET_RELATIONSHIPS.get(kind, []):
+            for path, arn in iter_property_paths(specs, pattern):
+                target = index.by_arn.get(_unqualified(arn)) if isinstance(arn, str) else None
+                if target is not None:
+                    add(spec, target, relationship, CONFIDENCE[relationship], [cite(spec, path)])
+        if kind == "aws_autoscaling_group" and isinstance(specs.get("VPCZoneIdentifier"), str):
+            for subnet_id in specs["VPCZoneIdentifier"].split(","):
+                subnet = index.subnets.get(subnet_id.strip())
+                if subnet is not None:
+                    citations = [cite(spec, "specifications.VPCZoneIdentifier")]
+                    add(spec, subnet, "subnet_placement", 1.0, citations)
+        elif kind == "aws_ecs_task_definition":
+            for path, image in iter_property_paths(specs, "containerDefinitions[].image"):
+                repository = index.repository_uris.get(_image_repository(image))
+                if repository is not None:
+                    citations = [cite(spec, path), cite(repository, "specifications.repositoryUri")]
+                    add(spec, repository, "container_image", 1.0, citations)
+        elif kind == "aws_launch_template":
+            # Instance profile name == role name (the convention used for EC2 instances).
+            profile = _get(specs, "LaunchTemplateData", "IamInstanceProfile") or {}
+            for key in ("Arn", "Name"):
+                value = profile.get(key) if isinstance(profile, dict) else None
+                role = index.roles.get(_short(value)) if isinstance(value, str) else None
+                if role is not None:
+                    path = f"specifications.LaunchTemplateData.IamInstanceProfile.{key}"
+                    add(
+                        spec,
+                        role,
+                        "iam_role_usage",
+                        CONFIDENCE["iam_role_usage"],
+                        [cite(spec, path)],
+                    )
+                    break
 
     @staticmethod
     def _reference_relationships(spec: ResourceSpec, kind: str, index: _Index, add: Any) -> None:
@@ -588,6 +724,62 @@ class AnalysisEngine:
                             support,
                         )
                     )
+            elif kind == "aws_cloudfront_distribution":
+                patterns += self._edge_patterns(spec, rels, by_arn)
+        return patterns
+
+    def _edge_patterns(
+        self,
+        distribution: ResourceSpec,
+        rels: list[ResourceRelationship],
+        by_arn: dict[str, ResourceSpec],
+    ) -> list[ArchitecturePattern]:
+        """Static site (S3 origin) and web app (LB origin -> listener -> TG -> ECS service)."""
+
+        def name(arn: str) -> str:
+            target = by_arn.get(arn)
+            return resource_id(target) if target else _short(arn)
+
+        def outgoing(arn: str, kind: str) -> list[ResourceRelationship]:
+            return [r for r in rels if r.from_arn == arn and r.relationship_type == kind]
+
+        patterns: list[ArchitecturePattern] = []
+        label = resource_id(distribution)
+        for origin in outgoing(distribution.arn, "cdn_origin"):
+            origin_spec = by_arn.get(origin.to_arn)
+            if origin_spec is not None and _type(origin_spec) == "aws_s3_bucket":
+                patterns.append(
+                    self._pattern(
+                        STATIC_SITE_PATTERN,
+                        f"CloudFront distribution '{label}' serves content from S3 bucket "
+                        f"'{name(origin.to_arn)}'.",
+                        distribution,
+                        [origin],
+                    )
+                )
+                continue
+            listeners = [
+                r
+                for r in rels
+                if r.to_arn == origin.to_arn and r.relationship_type == "lb_listener"
+            ]
+            for listener in listeners:
+                for forward in outgoing(listener.from_arn, "forwards_to"):
+                    for target in outgoing(forward.to_arn, "lb_target"):
+                        service = by_arn.get(target.to_arn)
+                        if service is None or _type(service) != "aws_ecs_service":
+                            continue
+                        patterns.append(
+                            self._pattern(
+                                WEB_APP_PATTERN,
+                                f"CloudFront distribution '{label}' sends requests to load "
+                                f"balancer '{name(origin.to_arn)}', whose listener forwards "
+                                f"to target group '{name(forward.to_arn)}' serving ECS "
+                                f"service '{name(target.to_arn)}'.",
+                                distribution,
+                                [origin, listener, forward, target],
+                            )
+                        )
         return patterns
 
     @staticmethod
@@ -596,8 +788,10 @@ class AnalysisEngine:
     ) -> ArchitecturePattern:
         participants = [spec.arn]
         for rel in support:
-            if rel.to_arn not in participants:
-                participants.append(rel.to_arn)
+            # Sources other than the anchor (e.g. the listener of lb_listener) take part too.
+            for arn in (rel.to_arn, rel.from_arn):
+                if arn not in participants:
+                    participants.append(arn)
         citations: list[Citation] = []
         for rel in support:
             citations.extend(rel.citations)
