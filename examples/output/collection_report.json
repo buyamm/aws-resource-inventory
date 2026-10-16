@@ -2,10 +2,10 @@
   "account_id": "123456789012",
   "collection_errors": [],
   "discovery_errors": [],
-  "finished_at": "2026-10-16T01:29:14.689536Z",
+  "finished_at": "2026-10-16T02:05:50.075981Z",
   "metrics": {
-    "api_calls": 136,
-    "data_volume_bytes": 530762,
+    "api_calls": 140,
+    "data_volume_bytes": 547828,
     "resources_discovered": 47,
     "specs_collected": 47,
     "specs_failed": 0
@@ -17,9 +17,9 @@
       "error_type": "",
       "operation": "DescribeCertificate",
       "outcome": "success",
-      "resource_arn": "arn:aws:acm:us-east-1:123456789012:certificate/8f72f034-ca75-4120-acc5-f35a9fd3885d",
+      "resource_arn": "arn:aws:acm:us-east-1:123456789012:certificate/a2f4311b-2bbd-4ca0-97e7-018106634454",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -27,9 +27,9 @@
       "error_type": "",
       "operation": "ListTagsForCertificate",
       "outcome": "success",
-      "resource_arn": "arn:aws:acm:us-east-1:123456789012:certificate/8f72f034-ca75-4120-acc5-f35a9fd3885d",
+      "resource_arn": "arn:aws:acm:us-east-1:123456789012:certificate/a2f4311b-2bbd-4ca0-97e7-018106634454",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -37,9 +37,9 @@
       "error_type": "",
       "operation": "DescribeAutoScalingGroups",
       "outcome": "success",
-      "resource_arn": "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:9bbe6615-958a-43a1-81c1-b9c0e0c23918:autoScalingGroupName/storefront-workers",
+      "resource_arn": "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:fddff19a-c8c9-4401-9bef-23ac1c8a6198:autoScalingGroupName/storefront-workers",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -47,9 +47,9 @@
       "error_type": "",
       "operation": "GetDistribution",
       "outcome": "success",
-      "resource_arn": "arn:aws:cloudfront::123456789012:distribution/S8ZTDFP8H8PGF",
+      "resource_arn": "arn:aws:cloudfront::123456789012:distribution/X5E0C4JHPHC9C",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -57,9 +57,9 @@
       "error_type": "",
       "operation": "ListTagsForResource",
       "outcome": "success",
-      "resource_arn": "arn:aws:cloudfront::123456789012:distribution/S8ZTDFP8H8PGF",
+      "resource_arn": "arn:aws:cloudfront::123456789012:distribution/X5E0C4JHPHC9C",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -69,7 +69,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:dynamodb:us-east-1:123456789012:table/orders",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -79,7 +79,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:dynamodb:us-east-1:123456789012:table/orders",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -87,9 +87,9 @@
       "error_type": "",
       "operation": "DescribeInstances",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-47f9de669501b27af",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-5e2db2f538089c39d",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -97,9 +97,9 @@
       "error_type": "",
       "operation": "DescribeInstances",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-7c15a7e2df90fa017",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-b892b745a8c407b02",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -107,9 +107,9 @@
       "error_type": "",
       "operation": "DescribeInternetGateways",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-dbc38f85",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-d045f4ab",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -117,9 +117,9 @@
       "error_type": "",
       "operation": "DescribeLaunchTemplates",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:launch-template/lt-c743f2f076e986059",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:launch-template/lt-bad06a08aee200bf2",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -127,9 +127,9 @@
       "error_type": "",
       "operation": "DescribeLaunchTemplateVersions",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:launch-template/lt-c743f2f076e986059",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:launch-template/lt-bad06a08aee200bf2",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -137,9 +137,9 @@
       "error_type": "",
       "operation": "DescribeNatGateways",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:natgateway/nat-60d1a0cf8c8f398eb",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:natgateway/nat-af9f73b40a8a4af4f",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -147,9 +147,9 @@
       "error_type": "",
       "operation": "DescribeRouteTables",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-260c9780",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-561c82c8",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -157,9 +157,9 @@
       "error_type": "",
       "operation": "DescribeRouteTables",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-7bfbfaee",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-bf60be68",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -167,9 +167,9 @@
       "error_type": "",
       "operation": "DescribeRouteTables",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-abf4c4b4",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-e28b5541",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -177,9 +177,19 @@
       "error_type": "",
       "operation": "DescribeSecurityGroups",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-2edfb301c8a045aa8",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-12874fb82c9db66ed",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeSecurityGroupRules",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-12874fb82c9db66ed",
+      "status": "success",
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -187,9 +197,19 @@
       "error_type": "",
       "operation": "DescribeSecurityGroups",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-71a3ac0ec6bbd92b7",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-156a39ed25de235cf",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeSecurityGroupRules",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-156a39ed25de235cf",
+      "status": "success",
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -197,9 +217,19 @@
       "error_type": "",
       "operation": "DescribeSecurityGroups",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-7c3a665620cbf02dc",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-2bf145296ea5159ab",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeSecurityGroupRules",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-2bf145296ea5159ab",
+      "status": "success",
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -207,9 +237,19 @@
       "error_type": "",
       "operation": "DescribeSecurityGroups",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-c6ec367b2a800f7fe",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-e4a0ee2dde2bb1f50",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
+    },
+    {
+      "attempts": 1,
+      "detail": "",
+      "error_type": "",
+      "operation": "DescribeSecurityGroupRules",
+      "outcome": "success",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-e4a0ee2dde2bb1f50",
+      "status": "success",
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -217,9 +257,9 @@
       "error_type": "",
       "operation": "DescribeSubnets",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-30a75c4f",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-2cf4f53a",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -227,9 +267,9 @@
       "error_type": "",
       "operation": "DescribeSubnets",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-9134f3a5",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-4d897e3d",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -237,9 +277,9 @@
       "error_type": "",
       "operation": "DescribeSubnets",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-91c2dcc6",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-4db17d3d",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -247,9 +287,9 @@
       "error_type": "",
       "operation": "DescribeVpcEndpoints",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-55746589",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-40eb00b6",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -257,9 +297,9 @@
       "error_type": "",
       "operation": "DescribeVpcs",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-7c4f2f1d",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-660d36ef",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -267,9 +307,9 @@
       "error_type": "",
       "operation": "DescribeVpcAttribute:enableDnsSupport",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-7c4f2f1d",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-660d36ef",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -277,9 +317,9 @@
       "error_type": "",
       "operation": "DescribeVpcAttribute:enableDnsHostnames",
       "outcome": "success",
-      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-7c4f2f1d",
+      "resource_arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-660d36ef",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -289,7 +329,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:ecr:us-east-1:123456789012:repository/storefront-web",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -299,7 +339,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:ecr:us-east-1:123456789012:repository/storefront-web",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -309,7 +349,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:ecs:us-east-1:123456789012:cluster/storefront",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -319,7 +359,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:ecs:us-east-1:123456789012:service/storefront/web",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -329,7 +369,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -339,7 +379,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:elasticache:us-east-1:123456789012:replicationgroup:storefront-cache",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -349,7 +389,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:elasticache:us-east-1:123456789012:replicationgroup:storefront-cache",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -359,7 +399,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:elasticache:us-east-1:123456789012:replicationgroup:storefront-cache",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -369,7 +409,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:elasticache:us-east-1:123456789012:replicationgroup:storefront-cache",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -377,9 +417,9 @@
       "error_type": "",
       "operation": "DescribeListeners",
       "outcome": "success",
-      "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434536313232",
+      "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434501777232",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -387,9 +427,9 @@
       "error_type": "",
       "operation": "DescribeTags",
       "outcome": "success",
-      "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434536313232",
+      "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434501777232",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -399,7 +439,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -409,7 +449,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -419,7 +459,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -429,7 +469,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -439,7 +479,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -449,7 +489,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -459,7 +499,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -469,7 +509,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:events:us-east-1:123456789012:rule/storefront-nightly-report",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -479,7 +519,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:events:us-east-1:123456789012:rule/storefront-nightly-report",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -489,7 +529,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:events:us-east-1:123456789012:rule/storefront-nightly-report",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -499,7 +539,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/order-lambda-role",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -509,7 +549,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/order-lambda-role",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -519,7 +559,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/order-lambda-role",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -529,7 +569,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/order-lambda-role",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -539,7 +579,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/orders-app-role",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -549,7 +589,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/orders-app-role",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -559,7 +599,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/orders-app-role",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -569,7 +609,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/storefront-exec-role",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -579,7 +619,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/storefront-exec-role",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -589,7 +629,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/storefront-exec-role",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -599,7 +639,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/storefront-scheduler-role",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -609,7 +649,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/storefront-scheduler-role",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -619,7 +659,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/storefront-scheduler-role",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -629,7 +669,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/storefront-task-role",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -639,7 +679,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/storefront-task-role",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -649,7 +689,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:iam::123456789012:role/storefront-task-role",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -659,7 +699,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:lambda:us-east-1:123456789012:function:order-processor",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -669,7 +709,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -679,7 +719,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -689,7 +729,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:logs:us-east-1:123456789012:log-group:/ecs/storefront-web",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -699,7 +739,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:logs:us-east-1:123456789012:log-group:/ecs/storefront-web",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -709,7 +749,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:rds:us-east-1:123456789012:db:orders-db",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -717,9 +757,9 @@
       "error_type": "",
       "operation": "GetHostedZone",
       "outcome": "success",
-      "resource_arn": "arn:aws:route53:::hostedzone/2VX36NXN28FIY7F",
+      "resource_arn": "arn:aws:route53:::hostedzone/ACA19C6IIUY2GFZ",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -727,9 +767,9 @@
       "error_type": "",
       "operation": "ListResourceRecordSets",
       "outcome": "success",
-      "resource_arn": "arn:aws:route53:::hostedzone/2VX36NXN28FIY7F",
+      "resource_arn": "arn:aws:route53:::hostedzone/ACA19C6IIUY2GFZ",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -737,9 +777,9 @@
       "error_type": "",
       "operation": "ListTagsForResource",
       "outcome": "success",
-      "resource_arn": "arn:aws:route53:::hostedzone/2VX36NXN28FIY7F",
+      "resource_arn": "arn:aws:route53:::hostedzone/ACA19C6IIUY2GFZ",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -749,7 +789,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:s3:::orders-public-assets",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -759,7 +799,7 @@
       "outcome": "not_configured",
       "resource_arn": "arn:aws:s3:::orders-public-assets",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -769,7 +809,7 @@
       "outcome": "not_configured",
       "resource_arn": "arn:aws:s3:::orders-public-assets",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -779,7 +819,7 @@
       "outcome": "not_configured",
       "resource_arn": "arn:aws:s3:::orders-public-assets",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -789,7 +829,7 @@
       "outcome": "not_configured",
       "resource_arn": "arn:aws:s3:::orders-public-assets",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -799,7 +839,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:s3:::orders-public-assets",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -809,7 +849,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:s3:::orders-public-assets",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -819,7 +859,7 @@
       "outcome": "not_configured",
       "resource_arn": "arn:aws:s3:::orders-public-assets",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -829,7 +869,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:s3:::storefront-static",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -839,7 +879,7 @@
       "outcome": "not_configured",
       "resource_arn": "arn:aws:s3:::storefront-static",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -849,7 +889,7 @@
       "outcome": "not_configured",
       "resource_arn": "arn:aws:s3:::storefront-static",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -859,7 +899,7 @@
       "outcome": "not_configured",
       "resource_arn": "arn:aws:s3:::storefront-static",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -869,7 +909,7 @@
       "outcome": "not_configured",
       "resource_arn": "arn:aws:s3:::storefront-static",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -879,7 +919,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:s3:::storefront-static",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -889,7 +929,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:s3:::storefront-static",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -899,7 +939,7 @@
       "outcome": "not_configured",
       "resource_arn": "arn:aws:s3:::storefront-static",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -909,7 +949,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:scheduler:us-east-1:123456789012:schedule/default/storefront-cleanup",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -919,7 +959,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:sns:us-east-1:123456789012:storefront-events",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -929,7 +969,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:sns:us-east-1:123456789012:storefront-events",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -939,7 +979,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:sns:us-east-1:123456789012:storefront-events",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -949,7 +989,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:sqs:us-east-1:123456789012:storefront-orders",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -959,7 +999,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:sqs:us-east-1:123456789012:storefront-orders",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -969,7 +1009,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:sqs:us-east-1:123456789012:storefront-orders",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -979,7 +1019,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:states:us-east-1:123456789012:stateMachine:order-flow",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -989,7 +1029,7 @@
       "outcome": "success",
       "resource_arn": "arn:aws:states:us-east-1:123456789012:stateMachine:order-flow",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -997,9 +1037,9 @@
       "error_type": "",
       "operation": "GetWebACL",
       "outcome": "success",
-      "resource_arn": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/1cbd8645-1348-4072-8b2e-633711042db1",
+      "resource_arn": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/d06f4b4d-1ec6-42a4-81fa-1582637eb32d",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     },
     {
       "attempts": 1,
@@ -1007,29 +1047,29 @@
       "error_type": "",
       "operation": "ListTagsForResource",
       "outcome": "success",
-      "resource_arn": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/1cbd8645-1348-4072-8b2e-633711042db1",
+      "resource_arn": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/d06f4b4d-1ec6-42a4-81fa-1582637eb32d",
       "status": "success",
-      "timestamp": "2026-10-16T01:29:14Z"
+      "timestamp": "2026-10-16T02:05:49Z"
     }
   ],
   "phases": [
     {
-      "duration_seconds": 0.681739,
-      "ended_at": "2026-10-16T01:29:14.271075Z",
+      "duration_seconds": 0.66022,
+      "ended_at": "2026-10-16T02:05:49.657630Z",
       "name": "discovery",
-      "started_at": "2026-10-16T01:29:13.589350Z"
+      "started_at": "2026-10-16T02:05:48.997422Z"
     },
     {
-      "duration_seconds": 0.330762,
-      "ended_at": "2026-10-16T01:29:14.601848Z",
+      "duration_seconds": 0.344082,
+      "ended_at": "2026-10-16T02:05:50.001720Z",
       "name": "collection",
-      "started_at": "2026-10-16T01:29:14.271091Z"
+      "started_at": "2026-10-16T02:05:49.657644Z"
     },
     {
-      "duration_seconds": 0.086316,
-      "ended_at": "2026-10-16T01:29:14.689536Z",
+      "duration_seconds": 0.073788,
+      "ended_at": "2026-10-16T02:05:50.075981Z",
       "name": "output",
-      "started_at": "2026-10-16T01:29:14.603205Z"
+      "started_at": "2026-10-16T02:05:50.002186Z"
     }
   ],
   "regions": [
@@ -1037,15 +1077,15 @@
   ],
   "scope": {
     "excluded_defaults": [
-      "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-2d428c61",
-      "arn:aws:ec2:us-east-1:123456789012:security-group/sg-a23470852f1e58130",
-      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-115650b6",
-      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-14c7b0a5",
-      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-39c7bbe1",
-      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-5a0c2b90",
-      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-c53a005a",
-      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-f7a2f61b",
-      "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-cd9cc3e3"
+      "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-1ec2b995",
+      "arn:aws:ec2:us-east-1:123456789012:security-group/sg-5b3deffeaa137a692",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-471b9eaa",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-54fa75cf",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-62b71721",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-cf0b6430",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-e837d5fa",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-ea931260",
+      "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-f454ebe5"
     ],
     "include_defaults": false,
     "mode": "account",
@@ -1056,11 +1096,11 @@
     ],
     "seed_resources": 47
   },
-  "started_at": "2026-10-16T01:29:13.589350Z",
+  "started_at": "2026-10-16T02:05:48.997422Z",
   "time_savings": {
-    "automated_hours": 0.00030522694444444444,
-    "hours_saved": 3.916361439722222,
+    "automated_hours": 0.0002994694444444444,
+    "hours_saved": 3.9163671972222223,
     "manual_hours": 3.9166666666666665,
-    "percent_saved": 99.9922069716312
+    "percent_saved": 99.9923539716312
   }
 }

@@ -8,7 +8,7 @@
 | ARN               | arn:aws:elasticache:us-east-1:123456789012:replicationgroup:storefront-cache |
 | Region            | us-east-1                                                                    |
 | Account ID        | 123456789012                                                                 |
-| Collected At      | 2026-10-16T01:29:14Z                                                         |
+| Collected At      | 2026-10-16T02:05:49Z                                                         |
 | Collector Version | 0.1.0                                                                        |
 
 
@@ -70,7 +70,7 @@
   "ReplicationGroupLogDeliveryEnabled": false,
   "SecurityGroups": [
     {
-      "SecurityGroupId": "sg-7c3a665620cbf02dc",
+      "SecurityGroupId": "sg-12874fb82c9db66ed",
       "Status": "active"
     }
   ],
@@ -93,7 +93,7 @@
       "SubnetAvailabilityZone": {
         "Name": "us-east-1a"
       },
-      "SubnetIdentifier": "subnet-30a75c4f",
+      "SubnetIdentifier": "subnet-4d897e3d",
       "SupportedNetworkTypes": [
         "ipv4"
       ]
@@ -102,7 +102,7 @@
   "SupportedNetworkTypes": [
     "ipv4"
   ],
-  "VpcId": "vpc-7c4f2f1d"
+  "VpcId": "vpc-660d36ef"
 }
 ```
 

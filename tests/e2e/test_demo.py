@@ -30,9 +30,10 @@ EXPECTED_FILES = (
     "analysis/analysis.md",
     "diagrams/architecture.drawio",
     "docs/infrastructure.md",
-    "terraform/main.tf",
-    "terraform/providers.tf",
-    "terraform/import.sh",
+    "terraform/README.md",
+    "terraform/modules/network/main.tf",
+    "terraform/envs/default/main.tf",
+    "terraform/envs/default/imports.tf",
     "checksums.sha256",
 )
 

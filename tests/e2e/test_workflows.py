@@ -11,7 +11,6 @@ from __future__ import annotations
 import json
 import logging
 import re
-import shlex
 from pathlib import Path
 from unittest.mock import patch
 
@@ -153,10 +152,10 @@ def test_e2e_discovery_collection_output_workflow(collected, sample_account):
 
 
 def _resource_addresses(terraform_dir: Path) -> list[str]:
-    """`module.<region>.<type>.<name>` of every resource block, parsed with python-hcl2."""
+    """`module.<module>.<type>.<name>` of every resource block, parsed with python-hcl2."""
     addresses = []
-    for tf_file in sorted(terraform_dir.glob("*/*.tf")):
-        module = tf_file.parent.name.replace("-", "_")
+    for tf_file in sorted(terraform_dir.glob("modules/*/main.tf")):
+        module = tf_file.parent.name
         parsed = hcl2.loads(tf_file.read_text(encoding="utf-8"))
         for item in parsed.get("resource", []):
             for tf_type, named in item.items():
@@ -171,8 +170,11 @@ def test_e2e_iac_generation_workflow(runner, collected):
     assert result.exit_code == 0, result.output
 
     terraform_dir = out / "terraform"
-    for name in ("providers.tf", "main.tf"):
-        hcl2.loads((terraform_dir / name).read_text(encoding="utf-8"))
+    env_dirs = sorted(p for p in (terraform_dir / "envs").iterdir() if p.is_dir())
+    assert len(env_dirs) == 1, env_dirs
+    env_dir = env_dirs[0]
+    for name in ("providers.tf", "main.tf", "variables.tf", "outputs.tf", "versions.tf"):
+        hcl2.loads((env_dir / name).read_text(encoding="utf-8"))
 
     addresses = _resource_addresses(terraform_dir)
     assert len(addresses) == len(set(addresses)), "resource addresses are unique"
@@ -182,13 +184,9 @@ def test_e2e_iac_generation_workflow(runner, collected):
     assert len(primary) == len(specs), "one primary block per collected resource"
     assert {a.split(".")[2] for a in primary} == set(REGISTRY)
 
-    import_lines = [
-        line
-        for line in (terraform_dir / "import.sh").read_text(encoding="utf-8").splitlines()
-        if "terraform import" in line
-    ]
-    imported = [shlex.split(line.split("terraform import", 1)[1])[0] for line in import_lines]
-    assert sorted(imported) == sorted(addresses), "exactly one import per resource block"
+    imports = hcl2.loads((env_dir / "imports.tf").read_text(encoding="utf-8"))["import"]
+    imported = [block["to"].strip('"${}') for block in imports]
+    assert sorted(imported) == sorted(addresses), "exactly one import block per resource block"
 
     assert verify_output_dir(out).ok, "generate-iac refreshes checksums"
 

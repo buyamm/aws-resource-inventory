@@ -135,13 +135,13 @@ class TestIaCGeneratorUnitTests:
     ) -> None:
         """Requirement 7.4: Generate terraform import commands for all existing resources."""
         generator = IaCGenerator()
-        import_script = generator.generate_import_script(sample_specs)
+        imports = generator.generate_imports(sample_specs)
 
-        assert "terraform import" in import_script
-        assert "production-assets-bucket" in import_script
-        assert "process-order" in import_script
-        assert "aws_s3_bucket" in import_script
-        assert "aws_lambda_function" in import_script
+        assert imports.count("import {") == 2
+        assert 'id = "production-assets-bucket"' in imports
+        assert 'id = "process-order"' in imports
+        assert "to = module.data.aws_s3_bucket.production_assets_bucket" in imports
+        assert "to = module.compute.aws_lambda_function.process_order" in imports
 
     def test_iac_generator_organizes_by_type_and_region_req_7_2(
         self, tmp_path: Path, sample_specs: list[ResourceSpec]
@@ -152,11 +152,11 @@ class TestIaCGeneratorUnitTests:
 
         assert len(tf_files) > 0
 
-        # Check directory structure on disk
-        # Expect either <tmp_path>/<region>/<resource_type>.tf or <tmp_path>/<resource_type>/<region>/
-        created_paths = [Path(p) for p in tf_files.keys()]
-        assert any("us-east-1" in str(p) for p in created_paths)
-        assert any("us-west-2" in str(p) for p in created_paths)
+        # modules/<module>/ holds the resources, envs/<env>/ the root configuration.
+        assert "modules/data/main.tf" in tf_files
+        assert "modules/compute/main.tf" in tf_files
+        assert "envs/default/main.tf" in tf_files
+        assert "aws_lambda_function" in tf_files["modules/compute/main.tf"]
 
         for rel_path, code in tf_files.items():
             full_path = tmp_path / rel_path
@@ -279,6 +279,50 @@ SECURITY_GROUP = _s(
                 "PrefixListIds": [],
                 "UserIdGroupPairs": [],
             }
+        ],
+        # DescribeSecurityGroupRules: one rule per source (Requirement 16.3).
+        "SecurityGroupRules": [
+            {
+                "SecurityGroupRuleId": "sgr-1",
+                "GroupId": "sg-1",
+                "IsEgress": False,
+                "IpProtocol": "tcp",
+                "FromPort": 443,
+                "ToPort": 443,
+                "CidrIpv4": "0.0.0.0/0",
+                "Description": "https",
+                "Tags": [],
+            },
+            {
+                "SecurityGroupRuleId": "sgr-2",
+                "GroupId": "sg-1",
+                "IsEgress": False,
+                "IpProtocol": "-1",
+                "FromPort": -1,
+                "ToPort": -1,
+                "ReferencedGroupInfo": {"GroupId": "sg-1", "UserId": ACCOUNT},
+                "Tags": [],
+            },
+            {
+                "SecurityGroupRuleId": "sgr-3",
+                "GroupId": "sg-1",
+                "IsEgress": False,
+                "IpProtocol": "-1",
+                "FromPort": -1,
+                "ToPort": -1,
+                "ReferencedGroupInfo": {"GroupId": "sg-2", "UserId": ACCOUNT},
+                "Tags": [{"Key": "Name", "Value": "from-sg-2"}],
+            },
+            {
+                "SecurityGroupRuleId": "sgr-4",
+                "GroupId": "sg-1",
+                "IsEgress": True,
+                "IpProtocol": "-1",
+                "FromPort": -1,
+                "ToPort": -1,
+                "CidrIpv4": "0.0.0.0/0",
+                "Tags": [],
+            },
         ],
         "OwnerId": ACCOUNT,
     },
@@ -528,15 +572,49 @@ class TestIaCTypeMappings:
         body = _body(SECURITY_GROUP)
         assert _arg(body, "name") == "web"
         assert _arg(body, "vpc_id") == "vpc-1"
-        ingress = [_unquote(b) for b in body["ingress"]]
-        https = next(r for r in ingress if r["protocol"] == "tcp")
+        # Rules are separate resources (Requirement 16.3).
+        assert "ingress" not in body and "egress" not in body
+
+    def test_iac_security_group_rules_separate_resources_req_16_3(self):
+        resources = _resources(IaCGenerator().generate_resource_block(SECURITY_GROUP))
+        ingress = {
+            n: _unquote(b)
+            for (t, n), b in resources.items()
+            if t == "aws_vpc_security_group_ingress_rule"
+        }
+        egress = {
+            n: _unquote(b)
+            for (t, n), b in resources.items()
+            if t == "aws_vpc_security_group_egress_rule"
+        }
+        assert sorted(ingress) == ["web_ingress_all", "web_ingress_all_2", "web_ingress_tcp_443"]
+        https = ingress["web_ingress_tcp_443"]
+        assert https["security_group_id"] == "${aws_security_group.web.id}"
+        assert https["ip_protocol"] == "tcp"
         assert https["from_port"] == 443 and https["to_port"] == 443
-        assert https["cidr_blocks"] == ["0.0.0.0/0"]
-        assert https["description"] == "https"
-        internal = next(r for r in ingress if r["protocol"] == "-1")
-        assert internal["self"] is True and internal["security_groups"] == ["sg-2"]
-        assert internal["from_port"] == 0 and internal["to_port"] == 0
-        assert _unquote(body["egress"][0])["cidr_blocks"] == ["0.0.0.0/0"]
+        assert https["cidr_ipv4"] == "0.0.0.0/0" and https["description"] == "https"
+        # The rule that references its own group points at the group resource.
+        assert ingress["web_ingress_all"]["referenced_security_group_id"] == (
+            "${aws_security_group.web.id}"
+        )
+        other = ingress["web_ingress_all_2"]
+        assert other["referenced_security_group_id"] == "sg-2"
+        assert other["tags"] == {"Name": "from-sg-2"}
+        # All-protocol rules carry no ports.
+        assert "from_port" not in other and "to_port" not in other
+        assert egress["web_egress_all"]["cidr_ipv4"] == "0.0.0.0/0"
+        assert egress["web_egress_all"]["ip_protocol"] == "-1"
+        block = IaCGenerator().generate_resource_block(SECURITY_GROUP)
+        assert "# unmapped: IpPermissions" not in block
+
+    def test_iac_security_group_without_rule_ids_leaves_rules_unmanaged_req_16_3(self):
+        specs = dict(SECURITY_GROUP.specifications)
+        del specs["SecurityGroupRules"]
+        spec = _s("aws_security_group", SECURITY_GROUP.arn, specs)
+        resources = _resources(IaCGenerator().generate_resource_block(spec))
+        assert {t for t, _ in resources} == {"aws_security_group"}
+        block = IaCGenerator().generate_resource_block(spec)
+        assert "# unmapped: IpPermissions" in block
 
     def test_iac_aws_lambda_function_maps_arguments_req_7_3(self):
         body = _body(FUNCTION)
@@ -630,11 +708,20 @@ class TestIaCTypeMappings:
         assert "password" in str(ignore)
 
 
+def _imports(text: str) -> dict[str, str]:
+    """{to address: id} of the import blocks of an imports.tf."""
+    out = {}
+    for block in hcl2.loads(text).get("import", []):
+        to = _unquote(block["to"])
+        out[to.removeprefix("${").removesuffix("}")] = _unquote(block["id"])
+    return out
+
+
 class TestIaCFiles:
     def test_iac_generated_files_parse_as_hcl_req_7_2(self, tmp_path):
         files = IaCGenerator().generate_terraform(ALL, target_dir=tmp_path)
-        assert "global/aws_s3_bucket.tf" in files
-        assert "us-west-2/aws_lambda_function.tf" in files
+        assert "aws_s3_bucket" in files["modules/data/main.tf"]
+        assert "aws_lambda_function" in files["modules/compute/main.tf"]
         total = 0
         for rel, text in files.items():
             if rel.endswith(".tf"):
@@ -642,85 +729,88 @@ class TestIaCFiles:
                 total += len(parsed.get("resource", []))
         assert total >= len(ALL)
 
-    def test_iac_provider_alias_per_region_req_7_2(self, tmp_path):
-        files = IaCGenerator().generate_terraform(ALL, target_dir=tmp_path)
-        providers = hcl2.loads(files["providers.tf"])["provider"]
-        aliases = {_unquote(p['"aws"'].get("alias")) for p in providers}
-        assert {"us_east_1", "us_west_2"} <= aliases
-        assert None in aliases, "a default provider (us-east-1) is needed for global resources"
-        modules = {}
-        for item in hcl2.loads(files["main.tf"])["module"]:
-            for name, body in item.items():
-                modules[_unquote(name)] = _unquote(body)
-        assert modules["us_west_2"]["source"] == "./us-west-2"
-        assert "aws.us_west_2" in str(modules["us_west_2"]["providers"])
-        assert modules["global"]["source"] == "./global"
-        assert "versions.tf" in str(sorted(files))
-        assert "us-west-2/versions.tf" in files
-        for spec in ALL:
-            assert "provider" not in _body(spec)
-
     def test_iac_import_ids_per_type_req_7_4(self):
-        script = IaCGenerator().generate_import_script(ALL)
-        east, west, glob = "module.us_east_1.", "module.us_west_2.", "module.global."
-        expected = [
-            (east + "aws_instance.i-0abc", "i-0abc"),
-            (east + "aws_vpc.vpc-1", "vpc-1"),
-            (east + "aws_security_group.sg-1", "sg-1"),
-            (west + "aws_lambda_function.process-order", "process-order"),
-            (east + "aws_db_instance.orders-db", "orders-db"),
-            (
-                east + "aws_cloudwatch_log_group.aws_lambda_process-order",
-                "/aws/lambda/process-order",
+        imports = _imports(IaCGenerator().generate_imports(ALL))
+        expected = {
+            "module.compute.aws_instance.web_1": "i-0abc",
+            "module.network.aws_vpc.main": "vpc-1",
+            "module.network.aws_security_group.web": "sg-1",
+            "module.network.aws_vpc_security_group_ingress_rule.web_ingress_tcp_443": "sgr-1",
+            "module.network.aws_vpc_security_group_egress_rule.web_egress_all": "sgr-4",
+            "module.compute.aws_lambda_function.process_order": "process-order",
+            "module.data.aws_db_instance.orders_db": "orders-db",
+            "module.observability.aws_cloudwatch_log_group.aws_lambda_process_order": (
+                "/aws/lambda/process-order"
             ),
-            (east + "aws_sfn_state_machine.flow", STATE_MACHINE.arn),
-            (east + "aws_dynamodb_table.orders", "orders"),
-            (glob + "aws_s3_bucket.assets", "assets"),
-            (glob + "aws_s3_bucket_versioning.assets", "assets"),
-            (glob + "aws_iam_role.lambda-role", "lambda-role"),
-            (
-                glob + "aws_iam_role_policy_attachment.lambda-role_ReadOnly",
-                "lambda-role/arn:aws:iam::aws:policy/ReadOnlyAccess",
+            "module.compute.aws_sfn_state_machine.flow": STATE_MACHINE.arn,
+            "module.data.aws_dynamodb_table.orders": "orders",
+            "module.data.aws_s3_bucket.assets": "assets",
+            "module.data.aws_s3_bucket_versioning.assets": "assets",
+            "module.iam.aws_iam_role.lambda_role": "lambda-role",
+            "module.iam.aws_iam_role_policy_attachment.lambda_role_readonly": (
+                "lambda-role/arn:aws:iam::aws:policy/ReadOnlyAccess"
             ),
-            (glob + "aws_iam_role_policy.lambda-role_logs", "lambda-role:logs"),
-        ]
-        for address, import_id in expected:
-            assert f"terraform import {address} {import_id}" in script.replace("'", ""), address
-        assert script.count("terraform import ") == 15
+            "module.iam.aws_iam_role_policy.lambda_role_logs": "lambda-role:logs",
+        }
+        for address, import_id in expected.items():
+            assert imports.get(address) == import_id, address
+        # 10 primaries, 3 S3 companions, 2 IAM companions, 4 security group rules.
+        assert len(imports) == 19
 
-    def test_iac_resource_names_are_unique_and_valid_req_7_2(self):
+    def test_iac_resource_names_are_unique_and_valid_req_16_2(self):
         a = _s("aws_s3_bucket", "arn:aws:s3:::1-data", {"Name": "1-data"}, region="global")
         b = _s("aws_s3_bucket", "arn:aws:s3:::1_data", {"Name": "1_data"}, region="global")
         names = IaCGenerator().assign_names([a, b])
-        assert names[a.arn] == "r_1-data"
-        assert names[b.arn] == "r_1_data"
+        assert names[a.arn] == "r_1_data"
+        assert names[b.arn] == "r_1_data_2"
         c = _s("aws_s3_bucket", "arn:aws:s3:::x.y", {"Name": "x.y"}, region="global")
         d = _s("aws_s3_bucket", "arn:aws:s3:::x_y", {"Name": "x_y"}, region="global")
-        names = IaCGenerator().assign_names([c, d])
-        assert sorted(names.values()) == ["x_y", "x_y_2"]
+        names = IaCGenerator().assign_names([d, c])
+        assert names == {c.arn: "x_y", d.arn: "x_y_2"}, "order-independent"
 
 
 class TestIaCPlanVerification:
-    def _run(self, returncode, stdout=""):
-        result = MagicMock(returncode=returncode, stdout=stdout, stderr="")
-        with patch("src.iac_generator.subprocess.run", return_value=result) as run:
+    PLAN = ["terraform", "plan", "-detailed-exitcode", "-no-color", "-input=false"]
+
+    def _run(self, returncode, stdout="", plan_json=None):
+        plan = MagicMock(returncode=returncode, stdout=stdout, stderr="")
+        show = MagicMock(returncode=0, stdout=json.dumps(plan_json or {}), stderr="")
+        with patch("src.iac_generator.subprocess.run", side_effect=[plan, show]) as run:
             outcome = IaCGenerator().verify_terraform_plan("/tmp/tf")
         return outcome, run
 
-    def test_iac_verify_plan_uses_exit_code_only_req_7_5(self):
+    def test_iac_verify_plan_uses_exit_code_req_7_5(self):
         (ok, _msg), run = self._run(0, "Plan: 1 to add")
         assert ok is True
-        assert run.call_args.args[0] == [
-            "terraform",
-            "plan",
-            "-detailed-exitcode",
-            "-no-color",
-            "-input=false",
-        ]
-        (ok, msg), _ = self._run(2, "No changes.")
-        assert ok is False and "changes detected" in msg.lower()
+        assert run.call_args_list[0].args[0][:5] == self.PLAN
+        assert run.call_count == 1
         (ok, msg), _ = self._run(1, "No changes.")
         assert ok is False and "error" in msg.lower()
+
+    def test_iac_verify_plan_accepts_pending_imports_only_req_7_5(self):
+        imports_only = {
+            "resource_changes": [
+                {
+                    "address": "module.network.aws_vpc.main",
+                    "change": {"actions": ["no-op"], "importing": {"id": "vpc-1"}},
+                }
+            ]
+        }
+        (ok, msg), run = self._run(2, "Plan: 1 to import", imports_only)
+        assert ok is True and "1 import" in msg
+        assert run.call_args_list[1].args[0][:3] == ["terraform", "show", "-json"]
+
+        with_update = {
+            "resource_changes": [
+                {
+                    "address": "module.network.aws_vpc.main",
+                    "change": {"actions": ["update"], "importing": {"id": "vpc-1"}},
+                }
+            ]
+        }
+        (ok, msg), _ = self._run(2, "Plan: 1 to import, 1 to change", with_update)
+        assert ok is False and "changes detected" in msg.lower()
+        assert "module.network.aws_vpc.main" in msg
 
     def test_iac_verify_plan_terraform_missing_req_7_5(self):
         with patch("src.iac_generator.subprocess.run", side_effect=FileNotFoundError("terraform")):
@@ -1049,7 +1139,7 @@ class TestIaCNetworkEdgeMappings:
         ]
         association = _body(ROUTE_TABLE, "aws_route_table_association")
         assert _arg(association, "subnet_id") == "subnet-a"
-        assert _arg(association, "route_table_id") == "${aws_route_table.rtb-1.id}"
+        assert _arg(association, "route_table_id") == "${aws_route_table.rtb_1.id}"
 
         assert _arg(_body(INTERNET_GATEWAY), "vpc_id") == "vpc-1"
         nat = _body(NAT_GATEWAY)
@@ -1119,10 +1209,10 @@ class TestIaCNetworkEdgeMappings:
         records = _resources(IaCGenerator().generate_resource_block(ZONE))
         record_bodies = {n: b for (t, n), b in records.items() if t == "aws_route53_record"}
         # Apex NS and SOA records belong to the zone itself.
-        assert sorted(record_bodies) == ["Z1_shop_example_com_A", "Z1_www_example_com_CNAME"]
-        alias = _block(record_bodies["Z1_shop_example_com_A"], "alias")
+        assert sorted(record_bodies) == ["example_com_shop_a", "example_com_www_cname"]
+        alias = _block(record_bodies["example_com_shop_a"], "alias")
         assert alias["name"] == "d1.cloudfront.net."
-        assert _arg(record_bodies["Z1_www_example_com_CNAME"], "records") == ["shop.example.com"]
+        assert _arg(record_bodies["example_com_www_cname"], "records") == ["shop.example.com"]
 
         cert = _body(CERTIFICATE)
         assert _arg(cert, "domain_name") == "shop.example.com"
@@ -1138,37 +1228,36 @@ class TestIaCNetworkEdgeMappings:
         assert "# unmapped: Rules" in IaCGenerator().generate_resource_block(WEB_ACL)
 
     def test_iac_network_edge_import_ids_req_7_4(self):
-        script = IaCGenerator().generate_import_script(NETWORK_EDGE).replace("'", "")
-        east, glob = "module.us_east_1.", "module.global."
-        expected = [
-            (east + "aws_subnet.subnet-a", "subnet-a"),
-            (east + "aws_route_table.rtb-1", "rtb-1"),
-            (east + "aws_route_table_association.rtb-1_subnet-a", "subnet-a/rtb-1"),
-            (east + "aws_internet_gateway.igw-1", "igw-1"),
-            (east + "aws_nat_gateway.nat-1", "nat-1"),
-            (east + "aws_vpc_endpoint.vpce-1", "vpce-1"),
-            (east + "aws_lb.app_web-alb_abc", LB_ARN),
-            (east + "aws_lb_listener.app_web-alb_abc_def", LISTENER_ARN),
-            (east + "aws_lb_target_group.web-tg_123", TG_ARN),
-            (east + "aws_acm_certificate.uuid-1", CERT_ARN),
-            (glob + "aws_cloudfront_distribution.E1", "E1"),
-            (glob + "aws_route53_zone.Z1", "Z1"),
-            (glob + "aws_route53_record.Z1_shop_example_com_A", "Z1_shop.example.com_A"),
-            (glob + "aws_route53_record.Z1_www_example_com_CNAME", "Z1_www.example.com_CNAME"),
-            (glob + "aws_wafv2_web_acl.web-acl_uuid-2", "uuid-2/web-acl/CLOUDFRONT"),
-        ]
-        for address, import_id in expected:
-            assert f"terraform import {address} {import_id}" in script, address
-        assert script.count("terraform import ") == len(expected)
+        imports = _imports(IaCGenerator().generate_imports(NETWORK_EDGE))
+        net, edge = "module.network.", "module.edge."
+        expected = {
+            net + "aws_subnet.subnet_a": "subnet-a",
+            net + "aws_route_table.rtb_1": "rtb-1",
+            net + "aws_route_table_association.rtb_1_subnet_a": "subnet-a/rtb-1",
+            net + "aws_internet_gateway.igw_1": "igw-1",
+            net + "aws_nat_gateway.nat_1": "nat-1",
+            net + "aws_vpc_endpoint.vpce_1": "vpce-1",
+            edge + "aws_lb.web_alb": LB_ARN,
+            edge + "aws_lb_listener.https_443": LISTENER_ARN,
+            edge + "aws_lb_target_group.web_tg": TG_ARN,
+            # "shop" (the service tag) is stripped from shop.example.com.
+            edge + "aws_acm_certificate.example_com": CERT_ARN,
+            edge + "aws_cloudfront_distribution.example_com": "E1",
+            edge + "aws_route53_zone.example_com": "Z1",
+            edge + "aws_route53_record.example_com_shop_a": "Z1_shop.example.com_A",
+            edge + "aws_route53_record.example_com_www_cname": "Z1_www.example.com_CNAME",
+            edge + "aws_wafv2_web_acl.web_acl": "uuid-2/web-acl/CLOUDFRONT",
+        }
+        assert imports == expected
 
     def test_iac_network_edge_files_parse_as_hcl_req_7_2(self, tmp_path):
         files = IaCGenerator().generate_terraform(NETWORK_EDGE, target_dir=tmp_path)
-        assert "global/aws_cloudfront_distribution.tf" in files
-        assert "us-east-1/aws_lb_listener.tf" in files
+        assert "aws_cloudfront_distribution" in files["modules/edge/main.tf"]
+        assert "aws_lb_listener" in files["modules/edge/main.tf"]
         for rel, text in files.items():
             if rel.endswith(".tf"):
                 hcl2.loads(text)
-            if rel.endswith(".tf") and "/" in rel and not rel.endswith("versions.tf"):
+            if rel.endswith("/main.tf") and rel.startswith("modules/"):
                 assert "# unmapped: Tags" not in text, rel
 
 
@@ -1604,35 +1693,306 @@ class TestIaCComputeDataMappings:
         assert retry == {"maximum_event_age_in_seconds": 86400, "maximum_retry_attempts": 185}
 
     def test_iac_compute_data_import_ids_req_7_4(self):
-        script = IaCGenerator().generate_import_script(COMPUTE_DATA).replace("'", "")
-        east = "module.us_east_1."
-        expected = [
-            (east + "aws_ecs_cluster.web", "web"),
-            (east + "aws_ecs_service.web_api", "web/api"),
-            (east + "aws_ecs_task_definition.api_7", TASK_ARN),
-            (east + "aws_ecr_repository.team_api", "team/api"),
-            (east + "aws_autoscaling_group.workers", "workers"),
-            (east + "aws_launch_template.lt-1", "lt-1"),
-            (east + "aws_elasticache_replication_group.cache", "cache"),
-            (east + "aws_sqs_queue.jobs", f"https://sqs.us-east-1.amazonaws.com/{ACCOUNT}/jobs"),
-            (east + "aws_sns_topic.events", TOPIC_ARN),
-            (east + "aws_cloudwatch_event_rule.nightly", "nightly"),
-            (east + "aws_cloudwatch_event_target.nightly_worker", "nightly/worker"),
-            (east + "aws_cloudwatch_event_target.nightly_cleanup", "nightly/cleanup"),
-            (east + "aws_cloudwatch_event_rule.orders-bus_created", "orders-bus/created"),
-            (east + "aws_cloudwatch_event_target.orders-bus_created_q", "orders-bus/created/q"),
-            (east + "aws_scheduler_schedule.default_report", "default/report"),
-        ]
-        for address, import_id in expected:
-            assert f"terraform import {address} {import_id}" in script, address
-        assert script.count("terraform import ") == len(expected)
+        imports = _imports(IaCGenerator().generate_imports(COMPUTE_DATA))
+        compute, data = "module.compute.", "module.data."
+        expected = {
+            compute + "aws_ecs_cluster.web": "web",
+            compute + "aws_ecs_service.api": "web/api",
+            compute + "aws_ecs_task_definition.api_7": TASK_ARN,
+            compute + "aws_ecr_repository.team_api": "team/api",
+            compute + "aws_autoscaling_group.workers": "workers",
+            compute + "aws_launch_template.worker": "lt-1",
+            data + "aws_elasticache_replication_group.cache": "cache",
+            data + "aws_sqs_queue.jobs": f"https://sqs.us-east-1.amazonaws.com/{ACCOUNT}/jobs",
+            data + "aws_sns_topic.events": TOPIC_ARN,
+            compute + "aws_cloudwatch_event_rule.nightly": "nightly",
+            compute + "aws_cloudwatch_event_target.nightly_worker": "nightly/worker",
+            compute + "aws_cloudwatch_event_target.nightly_cleanup": "nightly/cleanup",
+            compute + "aws_cloudwatch_event_rule.created": "orders-bus/created",
+            compute + "aws_cloudwatch_event_target.created_q": "orders-bus/created/q",
+            compute + "aws_scheduler_schedule.report": "default/report",
+        }
+        assert imports == expected
 
     def test_iac_compute_data_files_parse_as_hcl_req_7_2(self, tmp_path):
         files = IaCGenerator().generate_terraform(COMPUTE_DATA, target_dir=tmp_path)
-        assert "us-east-1/aws_ecs_service.tf" in files
+        assert "aws_ecs_service" in files["modules/compute/main.tf"]
         for rel, text in files.items():
             if rel.endswith(".tf"):
                 hcl2.loads(text)
-            if rel.endswith(".tf") and "/" in rel and not rel.endswith("versions.tf"):
+            if rel.endswith("/main.tf") and rel.startswith("modules/"):
                 assert "# unmapped: Tags" not in text, rel
                 assert "# unmapped: tags" not in text, rel
+
+
+# ============================================================================
+# modules/ + envs/<env>/ layout (Requirements 7.2, 7.4, 16.1, 16.2, 16.3)
+# ============================================================================
+
+import re  # noqa: E402
+import shutil  # noqa: E402
+import subprocess  # noqa: E402
+
+PROJECT = ALL + NETWORK_EDGE + COMPUTE_DATA
+MODULE_FILES = ("README.md", "main.tf", "outputs.tf", "variables.tf", "versions.tf")
+ENV_FILES = (
+    "backend.tf",
+    "imports.tf",
+    "main.tf",
+    "outputs.tf",
+    "providers.tf",
+    "terraform.tfvars",
+    "variables.tf",
+    "verify_state.sh",
+    "versions.tf",
+)
+
+
+def _blocks(text: str, kind: str) -> dict:
+    """{name: body} of the top-level `kind` blocks (variable, output, module, provider)."""
+    out = {}
+    for item in hcl2.loads(text).get(kind, []):
+        for name, body in item.items():
+            out[_unquote(name)] = body
+    return out
+
+
+def _code_lines(text: str) -> list[str]:
+    """Lines that are not comments (heredoc bodies included)."""
+    return [line for line in text.splitlines() if not line.lstrip().startswith("#")]
+
+
+@pytest.fixture
+def project(tmp_path):
+    files = IaCGenerator().generate_terraform(PROJECT, target_dir=tmp_path)
+    return tmp_path, files
+
+
+class TestIaCProjectLayout:
+    def test_iac_directory_snapshot_req_16_1(self, project):
+        root, files = project
+        modules = ("compute", "data", "edge", "iam", "network", "observability")
+        expected = sorted(
+            ["README.md"]
+            + [f"modules/{m}/{f}" for m in modules for f in MODULE_FILES]
+            + [f"envs/default/{f}" for f in ENV_FILES]
+        )
+        assert sorted(files) == expected
+        on_disk = sorted(
+            str(p.relative_to(root)).replace("\\", "/") for p in root.rglob("*") if p.is_file()
+        )
+        assert on_disk == expected
+        for rel, text in files.items():
+            assert (root / rel).read_text(encoding="utf-8") == text
+        assert (root / "envs/default/verify_state.sh").stat().st_mode & 0o111
+
+    def test_iac_each_resource_once_in_module_and_imports_req_7_4(self, project):
+        _root, files = project
+        addresses = []
+        for rel, text in files.items():
+            if rel.startswith("modules/") and rel.endswith("/main.tf"):
+                module = rel.split("/")[1]
+                addresses += [f"module.{module}.{t}.{n}" for t, n in _resources(text)]
+        assert len(addresses) == len(set(addresses))
+        imports = _imports(files["envs/default/imports.tf"])
+        assert sorted(imports) == sorted(addresses), "one import block per resource block"
+        primaries = [a for a in addresses if a.split(".")[2] in {s.resource_type for s in PROJECT}]
+        assert len(primaries) == len(PROJECT)
+        assert imports["module.network.aws_vpc.main"] == "vpc-1"
+        assert imports["module.edge.aws_lb.web_alb"] == LB_ARN
+        assert "aws_" not in "".join(rel for rel in files if rel.startswith("envs/"))
+
+    def test_iac_module_assignment_req_16_1(self, project):
+        _root, files = project
+        types = {
+            rel.split("/")[1]: {t for t, _n in _resources(text)}
+            for rel, text in files.items()
+            if rel.startswith("modules/") and rel.endswith("/main.tf")
+        }
+        assert {"aws_vpc", "aws_subnet", "aws_security_group"} <= types["network"]
+        assert {"aws_lb", "aws_cloudfront_distribution", "aws_route53_zone"} <= types["edge"]
+        assert {"aws_ecs_service", "aws_lambda_function", "aws_instance"} <= types["compute"]
+        assert {"aws_db_instance", "aws_s3_bucket", "aws_sqs_queue"} <= types["data"]
+        assert types["iam"] == {
+            "aws_iam_role",
+            "aws_iam_role_policy",
+            "aws_iam_role_policy_attachment",
+        }
+        assert types["observability"] == {"aws_cloudwatch_log_group"}
+
+    def test_iac_cross_module_references_req_16_2(self, project):
+        _root, files = project
+        network = files["modules/network/main.tf"]
+        edge = files["modules/edge/main.tf"]
+        compute = files["modules/compute/main.tf"]
+        data = files["modules/data/main.tf"]
+        security_group = _resources(network)[("aws_security_group", "web")]
+        assert _arg(security_group, "vpc_id") == "${aws_vpc.main.id}"
+        lb = _resources(edge)[("aws_lb", "web_alb")]
+        # Managed subnet through the network module; unmanaged ids stay literal.
+        assert _arg(lb, "subnets") == ['${var.subnet_ids["subnet_a"]}', "subnet-b"]
+        listener = _resources(edge)[("aws_lb_listener", "https_443")]
+        assert _arg(listener, "load_balancer_arn") == "${aws_lb.web_alb.arn}"
+        assert _arg(listener, "certificate_arn") == "${aws_acm_certificate.example_com.arn}"
+        distribution = _resources(edge)[("aws_cloudfront_distribution", "example_com")]
+        assert _arg(distribution, "web_acl_id") == "${aws_wafv2_web_acl.web_acl.arn}"
+        service = _resources(compute)[("aws_ecs_service", "api")]
+        assert _arg(service, "cluster") == "${aws_ecs_cluster.web.arn}"
+        assert _arg(service, "task_definition") == "${aws_ecs_task_definition.api_7.arn}"
+        assert _block(service, "load_balancer")["target_group_arn"] == (
+            '${var.lb_target_group_arns["web_tg"]}'
+        )
+        function = _resources(compute)[("aws_lambda_function", "process_order")]
+        assert _arg(function, "role") == '${var.iam_role_arns["lambda_role"]}'
+        instance = _resources(compute)[("aws_instance", "web_1")]
+        assert _arg(instance, "vpc_security_group_ids") == ['${var.security_group_ids["web"]}']
+        schedule = _resources(compute)[("aws_scheduler_schedule", "report")]
+        assert _block(schedule, "target")["arn"] == '${var.sqs_queue_arns["jobs"]}'
+        database = _resources(data)[("aws_db_instance", "orders_db")]
+        assert _arg(database, "vpc_security_group_ids") == ['${var.security_group_ids["web"]}']
+
+        managed = ["vpc-1", "subnet-a", "sg-1", "rtb-1", "igw-1", "nat-1", "vpce-1", "lt-1"]
+        managed += [LB_ARN, TG_ARN, CERT_ARN, WAF_ARN, CLUSTER_ARN, TASK_ARN, QUEUE_ARN, ROLE.arn]
+        for rel, text in files.items():
+            if rel.startswith("modules/") and rel.endswith("/main.tf"):
+                for line in _code_lines(text):
+                    for value in managed:
+                        assert f'"{value}"' not in line, (rel, line)
+
+        modules = _blocks(files["envs/default/main.tf"], "module")
+        assert _unquote(modules["compute"]["lb_target_group_arns"]) == (
+            "${module.edge.lb_target_group_arns}"
+        )
+        assert _unquote(modules["edge"]["subnet_ids"]) == "${module.network.subnet_ids}"
+        assert _unquote(modules["network"]["source"]) == "../../modules/network"
+
+    def test_iac_variables_and_outputs_typed_and_described_req_16_2(self, project):
+        _root, files = project
+        env_modules = _blocks(files["envs/default/main.tf"], "module")
+        for rel, text in files.items():
+            if not rel.endswith(".tf"):
+                continue
+            for name, body in _blocks(text, "variable").items():
+                assert body.get("type") and body.get("description"), (rel, name)
+            for name, body in _blocks(text, "output").items():
+                assert body.get("description") and "value" in body, (rel, name)
+            if rel.startswith("modules/") and rel.endswith("/main.tf"):
+                module = rel.split("/")[1]
+                declared = set(_blocks(files[f"modules/{module}/variables.tf"], "variable"))
+                used = set(re.findall(r"\bvar\.([a-z_0-9]+)", text))
+                assert used == declared, module
+                wired = set(env_modules[module]) - {"source", "providers", "__is_block__"}
+                assert wired == declared, module
+                outputs = _blocks(files[f"modules/{module}/outputs.tf"], "output")
+                assert outputs, module
+        env_outputs = _blocks(files["envs/default/outputs.tf"], "output")
+        assert _unquote(env_outputs["subnet_ids"]["value"]) == "${module.network.subnet_ids}"
+        assert "default_tags" in _blocks(files["envs/default/variables.tf"], "variable")
+
+    def test_iac_providers_backend_versions_req_16_1(self, project):
+        _root, files = project
+        providers = [p['"aws"'] for p in hcl2.loads(files["envs/default/providers.tf"])["provider"]]
+        default = next(p for p in providers if "alias" not in p)
+        assert _unquote(default["region"]) == "us-east-1"
+        assert _unquote(default["default_tags"][0]["tags"]) == "${var.default_tags}"
+        aliases = {_unquote(p["alias"]): _unquote(p["region"]) for p in providers if "alias" in p}
+        assert aliases == {"us_west_2": "us-west-2"}
+        function = _resources(files["modules/compute/main.tf"])[
+            ("aws_lambda_function", "process_order")
+        ]
+        assert _unquote(function["provider"]) == "${aws.us_west_2}"
+        assert "aws.us_west_2" in files["modules/compute/versions.tf"]
+        assert "configuration_aliases" not in files["modules/network/versions.tf"]
+        compute = _blocks(files["envs/default/main.tf"], "module")["compute"]
+        assert "aws.us_west_2" in str(compute["providers"])
+        backend = hcl2.loads(files["envs/default/backend.tf"])["terraform"][0]["backend"][0]
+        assert '"s3"' in backend or "s3" in backend
+        assert "-backend-config" in files["envs/default/backend.tf"]
+        assert 'required_version = ">= 1.5.0"' in files["envs/default/versions.tf"]
+        assert 'version = "~> 5.0"' in re.sub(r" +", " ", files["envs/default/versions.tf"])
+        assert "terraform plan" in files["envs/default/verify_state.sh"]
+        assert "show -json" in files["envs/default/verify_state.sh"]
+
+    def test_iac_names_and_environment_from_tags_req_16_2(self, tmp_path):
+        tags = [
+            {"Key": "Project", "Value": "storefront"},
+            {"Key": "environment", "Value": "prod"},
+        ]
+        subnet = _s(
+            "aws_subnet",
+            f"{EC2_ARN}:subnet/subnet-1",
+            {
+                "SubnetId": "subnet-1",
+                "Tags": [*tags, {"Key": "Name", "Value": "storefront-public-a"}],
+            },
+        )
+        cluster = _s(
+            "aws_ecs_cluster",
+            f"{ECS}:cluster/storefront",
+            {"clusterName": "storefront", "clusterArn": f"{ECS}:cluster/storefront"},
+        )
+        database = _s(
+            "aws_db_instance",
+            f"arn:aws:rds:us-east-1:{ACCOUNT}:db:storefront-prod-db",
+            {"DBInstanceIdentifier": "storefront-prod-db", "TagList": tags},
+        )
+        generator = IaCGenerator()
+        names = generator.assign_names([subnet, cluster, database])
+        assert names == {subnet.arn: "public_a", cluster.arn: "main", database.arn: "db"}
+        files = generator.generate_terraform([subnet, cluster, database], target_dir=tmp_path)
+        assert "envs/prod/main.tf" in files
+        for rel, text in files.items():
+            if rel.startswith("modules/") and rel.endswith("/main.tf"):
+                for _t, name in _resources(text):
+                    assert re.fullmatch(r"[a-z_][a-z0-9_]*", name), name
+
+    def test_iac_explicit_project_tags_strip_prefix_req_16_2(self):
+        spec = _s(
+            "aws_sqs_queue",
+            f"arn:aws:sqs:us-east-1:{ACCOUNT}:acme-jobs",
+            {"QueueUrl": f"https://sqs.us-east-1.amazonaws.com/{ACCOUNT}/acme-jobs"},
+        )
+        assert IaCGenerator().assign_names([spec]) == {spec.arn: "acme_jobs"}
+        generator = IaCGenerator(project_tags={"team": "acme"})
+        assert generator.assign_names([spec]) == {spec.arn: "jobs"}
+
+    def test_iac_default_tags_hold_tags_common_to_every_resource_req_16_1(self, tmp_path):
+        tags = [{"Key": "service", "Value": "shop"}, {"Key": "aws:cloudformation:x", "Value": "y"}]
+        vpc = _s("aws_vpc", f"{EC2_ARN}:vpc/vpc-9", {"VpcId": "vpc-9", "Tags": tags})
+        subnet = _s(
+            "aws_subnet",
+            f"{EC2_ARN}:subnet/subnet-9",
+            {
+                "SubnetId": "subnet-9",
+                "VpcId": "vpc-9",
+                "Tags": [*tags, {"Key": "Name", "Value": "a"}],
+            },
+        )
+        files = IaCGenerator().generate_terraform([vpc, subnet], target_dir=tmp_path)
+        tfvars = hcl2.loads(files["envs/default/terraform.tfvars"])
+        assert _unquote(tfvars["default_tags"]) == {"service": "shop"}
+        resources = _resources(files["modules/network/main.tf"])
+        # aws: tags belong to AWS and cannot be set through Terraform.
+        assert _arg(resources[("aws_subnet", "a")], "tags") == {"Name": "a"}
+        assert "tags" not in resources[("aws_vpc", "vpc_9")]
+
+        # One taggable resource without the tag: nothing is common.
+        bare = _s(
+            "aws_internet_gateway",
+            f"{EC2_ARN}:internet-gateway/igw-9",
+            {"InternetGatewayId": "igw-9"},
+        )
+        files = IaCGenerator().generate_terraform([vpc, subnet, bare], target_dir=tmp_path / "b")
+        assert _unquote(hcl2.loads(files["envs/default/terraform.tfvars"])["default_tags"]) == {}
+
+    @pytest.mark.skipif(shutil.which("terraform") is None, reason="terraform CLI not installed")
+    def test_iac_terraform_fmt_check_req_7_2(self, project):
+        root, _files = project
+        result = subprocess.run(
+            ["terraform", "fmt", "-check", "-recursive", "-diff", "-no-color"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result.returncode == 0, result.stdout + result.stderr

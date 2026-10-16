@@ -1,0 +1,56 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:ec2:us-east-1:123456789012:launch-template/lt-bad06a08aee200bf2",
+  "generated_at": "2026-10-16T02:05:50.002193Z",
+  "metadata": {
+    "api_version": "2016-11-15",
+    "checksum": "3a695fbf8e2cad28c531855ce902173748720797ea56c34e54ebaede7a7edec5",
+    "collected_at": "2026-10-16T02:05:49Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_launch_template",
+  "specifications": {
+    "CreateTime": "2026-10-16T02:05:48+00:00",
+    "CreatedBy": "arn:aws:iam::123456789012:root",
+    "DefaultVersionNumber": 1,
+    "LatestVersionNumber": 1,
+    "LaunchTemplateData": {
+      "IamInstanceProfile": {
+        "Name": "orders-app-role"
+      },
+      "ImageId": "ami-12c6146b",
+      "InstanceType": "t3.small",
+      "SecurityGroupIds": [
+        "sg-12874fb82c9db66ed"
+      ],
+      "TagSpecifications": [
+        {
+          "ResourceType": "launch-template",
+          "Tags": [
+            {
+              "Key": "Name",
+              "Value": "storefront-worker"
+            },
+            {
+              "Key": "service",
+              "Value": "storefront"
+            }
+          ]
+        }
+      ]
+    },
+    "LaunchTemplateId": "lt-bad06a08aee200bf2",
+    "LaunchTemplateName": "storefront-worker",
+    "Tags": [
+      {
+        "Key": "Name",
+        "Value": "storefront-worker"
+      },
+      {
+        "Key": "service",
+        "Value": "storefront"
+      }
+    ]
+  }
+}

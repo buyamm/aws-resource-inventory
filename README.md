@@ -124,15 +124,36 @@ aws-inventory analyze --output-dir ./output --export-png         # also writes d
 
 ### generate-iac
 
-Generates Terraform (AWS provider `~> 5.0`): one module per region, one `<type>.tf` per (region, type), plus `import.sh` and `verify_state.sh`. Every block is preceded by comments naming its source spec file, ARN, region, and the mapped/unmapped specification keys.
+Generates a Terraform project (Terraform `>= 1.5`, AWS provider `~> 5.0`) in the usual layout:
+
+```
+terraform/
+├── README.md
+├── modules/{iam,observability,network,edge,data,compute}/   # main.tf, variables.tf, outputs.tf, versions.tf, README.md
+└── envs/<env>/          # main.tf, providers.tf, backend.tf (S3), variables.tf, terraform.tfvars,
+                         # outputs.tf, versions.tf, imports.tf, verify_state.sh
+```
+
+- `<env>` is the most common `environment` tag value (`default` without one).
+- Resource names are snake_case of the Name tag (or the resource's own name/id) with the project prefix stripped (`storefront-public-a` → `public_a`).
+- A value that is the id or ARN of another generated resource becomes a reference (`aws_vpc.main.id`, or `var.subnet_ids["public_a"]` wired from the network module's output).
+- Security group rules are separate `aws_vpc_security_group_{ingress,egress}_rule` resources.
+- Tags common to every resource move to the provider's `default_tags`.
+- `imports.tf` holds one `import` block per resource.
+- Every block is preceded by comments naming its source spec file, ARN, region, and the mapped/unmapped specification keys. The files pass `terraform fmt -check`.
 
 ```bash
 aws-inventory generate-iac --output-dir ./output                       # -> ./output/terraform
 aws-inventory generate-iac --output-dir ./output --terraform-dir ./infra
-cd output/terraform && terraform init && ./import.sh && ./verify_state.sh
+cd output/terraform/envs/<env>
+terraform init -backend-config="bucket=<state bucket>" -backend-config="key=<env>/terraform.tfstate" \
+  -backend-config="region=<region>"
+terraform plan        # expected: N to import, 0 to add, 0 to change, 0 to destroy
+terraform apply       # records the imports in state
+./verify_state.sh
 ```
 
-`verify_state.sh` runs `terraform plan -detailed-exitcode` and exits 0 when there are no changes, 2 when there are changes, and 1 on error.
+To try it without an S3 bucket, add `backend_override.tf` containing `terraform { backend "local" {} }` to `envs/<env>/`. `verify_state.sh` runs `terraform plan -detailed-exitcode` and exits 0 when there are no changes (or only imports whose configuration already matches), 2 when there are changes, and 1 on error.
 
 ### generate-docs
 
@@ -206,7 +227,7 @@ Then ask, for example, "List the Lambda functions and explain which tables they 
 | `verify` reports `checksum mismatch` | A file changed after it was written. Re-run the command that produced it (`analyze`, `generate-iac`, `generate-docs` all refresh checksums), or re-collect. |
 | `verify` reports a citation mismatch at `path:line` | The spec file was edited after `analyze`. Re-run `analyze` (and `generate-docs`). |
 | MCP client shows no tools / server exits | Use absolute paths for both the executable and `--cache-dir`; the directory must exist. Run the same command in a terminal to see errors on stderr. |
-| `terraform plan` shows changes after `import.sh` | Expected for the items under "Known limitations" below. Review the diff; values marked `# REDACTED: set manually` must be filled in by hand. |
+| `terraform plan` shows changes besides the imports | Expected for the items under "Known limitations" below. Review the diff; values marked `# REDACTED: set manually` must be filled in by hand. |
 | `analyze --validate-diagram` says validation was skipped | The `drawio-ai` CLI is not on `PATH`. The XML is still checked for well-formedness. |
 | `analyze --export-png` says the export was skipped | The draw.io desktop CLI (`drawio`) is not installed. The `.drawio` file is still written. |
 
@@ -215,10 +236,10 @@ Then ask, for example, "List the Lambda functions and explain which tables they 
 - Only the resource types above are collected. Patterns no rule can detect (API Gateway + Lambda + DynamoDB, EC2 + Load Balancer with instances registered directly in the target group) are listed as undetectable in `analysis.json` with the reason, rather than guessed.
 - ECS: only the task definition revisions that services run are collected (not every registered revision); services must use the long ARN format (`service/<cluster>/<service>`). ElastiCache: replication groups only (not standalone Memcached clusters); the subnet group, security groups and engine version are read from the first member cluster.
 - CloudFront: only distributions are collected (never edge locations or IP ranges). A load balancer origin is matched to the collected load balancer by DNS name in the analysis, but the dependency closure cannot follow it (a DNS name does not identify an ARN); tag the load balancer or collect without `--project-tag`.
-- Terraform: WAF web ACL rules, extra (non-default) listener certificates, SNS subscriptions, Auto Scaling mixed-instances policies and ECS cluster capacity-provider associations are not mapped; launch template user data is always redacted (and ignored in the plan); web ACL rules are kept out of the plan with `ignore_changes = [rule]`. Imported ACM certificates need `certificate_body`/`private_key` set by hand.
+- Terraform: one environment root per run (resources of other environments land in it too); S3 buckets are managed through the `us-east-1` provider; Output_Dirs collected before security group rules were collected (`SecurityGroupRules`) leave the rules unmanaged — re-run `collect`. WAF web ACL rules, extra (non-default) listener certificates, SNS subscriptions, Auto Scaling mixed-instances policies and ECS cluster capacity-provider associations are not mapped; launch template user data is always redacted (and ignored in the plan); web ACL rules are kept out of the plan with `ignore_changes = [rule]`. Imported ACM certificates need `certificate_body`/`private_key` set by hand.
 - The analysis is rule-based and deterministic; there is no embedded LLM. Free-form explanations come from the AI agent connected over MCP.
 - The sanitizer redacts by key name as well as by value, so harmless fields whose names contain `token`, `secret`, `password`, ... (for example EC2 `ClientToken`) appear as `[REDACTED]`; so do ECS container environment values whose `name` looks sensitive, and launch template `UserData`.
-- Terraform: redacted values (for example secret environment variables) are emitted with a `# REDACTED: set manually` comment and listed in `ignore_changes`; Lambda code is a `lambda_<name>.zip` placeholder; the RDS master password is not available. S3 lifecycle/CORS/website/ACL and DynamoDB TTL/point-in-time recovery are not mapped, and security group rules with different per-range descriptions are emitted without descriptions.
+- Terraform: redacted values (for example secret environment variables) are emitted with a `# REDACTED: set manually` comment and listed in `ignore_changes`; Lambda code is a `lambda_<name>.zip` placeholder; the RDS master password is not available. S3 lifecycle/CORS/website/ACL and DynamoDB TTL/point-in-time recovery are not mapped.
 - The zero-change `terraform plan` guarantee is tested against a real account only by the opt-in live test (`AWS_INVENTORY_LIVE_TESTS=1`).
 - Collection of a single resource is not incremental; re-run `collect` to refresh the whole Output_Dir.
 

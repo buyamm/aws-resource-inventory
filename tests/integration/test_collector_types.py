@@ -70,6 +70,64 @@ def test_integration_collector_security_group_spec_req_2_1(sample_account):
     assert spec.specifications["VpcId"] == ids.vpc_id
 
 
+def test_integration_collector_security_group_rules_req_16_3(sample_account):
+    """One SecurityGroupRules entry per rule source, with the rule id Terraform imports."""
+    session, ids = sample_account
+    group = ids.app_security_group_id
+    arn = f"arn:aws:ec2:{REGION}:{ACCOUNT}:security-group/{group}"
+    spec, _ = _collect(session, "ec2", "aws_security_group", group, arn)
+    rules = spec.specifications["SecurityGroupRules"]
+    assert all(r["SecurityGroupRuleId"].startswith("sgr-") for r in rules)
+    assert [r["SecurityGroupRuleId"] for r in rules] == sorted(
+        r["SecurityGroupRuleId"] for r in rules
+    )
+    assert all(r["GroupId"] == group for r in rules)
+    ingress = {
+        (r["IpProtocol"], r["FromPort"], r["ToPort"], r["ReferencedGroupInfo"]["GroupId"])
+        for r in rules
+        if not r["IsEgress"]
+    }
+    assert ingress == {
+        ("tcp", 80, 80, ids.alb_security_group_id),
+        ("tcp", 6379, 6379, group),
+    }
+    egress = [r for r in rules if r["IsEgress"]]
+    assert len(egress) == 1
+    assert egress[0]["IpProtocol"] == "-1" and egress[0]["CidrIpv4"] == "0.0.0.0/0"
+    assert "DescribeSecurityGroupRules" in spec.raw_response
+
+
+def test_integration_collector_security_group_rules_per_source_req_16_3(sample_account):
+    """A permission with several sources is one rule per source (as AWS returns it)."""
+    session, ids = sample_account
+    ec2 = session.client("ec2", region_name=REGION)
+    group = ec2.create_security_group(GroupName="multi", Description="m", VpcId=ids.vpc_id)[
+        "GroupId"
+    ]
+    ec2.authorize_security_group_ingress(
+        GroupId=group,
+        IpPermissions=[
+            {
+                "IpProtocol": "tcp",
+                "FromPort": 443,
+                "ToPort": 443,
+                "IpRanges": [
+                    {"CidrIp": "10.0.0.0/8", "Description": "corp"},
+                    {"CidrIp": "192.168.0.0/16"},
+                ],
+            }
+        ],
+    )
+    arn = f"arn:aws:ec2:{REGION}:{ACCOUNT}:security-group/{group}"
+    spec, _ = _collect(session, "ec2", "aws_security_group", group, arn)
+    ingress = [r for r in spec.specifications["SecurityGroupRules"] if not r["IsEgress"]]
+    assert sorted((r["CidrIpv4"], r.get("Description")) for r in ingress) == [
+        ("10.0.0.0/8", "corp"),
+        ("192.168.0.0/16", None),
+    ]
+    assert len({r["SecurityGroupRuleId"] for r in ingress}) == 2
+
+
 def test_integration_collector_lambda_spec_with_tags_req_2_4(sample_account):
     session, ids = sample_account
     arn = f"arn:aws:lambda:{REGION}:{ACCOUNT}:function:{ids.function_name}"

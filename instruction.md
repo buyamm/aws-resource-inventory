@@ -13,7 +13,7 @@ Bạn tiếp nhận một AWS account **không có IaC, không có tài liệu, 
 2. **Lưu ra thư mục output** (gọi là Output_Dir) dạng JSON + Markdown, có checksum SHA-256 để kiểm tra toàn vẹn.
 3. **Phân tích** quan hệ giữa các resource (Lambda → DynamoDB, EC2 → VPC, ...), nhận diện pattern kiến trúc và phát hiện rủi ro bảo mật. **Mỗi kết luận đều có trích dẫn (citation)** trỏ tới đúng file và đúng thuộc tính đã thu thập.
 4. **Vẽ diagram** draw.io với icon AWS chính thức.
-5. **Sinh Terraform** kèm script `import.sh` và `verify_state.sh`.
+5. **Sinh Terraform** theo cấu trúc chuẩn `modules/` + `envs/<env>/`, kèm `imports.tf` (import block) và `verify_state.sh`.
 6. **Kiểm chứng** toàn bộ output bằng lệnh `verify` (checksum + mọi citation).
 7. **MCP server** cho AI Agent (Claude Desktop, Claude Code, ...) đọc dữ liệu đã thu thập, **không có quyền truy cập AWS**.
 
@@ -152,16 +152,38 @@ aws-inventory generate-iac --output-dir ./output                      # ghi vào
 aws-inventory generate-iac --output-dir ./output --terraform-dir ./infra
 ```
 
-Cấu trúc: `main.tf` + `providers.tf` ở gốc, mỗi region là một module (`us-east-1/`, `global/` cho S3 và IAM), mỗi loại resource một file `<type>.tf`. Phía trên mỗi block có comment ghi file spec nguồn, ARN, region, các key đã map (`# mapped:`) và chưa map (`# unmapped:`).
+Cấu trúc:
+
+```
+terraform/
+├── README.md
+├── modules/                 # resource gom theo nhóm, chỉ sinh module có resource
+│   ├── iam/  observability/  network/  edge/  data/  compute/
+│   │   └── main.tf, variables.tf, outputs.tf, versions.tf, README.md
+└── envs/<env>/              # root configuration của môi trường
+    └── main.tf, providers.tf, backend.tf, variables.tf, terraform.tfvars,
+        outputs.tf, versions.tf, imports.tf, verify_state.sh
+```
+
+- `<env>` là giá trị tag `environment` phổ biến nhất (không có tag thì là `default`).
+- Tên resource là snake_case của tag Name (hoặc tên/id của resource), đã bỏ prefix của project: `storefront-public-a` → `public_a`. Prefix lấy từ `--project-tag` lúc collect (đọc trong `manifest.json`) và các tag `project`/`service`/`application`/`app`/`environment`.
+- Giá trị là id/ARN của một resource khác cũng được sinh ra sẽ thành tham chiếu: cùng module thì `aws_vpc.main.id`; khác module thì `var.subnet_ids["public_a"]`, nối từ output của module `network` trong `envs/<env>/main.tf`.
+- Rule của security group là resource riêng (`aws_vpc_security_group_ingress_rule` / `_egress_rule`), import theo rule id.
+- Tag chung của mọi resource được đưa vào `default_tags` của provider (`terraform.tfvars`).
+- Phía trên mỗi block có comment ghi file spec nguồn, ARN, region, các key đã map (`# mapped:`) và chưa map (`# unmapped:`). File đạt `terraform fmt -check`.
 
 Đưa resource có sẵn vào Terraform state:
 
 ```bash
-cd output/terraform
-terraform init
-./import.sh          # terraform import từng resource (bỏ qua nếu đã có trong state)
-./verify_state.sh    # terraform plan -detailed-exitcode: 0 = không thay đổi, 2 = có thay đổi, 1 = lỗi
+cd output/terraform/envs/<env>
+terraform init -backend-config="bucket=<bucket state>" \
+  -backend-config="key=<env>/terraform.tfstate" -backend-config="region=<region>"
+terraform plan       # kỳ vọng: N to import, 0 to add, 0 to change, 0 to destroy
+terraform apply      # ghi các import vào state, không thay đổi resource
+./verify_state.sh    # 0 = khớp AWS (hoặc chỉ còn import), 2 = có thay đổi, 1 = lỗi
 ```
+
+Muốn thử nhanh mà chưa có bucket S3 cho state: tạo file `envs/<env>/backend_override.tf` với nội dung `terraform { backend "local" {} }`.
 
 Giá trị bị che (ví dụ biến môi trường chứa mật khẩu) xuất hiện kèm comment `# REDACTED: set manually` và được đưa vào `lifecycle.ignore_changes`; bạn cần tự điền nếu muốn Terraform quản lý chúng.
 
@@ -297,7 +319,7 @@ Chi tiết: [docs/ACCURACY_AND_SECURITY.md](docs/ACCURACY_AND_SECURITY.md).
 | `verify` báo `checksum mismatch` | File bị sửa sau khi tạo. Chạy lại lệnh đã tạo ra file đó (`analyze`, `generate-iac`, `generate-docs` đều cập nhật checksum) hoặc `collect` lại. |
 | `verify` báo sai lệch citation tại `file:dòng` | File spec bị sửa sau `analyze`. Chạy lại `analyze` (và `generate-docs`). |
 | AI client không thấy tool / server tắt ngay | Dùng đường dẫn tuyệt đối cho cả lệnh và `--cache-dir`, thư mục phải tồn tại. Chạy thử lệnh trong terminal để xem lỗi trên stderr. |
-| `terraform plan` vẫn có thay đổi sau `import.sh` | Xem phần giới hạn bên dưới; điền tay các giá trị `# REDACTED: set manually`. |
+| `terraform plan` có thay đổi ngoài các import | Xem phần giới hạn bên dưới; điền tay các giá trị `# REDACTED: set manually`. |
 | `--validate-diagram` báo bỏ qua | Chưa cài CLI `drawio-ai`. XML vẫn được kiểm tra hợp lệ. |
 | `--export-png` báo bỏ qua | Chưa cài draw.io desktop (không có `drawio` trên PATH). File `.drawio` vẫn được ghi. |
 
@@ -309,8 +331,8 @@ Chi tiết: [docs/ACCURACY_AND_SECURITY.md](docs/ACCURACY_AND_SECURITY.md).
 - ECS: chỉ thu thập các revision task definition mà service đang chạy; service phải dùng định dạng ARN dài (`service/<cluster>/<service>`). ElastiCache: chỉ replication group (không gồm cluster Memcached đứng riêng); subnet group, security group và engine version lấy từ member cluster đầu tiên.
 - Biến môi trường ECS có `name` nhạy cảm (chứa `secret`, `password`, `token`, ...) và `UserData` của launch template luôn bị thay bằng `[REDACTED]`.
 - Origin là load balancer được nối với load balancer đã thu thập theo DNS name khi phân tích, nhưng dependency closure không lần theo được (DNS name không xác định ARN); hãy gắn tag cho load balancer hoặc thu thập không dùng `--project-tag`.
-- Terraform: rule của WAF web ACL, certificate phụ (không phải default) của listener, SNS subscription, mixed-instances policy của Auto Scaling và capacity provider của ECS cluster chưa được map; rule WAF được giữ ngoài plan bằng `ignore_changes = [rule]`. ACM certificate dạng IMPORTED cần tự điền `certificate_body`/`private_key`.
+- Terraform: mỗi lần chạy sinh một môi trường (resource của môi trường khác cũng nằm trong đó); S3 bucket luôn dùng provider `us-east-1`; Output_Dir thu thập trước khi có `SecurityGroupRules` sẽ để rule của security group ngoài Terraform — hãy chạy lại `collect`. Rule của WAF web ACL, certificate phụ (không phải default) của listener, SNS subscription, mixed-instances policy của Auto Scaling và capacity provider của ECS cluster chưa được map; rule WAF được giữ ngoài plan bằng `ignore_changes = [rule]`. ACM certificate dạng IMPORTED cần tự điền `certificate_body`/`private_key`.
 - Phân tích dựa trên luật cố định, không dùng LLM bên trong. Phần giải thích tự do do AI Agent kết nối qua MCP đảm nhận.
 - Sanitizer che theo tên key, nên một số trường vô hại có tên chứa `token`, `secret`, ... (ví dụ `ClientToken` của EC2) cũng hiện là `[REDACTED]`.
-- Terraform: code Lambda là file placeholder `lambda_<name>.zip`; không lấy được mật khẩu master của RDS; S3 lifecycle/CORS/website/ACL và DynamoDB TTL/PITR chưa được map; rule security group có mô tả khác nhau theo từng dải IP được sinh ra không kèm mô tả.
+- Terraform: code Lambda là file placeholder `lambda_<name>.zip`; không lấy được mật khẩu master của RDS; S3 lifecycle/CORS/website/ACL và DynamoDB TTL/PITR chưa được map.
 - Chưa hỗ trợ thu thập lại từng resource; muốn cập nhật thì chạy lại `collect`.

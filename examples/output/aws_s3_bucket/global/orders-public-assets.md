@@ -8,7 +8,7 @@
 | ARN               | arn:aws:s3:::orders-public-assets |
 | Region            | global                            |
 | Account ID        | 123456789012                      |
-| Collected At      | 2026-10-16T01:29:14Z              |
+| Collected At      | 2026-10-16T02:05:49Z              |
 | Collector Version | 0.1.0                             |
 
 

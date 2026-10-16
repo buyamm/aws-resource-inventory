@@ -16,17 +16,17 @@
         <mxCell id="ove-box-000e793db70c" value="AWS Cloud (account 123456789012)" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;container=1;dropTarget=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#232F3E;fontColor=#232F3E;dashed=0;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="260" y="110" width="3820" height="1320" as="geometry" />
         </mxCell>
-        <UserObject id="ove-res-7af2f877697b" label="&lt;b&gt;example.com&lt;/b&gt;&lt;br&gt;Route 53 zone" tooltip="arn:aws:route53:::hostedzone/2VX36NXN28FIY7F" arns="arn:aws:route53:::hostedzone/2VX36NXN28FIY7F" resource_type="aws_route53_zone">
+        <UserObject id="ove-res-7af2f877697b" label="&lt;b&gt;example.com&lt;/b&gt;&lt;br&gt;Route 53 zone" tooltip="arn:aws:route53:::hostedzone/ACA19C6IIUY2GFZ" arns="arn:aws:route53:::hostedzone/ACA19C6IIUY2GFZ" resource_type="aws_route53_zone">
           <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.route_53_hosted_zone;fillColor=#8C4FFF;" vertex="1" parent="ove-box-000e793db70c">
             <mxGeometry x="71" y="50" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-res-14f0b95480f4" label="&lt;b&gt;shop.example.com&lt;/b&gt;&lt;br&gt;CloudFront" tooltip="arn:aws:cloudfront::123456789012:distribution/S8ZTDFP8H8PGF" arns="arn:aws:cloudfront::123456789012:distribution/S8ZTDFP8H8PGF" resource_type="aws_cloudfront_distribution">
+        <UserObject id="ove-res-14f0b95480f4" label="&lt;b&gt;shop.example.com&lt;/b&gt;&lt;br&gt;CloudFront" tooltip="arn:aws:cloudfront::123456789012:distribution/X5E0C4JHPHC9C" arns="arn:aws:cloudfront::123456789012:distribution/X5E0C4JHPHC9C" resource_type="aws_cloudfront_distribution">
           <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudfront;fillColor=#8C4FFF;" vertex="1" parent="ove-box-000e793db70c">
             <mxGeometry x="291" y="50" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-res-ce987e01968c" label="&lt;b&gt;storefront-waf&lt;/b&gt;&lt;br&gt;WAF web ACL" tooltip="arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/1cbd8645-1348-4072-8b2e-633711042db1" arns="arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/1cbd8645-1348-4072-8b2e-633711042db1" resource_type="aws_wafv2_web_acl">
+        <UserObject id="ove-res-ce987e01968c" label="&lt;b&gt;storefront-waf&lt;/b&gt;&lt;br&gt;WAF web ACL" tooltip="arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/d06f4b4d-1ec6-42a4-81fa-1582637eb32d" arns="arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/d06f4b4d-1ec6-42a4-81fa-1582637eb32d" resource_type="aws_wafv2_web_acl">
           <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.waf;fillColor=#DD344C;" vertex="1" parent="ove-box-000e793db70c">
             <mxGeometry x="291" y="240" width="78" height="78" as="geometry" />
           </mxCell>
@@ -34,74 +34,74 @@
         <mxCell id="ove-box-9315526fee1c" value="us-east-1" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;container=1;dropTarget=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_region;strokeColor=#00A4A6;fontColor=#147EBA;dashed=1;fontStyle=1;" vertex="1" parent="ove-box-000e793db70c">
           <mxGeometry x="470" y="50" width="3100" height="800" as="geometry" />
         </mxCell>
-        <UserObject id="ove-grp-57bc109690bc" label="orders-vpc (10.0.0.0/16)" tooltip="arn:aws:ec2:us-east-1:123456789012:vpc/vpc-7c4f2f1d" arns="arn:aws:ec2:us-east-1:123456789012:vpc/vpc-7c4f2f1d" resource_type="aws_vpc">
+        <UserObject id="ove-grp-7a8060797416" label="orders-vpc (10.0.0.0/16)" tooltip="arn:aws:ec2:us-east-1:123456789012:vpc/vpc-660d36ef" arns="arn:aws:ec2:us-east-1:123456789012:vpc/vpc-660d36ef" resource_type="aws_vpc">
           <mxCell style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;container=1;dropTarget=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_vpc;strokeColor=#8C4FFF;fontColor=#8C4FFF;dashed=0;fontStyle=1;" vertex="1" parent="ove-box-9315526fee1c">
             <mxGeometry x="30" y="50" width="2160" height="720" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-res-c7e996398d23" label="&lt;b&gt;storefront-igw&lt;/b&gt;&lt;br&gt;Internet gateway" tooltip="arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-dbc38f85" arns="arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-dbc38f85" resource_type="aws_internet_gateway">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.internet_gateway;fillColor=#8C4FFF;" vertex="1" parent="ove-grp-57bc109690bc">
+        <UserObject id="ove-res-ece4c1feca5b" label="&lt;b&gt;storefront-igw&lt;/b&gt;&lt;br&gt;Internet gateway" tooltip="arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-d045f4ab" arns="arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-d045f4ab" resource_type="aws_internet_gateway">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.internet_gateway;fillColor=#8C4FFF;" vertex="1" parent="ove-grp-7a8060797416">
             <mxGeometry x="71" y="50" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <mxCell id="ove-box-5107f5f02b60" value="us-east-1a" style="fillColor=none;strokeColor=#007FAA;dashed=1;verticalAlign=top;align=center;fontStyle=1;fontColor=#007FAA;whiteSpace=wrap;html=1;container=1;dropTarget=1;collapsible=0;recursiveResize=0;" vertex="1" parent="ove-grp-57bc109690bc">
+        <mxCell id="ove-box-1c45dd9955d7" value="us-east-1a" style="fillColor=none;strokeColor=#007FAA;dashed=1;verticalAlign=top;align=center;fontStyle=1;fontColor=#007FAA;whiteSpace=wrap;html=1;container=1;dropTarget=1;collapsible=0;recursiveResize=0;" vertex="1" parent="ove-grp-7a8060797416">
           <mxGeometry x="250" y="50" width="1660" height="290" as="geometry" />
         </mxCell>
-        <UserObject id="ove-grp-1a29b15399af" label="storefront-public-a&lt;br&gt;10.0.10.0/24" tooltip="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-91c2dcc6" arns="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-91c2dcc6" resource_type="aws_subnet" subnet_type="public">
-          <mxCell style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;container=1;dropTarget=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_security_group;strokeColor=#7AA116;fontColor=#248814;dashed=0;fontStyle=0;" vertex="1" parent="ove-box-5107f5f02b60">
+        <UserObject id="ove-grp-534491810976" label="storefront-public-a&lt;br&gt;10.0.10.0/24" tooltip="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-2cf4f53a" arns="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-2cf4f53a" resource_type="aws_subnet" subnet_type="public">
+          <mxCell style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;container=1;dropTarget=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_security_group;strokeColor=#7AA116;fontColor=#248814;dashed=0;fontStyle=0;" vertex="1" parent="ove-box-1c45dd9955d7">
             <mxGeometry x="30" y="50" width="440" height="210" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-res-d300117f5e9e" label="&lt;b&gt;storefront-alb&lt;/b&gt;&lt;br&gt;Load balancer" tooltip="arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188" arns="arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188" resource_type="aws_lb">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.application_load_balancer;fillColor=#8C4FFF;" vertex="1" parent="ove-grp-1a29b15399af">
+        <UserObject id="ove-res-a9aa81a42e41" label="&lt;b&gt;storefront-alb&lt;/b&gt;&lt;br&gt;Load balancer" tooltip="arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188" arns="arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188" resource_type="aws_lb">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.application_load_balancer;fillColor=#8C4FFF;" vertex="1" parent="ove-grp-534491810976">
             <mxGeometry x="71" y="50" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-res-e013fe2bc3d9" label="&lt;b&gt;storefront-nat&lt;/b&gt;&lt;br&gt;NAT gateway" tooltip="arn:aws:ec2:us-east-1:123456789012:natgateway/nat-60d1a0cf8c8f398eb" arns="arn:aws:ec2:us-east-1:123456789012:natgateway/nat-60d1a0cf8c8f398eb" resource_type="aws_nat_gateway">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.nat_gateway;fillColor=#8C4FFF;" vertex="1" parent="ove-grp-1a29b15399af">
+        <UserObject id="ove-res-723449b3d7ef" label="&lt;b&gt;storefront-nat&lt;/b&gt;&lt;br&gt;NAT gateway" tooltip="arn:aws:ec2:us-east-1:123456789012:natgateway/nat-af9f73b40a8a4af4f" arns="arn:aws:ec2:us-east-1:123456789012:natgateway/nat-af9f73b40a8a4af4f" resource_type="aws_nat_gateway">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.nat_gateway;fillColor=#8C4FFF;" vertex="1" parent="ove-grp-534491810976">
             <mxGeometry x="291" y="50" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-grp-3931705c9679" label="orders-private-a&lt;br&gt;10.0.1.0/24" tooltip="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-30a75c4f" arns="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-30a75c4f" resource_type="aws_subnet" subnet_type="private">
-          <mxCell style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;container=1;dropTarget=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_security_group;strokeColor=#147EBA;fontColor=#147EBA;dashed=0;fontStyle=0;" vertex="1" parent="ove-box-5107f5f02b60">
+        <UserObject id="ove-grp-f77c3a46b980" label="orders-private-a&lt;br&gt;10.0.1.0/24" tooltip="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-4d897e3d" arns="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-4d897e3d" resource_type="aws_subnet" subnet_type="private">
+          <mxCell style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;container=1;dropTarget=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_security_group;strokeColor=#147EBA;fontColor=#147EBA;dashed=0;fontStyle=0;" vertex="1" parent="ove-box-1c45dd9955d7">
             <mxGeometry x="530" y="50" width="1100" height="210" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-res-1276fc90910c" label="&lt;b&gt;storefront-workers&lt;/b&gt;&lt;br&gt;Auto Scaling group (1 instance)" tooltip="arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:9bbe6615-958a-43a1-81c1-b9c0e0c23918:autoScalingGroupName/storefront-workers&#10;arn:aws:ec2:us-east-1:123456789012:instance/i-7c15a7e2df90fa017" arns="arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:9bbe6615-958a-43a1-81c1-b9c0e0c23918:autoScalingGroupName/storefront-workers&#10;arn:aws:ec2:us-east-1:123456789012:instance/i-7c15a7e2df90fa017" resource_type="aws_autoscaling_group">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.auto_scaling_group;fillColor=#ED7100;" vertex="1" parent="ove-grp-3931705c9679">
+        <UserObject id="ove-res-0da0a9f982f8" label="&lt;b&gt;storefront-workers&lt;/b&gt;&lt;br&gt;Auto Scaling group (1 instance)" tooltip="arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:fddff19a-c8c9-4401-9bef-23ac1c8a6198:autoScalingGroupName/storefront-workers&#10;arn:aws:ec2:us-east-1:123456789012:instance/i-b892b745a8c407b02" arns="arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:fddff19a-c8c9-4401-9bef-23ac1c8a6198:autoScalingGroupName/storefront-workers&#10;arn:aws:ec2:us-east-1:123456789012:instance/i-b892b745a8c407b02" resource_type="aws_autoscaling_group">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.auto_scaling_group;fillColor=#ED7100;" vertex="1" parent="ove-grp-f77c3a46b980">
             <mxGeometry x="71" y="50" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-res-2e5f1491c6ec" label="&lt;b&gt;web&lt;/b&gt;&lt;br&gt;ECS service" tooltip="arn:aws:ecs:us-east-1:123456789012:service/storefront/web" arns="arn:aws:ecs:us-east-1:123456789012:service/storefront/web" resource_type="aws_ecs_service">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ecs_service;fillColor=#ED7100;" vertex="1" parent="ove-grp-3931705c9679">
+        <UserObject id="ove-res-cc7464304791" label="&lt;b&gt;web&lt;/b&gt;&lt;br&gt;ECS service" tooltip="arn:aws:ecs:us-east-1:123456789012:service/storefront/web" arns="arn:aws:ecs:us-east-1:123456789012:service/storefront/web" resource_type="aws_ecs_service">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ecs_service;fillColor=#ED7100;" vertex="1" parent="ove-grp-f77c3a46b980">
             <mxGeometry x="291" y="50" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-res-0e86f9ae86e8" label="&lt;b&gt;orders-web-1&lt;/b&gt;&lt;br&gt;EC2 instance" tooltip="arn:aws:ec2:us-east-1:123456789012:instance/i-47f9de669501b27af" arns="arn:aws:ec2:us-east-1:123456789012:instance/i-47f9de669501b27af" resource_type="aws_instance">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ec2;fillColor=#ED7100;" vertex="1" parent="ove-grp-3931705c9679">
+        <UserObject id="ove-res-dec1b6a08daa" label="&lt;b&gt;orders-web-1&lt;/b&gt;&lt;br&gt;EC2 instance" tooltip="arn:aws:ec2:us-east-1:123456789012:instance/i-5e2db2f538089c39d" arns="arn:aws:ec2:us-east-1:123456789012:instance/i-5e2db2f538089c39d" resource_type="aws_instance">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ec2;fillColor=#ED7100;" vertex="1" parent="ove-grp-f77c3a46b980">
             <mxGeometry x="511" y="50" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-res-746f243cec35" label="&lt;b&gt;orders-db&lt;/b&gt;&lt;br&gt;RDS instance" tooltip="arn:aws:rds:us-east-1:123456789012:db:orders-db" arns="arn:aws:rds:us-east-1:123456789012:db:orders-db" resource_type="aws_db_instance">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.rds;fillColor=#C925D1;" vertex="1" parent="ove-grp-3931705c9679">
+        <UserObject id="ove-res-593cc46d766b" label="&lt;b&gt;orders-db&lt;/b&gt;&lt;br&gt;RDS instance" tooltip="arn:aws:rds:us-east-1:123456789012:db:orders-db" arns="arn:aws:rds:us-east-1:123456789012:db:orders-db" resource_type="aws_db_instance">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.rds;fillColor=#C925D1;" vertex="1" parent="ove-grp-f77c3a46b980">
             <mxGeometry x="731" y="50" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-res-e198702fd611" label="&lt;b&gt;storefront-cache&lt;/b&gt;&lt;br&gt;ElastiCache" tooltip="arn:aws:elasticache:us-east-1:123456789012:replicationgroup:storefront-cache" arns="arn:aws:elasticache:us-east-1:123456789012:replicationgroup:storefront-cache" resource_type="aws_elasticache_replication_group">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elasticache;fillColor=#C925D1;" vertex="1" parent="ove-grp-3931705c9679">
+        <UserObject id="ove-res-f1170e627215" label="&lt;b&gt;storefront-cache&lt;/b&gt;&lt;br&gt;ElastiCache" tooltip="arn:aws:elasticache:us-east-1:123456789012:replicationgroup:storefront-cache" arns="arn:aws:elasticache:us-east-1:123456789012:replicationgroup:storefront-cache" resource_type="aws_elasticache_replication_group">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elasticache;fillColor=#C925D1;" vertex="1" parent="ove-grp-f77c3a46b980">
             <mxGeometry x="951" y="50" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <mxCell id="ove-box-3781bc83c51f" value="us-east-1b" style="fillColor=none;strokeColor=#007FAA;dashed=1;verticalAlign=top;align=center;fontStyle=1;fontColor=#007FAA;whiteSpace=wrap;html=1;container=1;dropTarget=1;collapsible=0;recursiveResize=0;" vertex="1" parent="ove-grp-57bc109690bc">
+        <mxCell id="ove-box-29d0aeb929b0" value="us-east-1b" style="fillColor=none;strokeColor=#007FAA;dashed=1;verticalAlign=top;align=center;fontStyle=1;fontColor=#007FAA;whiteSpace=wrap;html=1;container=1;dropTarget=1;collapsible=0;recursiveResize=0;" vertex="1" parent="ove-grp-7a8060797416">
           <mxGeometry x="250" y="400" width="1660" height="290" as="geometry" />
         </mxCell>
-        <UserObject id="ove-grp-b9c5d9a6756b" label="storefront-public-b&lt;br&gt;10.0.11.0/24" tooltip="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-9134f3a5" arns="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-9134f3a5" resource_type="aws_subnet" subnet_type="public">
-          <mxCell style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;container=1;dropTarget=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_security_group;strokeColor=#7AA116;fontColor=#248814;dashed=0;fontStyle=0;" vertex="1" parent="ove-box-3781bc83c51f">
+        <UserObject id="ove-grp-ddd5b4e2010f" label="storefront-public-b&lt;br&gt;10.0.11.0/24" tooltip="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-4db17d3d" arns="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-4db17d3d" resource_type="aws_subnet" subnet_type="public">
+          <mxCell style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;container=1;dropTarget=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_security_group;strokeColor=#7AA116;fontColor=#248814;dashed=0;fontStyle=0;" vertex="1" parent="ove-box-29d0aeb929b0">
             <mxGeometry x="30" y="50" width="440" height="210" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-res-2dd3bb9dc16e" label="&lt;b&gt;storefront-s3&lt;/b&gt;&lt;br&gt;VPC endpoint" tooltip="arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-55746589" arns="arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-55746589" resource_type="aws_vpc_endpoint">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.endpoints;fillColor=#8C4FFF;" vertex="1" parent="ove-grp-57bc109690bc">
+        <UserObject id="ove-res-6eaecded0a00" label="&lt;b&gt;storefront-s3&lt;/b&gt;&lt;br&gt;VPC endpoint" tooltip="arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-40eb00b6" arns="arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-40eb00b6" resource_type="aws_vpc_endpoint">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.endpoints;fillColor=#8C4FFF;" vertex="1" parent="ove-grp-7a8060797416">
             <mxGeometry x="2011" y="50" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
@@ -163,17 +163,17 @@
             <mxGeometry x="281" y="40" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-res-86e7901b86dc" label="&lt;b&gt;Security group ×4&lt;/b&gt;&lt;br&gt;Security group" tooltip="arn:aws:ec2:us-east-1:123456789012:security-group/sg-2edfb301c8a045aa8&#10;arn:aws:ec2:us-east-1:123456789012:security-group/sg-71a3ac0ec6bbd92b7&#10;arn:aws:ec2:us-east-1:123456789012:security-group/sg-7c3a665620cbf02dc&#10;arn:aws:ec2:us-east-1:123456789012:security-group/sg-c6ec367b2a800f7fe" arns="arn:aws:ec2:us-east-1:123456789012:security-group/sg-2edfb301c8a045aa8&#10;arn:aws:ec2:us-east-1:123456789012:security-group/sg-71a3ac0ec6bbd92b7&#10;arn:aws:ec2:us-east-1:123456789012:security-group/sg-7c3a665620cbf02dc&#10;arn:aws:ec2:us-east-1:123456789012:security-group/sg-c6ec367b2a800f7fe" resource_type="aws_security_group">
+        <UserObject id="ove-res-86e7901b86dc" label="&lt;b&gt;Security group ×4&lt;/b&gt;&lt;br&gt;Security group" tooltip="arn:aws:ec2:us-east-1:123456789012:security-group/sg-12874fb82c9db66ed&#10;arn:aws:ec2:us-east-1:123456789012:security-group/sg-156a39ed25de235cf&#10;arn:aws:ec2:us-east-1:123456789012:security-group/sg-2bf145296ea5159ab&#10;arn:aws:ec2:us-east-1:123456789012:security-group/sg-e4a0ee2dde2bb1f50" arns="arn:aws:ec2:us-east-1:123456789012:security-group/sg-12874fb82c9db66ed&#10;arn:aws:ec2:us-east-1:123456789012:security-group/sg-156a39ed25de235cf&#10;arn:aws:ec2:us-east-1:123456789012:security-group/sg-2bf145296ea5159ab&#10;arn:aws:ec2:us-east-1:123456789012:security-group/sg-e4a0ee2dde2bb1f50" resource_type="aws_security_group">
           <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.network_firewall;fillColor=#DD344C;" vertex="1" parent="ove-box-5bdcd3c0d4d2">
             <mxGeometry x="501" y="40" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-res-c91057f4f292" label="&lt;b&gt;Route table ×3&lt;/b&gt;&lt;br&gt;Route table" tooltip="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-260c9780&#10;arn:aws:ec2:us-east-1:123456789012:route-table/rtb-7bfbfaee&#10;arn:aws:ec2:us-east-1:123456789012:route-table/rtb-abf4c4b4" arns="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-260c9780&#10;arn:aws:ec2:us-east-1:123456789012:route-table/rtb-7bfbfaee&#10;arn:aws:ec2:us-east-1:123456789012:route-table/rtb-abf4c4b4" resource_type="aws_route_table">
+        <UserObject id="ove-res-c91057f4f292" label="&lt;b&gt;Route table ×3&lt;/b&gt;&lt;br&gt;Route table" tooltip="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-561c82c8&#10;arn:aws:ec2:us-east-1:123456789012:route-table/rtb-bf60be68&#10;arn:aws:ec2:us-east-1:123456789012:route-table/rtb-e28b5541" arns="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-561c82c8&#10;arn:aws:ec2:us-east-1:123456789012:route-table/rtb-bf60be68&#10;arn:aws:ec2:us-east-1:123456789012:route-table/rtb-e28b5541" resource_type="aws_route_table">
           <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.router;fillColor=#8C4FFF;" vertex="1" parent="ove-box-5bdcd3c0d4d2">
             <mxGeometry x="721" y="40" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-res-3db442b8be86" label="&lt;b&gt;HTTPS:443&lt;/b&gt;&lt;br&gt;Listener" tooltip="arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434536313232" arns="arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434536313232" resource_type="aws_lb_listener">
+        <UserObject id="ove-res-3db442b8be86" label="&lt;b&gt;HTTPS:443&lt;/b&gt;&lt;br&gt;Listener" tooltip="arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434501777232" arns="arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434501777232" resource_type="aws_lb_listener">
           <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elastic_load_balancing;fillColor=#8C4FFF;" vertex="1" parent="ove-box-5bdcd3c0d4d2">
             <mxGeometry x="941" y="40" width="78" height="78" as="geometry" />
           </mxCell>
@@ -183,7 +183,7 @@
             <mxGeometry x="1161" y="40" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-res-bbb68bb674c8" label="&lt;b&gt;shop.example.com&lt;/b&gt;&lt;br&gt;ACM certificate" tooltip="arn:aws:acm:us-east-1:123456789012:certificate/8f72f034-ca75-4120-acc5-f35a9fd3885d" arns="arn:aws:acm:us-east-1:123456789012:certificate/8f72f034-ca75-4120-acc5-f35a9fd3885d" resource_type="aws_acm_certificate">
+        <UserObject id="ove-res-bbb68bb674c8" label="&lt;b&gt;shop.example.com&lt;/b&gt;&lt;br&gt;ACM certificate" tooltip="arn:aws:acm:us-east-1:123456789012:certificate/a2f4311b-2bbd-4ca0-97e7-018106634454" arns="arn:aws:acm:us-east-1:123456789012:certificate/a2f4311b-2bbd-4ca0-97e7-018106634454" resource_type="aws_acm_certificate">
           <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.certificate_manager_3;fillColor=#DD344C;" vertex="1" parent="ove-box-5bdcd3c0d4d2">
             <mxGeometry x="1381" y="40" width="78" height="78" as="geometry" />
           </mxCell>
@@ -203,43 +203,33 @@
             <mxGeometry x="281" y="230" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-res-5ddc259211fc" label="&lt;b&gt;storefront-worker&lt;/b&gt;&lt;br&gt;Launch template" tooltip="arn:aws:ec2:us-east-1:123456789012:launch-template/lt-c743f2f076e986059" arns="arn:aws:ec2:us-east-1:123456789012:launch-template/lt-c743f2f076e986059" resource_type="aws_launch_template">
+        <UserObject id="ove-res-5ddc259211fc" label="&lt;b&gt;storefront-worker&lt;/b&gt;&lt;br&gt;Launch template" tooltip="arn:aws:ec2:us-east-1:123456789012:launch-template/lt-bad06a08aee200bf2" arns="arn:aws:ec2:us-east-1:123456789012:launch-template/lt-bad06a08aee200bf2" resource_type="aws_launch_template">
           <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.ami;fillColor=#ED7100;" vertex="1" parent="ove-box-5bdcd3c0d4d2">
             <mxGeometry x="501" y="230" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-edge-218b7a0957e8" label="5432" relationships="network_access" evidence="arn:aws:ec2:us-east-1:123456789012:launch-template/lt-c743f2f076e986059#specifications.LaunchTemplateData.SecurityGroupIds[0]&#10;arn:aws:ec2:us-east-1:123456789012:security-group/sg-2edfb301c8a045aa8#specifications.IpPermissions[1].UserIdGroupPairs[0].GroupId">
-          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="ove-grp-3931705c9679" source="ove-res-1276fc90910c" target="ove-res-746f243cec35">
+        <UserObject id="ove-edge-29a62f282317" label="5432" relationships="network_access" evidence="arn:aws:ec2:us-east-1:123456789012:launch-template/lt-bad06a08aee200bf2#specifications.LaunchTemplateData.SecurityGroupIds[0]&#10;arn:aws:ec2:us-east-1:123456789012:security-group/sg-2bf145296ea5159ab#specifications.IpPermissions[1].UserIdGroupPairs[0].GroupId">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="ove-grp-f77c3a46b980" source="ove-res-0da0a9f982f8" target="ove-res-593cc46d766b">
             <mxGeometry relative="1" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-edge-30a329e17069" label="6379" relationships="network_access" evidence="arn:aws:ec2:us-east-1:123456789012:launch-template/lt-c743f2f076e986059#specifications.LaunchTemplateData.SecurityGroupIds[0]&#10;arn:aws:ec2:us-east-1:123456789012:security-group/sg-7c3a665620cbf02dc#specifications.IpPermissions[1].UserIdGroupPairs[0].GroupId">
-          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="ove-grp-3931705c9679" source="ove-res-1276fc90910c" target="ove-res-e198702fd611">
+        <UserObject id="ove-edge-2440047847e4" label="6379" relationships="network_access" evidence="arn:aws:ec2:us-east-1:123456789012:launch-template/lt-bad06a08aee200bf2#specifications.LaunchTemplateData.SecurityGroupIds[0]&#10;arn:aws:ec2:us-east-1:123456789012:security-group/sg-12874fb82c9db66ed#specifications.IpPermissions[1].UserIdGroupPairs[0].GroupId">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="ove-grp-f77c3a46b980" source="ove-res-0da0a9f982f8" target="ove-res-f1170e627215">
             <mxGeometry relative="1" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-edge-41ec75da47eb" label="" relationships="cdn_origin" evidence="arn:aws:cloudfront::123456789012:distribution/S8ZTDFP8H8PGF#specifications.DistributionConfig.Origins.Items[0].DomainName&#10;arn:aws:s3:::storefront-static#specifications.Name">
+        <UserObject id="ove-edge-41ec75da47eb" label="" relationships="cdn_origin" evidence="arn:aws:cloudfront::123456789012:distribution/X5E0C4JHPHC9C#specifications.DistributionConfig.Origins.Items[0].DomainName&#10;arn:aws:s3:::storefront-static#specifications.Name">
           <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="ove-box-000e793db70c" source="ove-res-14f0b95480f4" target="ove-res-070976d26b66">
             <mxGeometry relative="1" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-edge-349c4a64c395" label="WAF" relationships="waf_protection" evidence="arn:aws:cloudfront::123456789012:distribution/S8ZTDFP8H8PGF#specifications.DistributionConfig.WebACLId">
+        <UserObject id="ove-edge-af5850b4b6d8" label="" relationships="cdn_origin" evidence="arn:aws:cloudfront::123456789012:distribution/X5E0C4JHPHC9C#specifications.DistributionConfig.Origins.Items[1].DomainName&#10;arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188#specifications.DNSName">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="ove-box-000e793db70c" source="ove-res-14f0b95480f4" target="ove-res-a9aa81a42e41">
+            <mxGeometry relative="1" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="ove-edge-349c4a64c395" label="WAF" relationships="waf_protection" evidence="arn:aws:cloudfront::123456789012:distribution/X5E0C4JHPHC9C#specifications.DistributionConfig.WebACLId">
           <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;endArrow=none;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="ove-box-000e793db70c" source="ove-res-14f0b95480f4" target="ove-res-ce987e01968c">
-            <mxGeometry relative="1" as="geometry" />
-          </mxCell>
-        </UserObject>
-        <UserObject id="ove-edge-dfdd284a734c" label="" relationships="cdn_origin" evidence="arn:aws:cloudfront::123456789012:distribution/S8ZTDFP8H8PGF#specifications.DistributionConfig.Origins.Items[1].DomainName&#10;arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188#specifications.DNSName">
-          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="ove-box-000e793db70c" source="ove-res-14f0b95480f4" target="ove-res-d300117f5e9e">
-            <mxGeometry relative="1" as="geometry" />
-          </mxCell>
-        </UserObject>
-        <UserObject id="ove-edge-ea29d6c907d6" label="5432" relationships="network_access" evidence="arn:aws:ec2:us-east-1:123456789012:security-group/sg-2edfb301c8a045aa8#specifications.IpPermissions[1].UserIdGroupPairs[0].GroupId&#10;arn:aws:ecs:us-east-1:123456789012:service/storefront/web#specifications.networkConfiguration.awsvpcConfiguration.securityGroups[0]">
-          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="ove-grp-3931705c9679" source="ove-res-2e5f1491c6ec" target="ove-res-746f243cec35">
-            <mxGeometry relative="1" as="geometry" />
-          </mxCell>
-        </UserObject>
-        <UserObject id="ove-edge-a58163449ca9" label="6379" relationships="network_access" evidence="arn:aws:ec2:us-east-1:123456789012:security-group/sg-7c3a665620cbf02dc#specifications.IpPermissions[1].UserIdGroupPairs[0].GroupId&#10;arn:aws:ecs:us-east-1:123456789012:service/storefront/web#specifications.networkConfiguration.awsvpcConfiguration.securityGroups[0]">
-          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="ove-grp-3931705c9679" source="ove-res-2e5f1491c6ec" target="ove-res-e198702fd611">
             <mxGeometry relative="1" as="geometry" />
           </mxCell>
         </UserObject>
@@ -253,13 +243,18 @@
             <mxGeometry relative="1" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-edge-8bf8d8292c8d" label="DNS" relationships="dns_alias" evidence="arn:aws:cloudfront::123456789012:distribution/S8ZTDFP8H8PGF#specifications.DomainName&#10;arn:aws:route53:::hostedzone/2VX36NXN28FIY7F#specifications.ResourceRecordSets[3].AliasTarget.DNSName">
+        <UserObject id="ove-edge-8bf8d8292c8d" label="DNS" relationships="dns_alias" evidence="arn:aws:cloudfront::123456789012:distribution/X5E0C4JHPHC9C#specifications.DomainName&#10;arn:aws:route53:::hostedzone/ACA19C6IIUY2GFZ#specifications.ResourceRecordSets[3].AliasTarget.DNSName">
           <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;dashed=1;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="ove-box-000e793db70c" source="ove-res-7af2f877697b" target="ove-res-14f0b95480f4">
             <mxGeometry relative="1" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-edge-602c76611147" label="DNS" relationships="dns_alias" evidence="arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188#specifications.DNSName&#10;arn:aws:route53:::hostedzone/2VX36NXN28FIY7F#specifications.ResourceRecordSets[2].AliasTarget.DNSName">
-          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;dashed=1;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="ove-box-000e793db70c" source="ove-res-7af2f877697b" target="ove-res-d300117f5e9e">
+        <UserObject id="ove-edge-dcfa76351151" label="DNS" relationships="dns_alias" evidence="arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188#specifications.DNSName&#10;arn:aws:route53:::hostedzone/ACA19C6IIUY2GFZ#specifications.ResourceRecordSets[2].AliasTarget.DNSName">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;dashed=1;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="ove-box-000e793db70c" source="ove-res-7af2f877697b" target="ove-res-a9aa81a42e41">
+            <mxGeometry relative="1" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="ove-edge-31266e818c62" label="HTTPS:443" relationships="forwards_to,lb_listener,lb_target" evidence="arn:aws:ecs:us-east-1:123456789012:service/storefront/web#specifications.loadBalancers[0].targetGroupArn&#10;arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434501777232#specifications.DefaultActions[0].TargetGroupArn&#10;arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434501777232#specifications.LoadBalancerArn">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="ove-box-1c45dd9955d7" source="ove-res-a9aa81a42e41" target="ove-res-cc7464304791">
             <mxGeometry relative="1" as="geometry" />
           </mxCell>
         </UserObject>
@@ -268,8 +263,13 @@
             <mxGeometry relative="1" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-edge-51efdbdedcf0" label="HTTPS:443" relationships="forwards_to,lb_listener,lb_target" evidence="arn:aws:ecs:us-east-1:123456789012:service/storefront/web#specifications.loadBalancers[0].targetGroupArn&#10;arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434536313232#specifications.DefaultActions[0].TargetGroupArn&#10;arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434536313232#specifications.LoadBalancerArn">
-          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="ove-box-5107f5f02b60" source="ove-res-d300117f5e9e" target="ove-res-2e5f1491c6ec">
+        <UserObject id="ove-edge-075f0c7158f8" label="5432" relationships="network_access" evidence="arn:aws:ec2:us-east-1:123456789012:security-group/sg-2bf145296ea5159ab#specifications.IpPermissions[1].UserIdGroupPairs[0].GroupId&#10;arn:aws:ecs:us-east-1:123456789012:service/storefront/web#specifications.networkConfiguration.awsvpcConfiguration.securityGroups[0]">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="ove-grp-f77c3a46b980" source="ove-res-cc7464304791" target="ove-res-593cc46d766b">
+            <mxGeometry relative="1" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="ove-edge-323980000c8b" label="6379" relationships="network_access" evidence="arn:aws:ec2:us-east-1:123456789012:security-group/sg-12874fb82c9db66ed#specifications.IpPermissions[1].UserIdGroupPairs[0].GroupId&#10;arn:aws:ecs:us-east-1:123456789012:service/storefront/web#specifications.networkConfiguration.awsvpcConfiguration.securityGroups[0]">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="ove-grp-f77c3a46b980" source="ove-res-cc7464304791" target="ove-res-f1170e627215">
             <mxGeometry relative="1" as="geometry" />
           </mxCell>
         </UserObject>
@@ -278,7 +278,7 @@
             <mxGeometry relative="1" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="ove-edge-d447f4573074" label="" relationships="entry_point" evidence="arn:aws:cloudfront::123456789012:distribution/S8ZTDFP8H8PGF">
+        <UserObject id="ove-edge-d447f4573074" label="" relationships="entry_point" evidence="arn:aws:cloudfront::123456789012:distribution/X5E0C4JHPHC9C">
           <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ove-users" target="ove-res-14f0b95480f4">
             <mxGeometry relative="1" as="geometry" />
           </mxCell>
@@ -303,109 +303,109 @@
         <mxCell id="net-box-9315526fee1c" value="us-east-1" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;container=1;dropTarget=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_region;strokeColor=#00A4A6;fontColor=#147EBA;dashed=1;fontStyle=1;" vertex="1" parent="net-box-000e793db70c">
           <mxGeometry x="30" y="50" width="1120" height="1050" as="geometry" />
         </mxCell>
-        <UserObject id="net-grp-57bc109690bc" label="orders-vpc (10.0.0.0/16)" tooltip="arn:aws:ec2:us-east-1:123456789012:vpc/vpc-7c4f2f1d" arns="arn:aws:ec2:us-east-1:123456789012:vpc/vpc-7c4f2f1d" resource_type="aws_vpc">
+        <UserObject id="net-grp-7a8060797416" label="orders-vpc (10.0.0.0/16)" tooltip="arn:aws:ec2:us-east-1:123456789012:vpc/vpc-660d36ef" arns="arn:aws:ec2:us-east-1:123456789012:vpc/vpc-660d36ef" resource_type="aws_vpc">
           <mxCell style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;container=1;dropTarget=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_vpc;strokeColor=#8C4FFF;fontColor=#8C4FFF;dashed=0;fontStyle=1;" vertex="1" parent="net-box-9315526fee1c">
             <mxGeometry x="30" y="50" width="1060" height="970" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="net-res-c7e996398d23" label="&lt;b&gt;storefront-igw&lt;/b&gt;&lt;br&gt;Internet gateway" tooltip="arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-dbc38f85" arns="arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-dbc38f85" resource_type="aws_internet_gateway">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.internet_gateway;fillColor=#8C4FFF;" vertex="1" parent="net-grp-57bc109690bc">
+        <UserObject id="net-res-ece4c1feca5b" label="&lt;b&gt;storefront-igw&lt;/b&gt;&lt;br&gt;Internet gateway" tooltip="arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-d045f4ab" arns="arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-d045f4ab" resource_type="aws_internet_gateway">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.internet_gateway;fillColor=#8C4FFF;" vertex="1" parent="net-grp-7a8060797416">
             <mxGeometry x="71" y="50" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <mxCell id="net-box-5107f5f02b60" value="us-east-1a" style="fillColor=none;strokeColor=#007FAA;dashed=1;verticalAlign=top;align=center;fontStyle=1;fontColor=#007FAA;whiteSpace=wrap;html=1;container=1;dropTarget=1;collapsible=0;recursiveResize=0;" vertex="1" parent="net-grp-57bc109690bc">
+        <mxCell id="net-box-1c45dd9955d7" value="us-east-1a" style="fillColor=none;strokeColor=#007FAA;dashed=1;verticalAlign=top;align=center;fontStyle=1;fontColor=#007FAA;whiteSpace=wrap;html=1;container=1;dropTarget=1;collapsible=0;recursiveResize=0;" vertex="1" parent="net-grp-7a8060797416">
           <mxGeometry x="250" y="50" width="560" height="290" as="geometry" />
         </mxCell>
-        <UserObject id="net-grp-1a29b15399af" label="storefront-public-a&lt;br&gt;10.0.10.0/24" tooltip="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-91c2dcc6" arns="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-91c2dcc6" resource_type="aws_subnet" subnet_type="public">
-          <mxCell style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;container=1;dropTarget=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_security_group;strokeColor=#7AA116;fontColor=#248814;dashed=0;fontStyle=0;" vertex="1" parent="net-box-5107f5f02b60">
+        <UserObject id="net-grp-534491810976" label="storefront-public-a&lt;br&gt;10.0.10.0/24" tooltip="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-2cf4f53a" arns="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-2cf4f53a" resource_type="aws_subnet" subnet_type="public">
+          <mxCell style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;container=1;dropTarget=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_security_group;strokeColor=#7AA116;fontColor=#248814;dashed=0;fontStyle=0;" vertex="1" parent="net-box-1c45dd9955d7">
             <mxGeometry x="30" y="50" width="220" height="210" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="net-res-e013fe2bc3d9" label="&lt;b&gt;storefront-nat&lt;/b&gt;&lt;br&gt;NAT gateway" tooltip="arn:aws:ec2:us-east-1:123456789012:natgateway/nat-60d1a0cf8c8f398eb" arns="arn:aws:ec2:us-east-1:123456789012:natgateway/nat-60d1a0cf8c8f398eb" resource_type="aws_nat_gateway">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.nat_gateway;fillColor=#8C4FFF;" vertex="1" parent="net-grp-1a29b15399af">
+        <UserObject id="net-res-723449b3d7ef" label="&lt;b&gt;storefront-nat&lt;/b&gt;&lt;br&gt;NAT gateway" tooltip="arn:aws:ec2:us-east-1:123456789012:natgateway/nat-af9f73b40a8a4af4f" arns="arn:aws:ec2:us-east-1:123456789012:natgateway/nat-af9f73b40a8a4af4f" resource_type="aws_nat_gateway">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.nat_gateway;fillColor=#8C4FFF;" vertex="1" parent="net-grp-534491810976">
             <mxGeometry x="71" y="50" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="net-grp-3931705c9679" label="orders-private-a&lt;br&gt;10.0.1.0/24" tooltip="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-30a75c4f" arns="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-30a75c4f" resource_type="aws_subnet" subnet_type="private">
-          <mxCell style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;container=1;dropTarget=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_security_group;strokeColor=#147EBA;fontColor=#147EBA;dashed=0;fontStyle=0;" vertex="1" parent="net-box-5107f5f02b60">
+        <UserObject id="net-grp-f77c3a46b980" label="orders-private-a&lt;br&gt;10.0.1.0/24" tooltip="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-4d897e3d" arns="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-4d897e3d" resource_type="aws_subnet" subnet_type="private">
+          <mxCell style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;container=1;dropTarget=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_security_group;strokeColor=#147EBA;fontColor=#147EBA;dashed=0;fontStyle=0;" vertex="1" parent="net-box-1c45dd9955d7">
             <mxGeometry x="310" y="50" width="220" height="210" as="geometry" />
           </mxCell>
         </UserObject>
-        <mxCell id="net-box-3781bc83c51f" value="us-east-1b" style="fillColor=none;strokeColor=#007FAA;dashed=1;verticalAlign=top;align=center;fontStyle=1;fontColor=#007FAA;whiteSpace=wrap;html=1;container=1;dropTarget=1;collapsible=0;recursiveResize=0;" vertex="1" parent="net-grp-57bc109690bc">
+        <mxCell id="net-box-29d0aeb929b0" value="us-east-1b" style="fillColor=none;strokeColor=#007FAA;dashed=1;verticalAlign=top;align=center;fontStyle=1;fontColor=#007FAA;whiteSpace=wrap;html=1;container=1;dropTarget=1;collapsible=0;recursiveResize=0;" vertex="1" parent="net-grp-7a8060797416">
           <mxGeometry x="250" y="400" width="560" height="290" as="geometry" />
         </mxCell>
-        <UserObject id="net-grp-b9c5d9a6756b" label="storefront-public-b&lt;br&gt;10.0.11.0/24" tooltip="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-9134f3a5" arns="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-9134f3a5" resource_type="aws_subnet" subnet_type="public">
-          <mxCell style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;container=1;dropTarget=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_security_group;strokeColor=#7AA116;fontColor=#248814;dashed=0;fontStyle=0;" vertex="1" parent="net-box-3781bc83c51f">
+        <UserObject id="net-grp-ddd5b4e2010f" label="storefront-public-b&lt;br&gt;10.0.11.0/24" tooltip="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-4db17d3d" arns="arn:aws:ec2:us-east-1:123456789012:subnet/subnet-4db17d3d" resource_type="aws_subnet" subnet_type="public">
+          <mxCell style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;container=1;dropTarget=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_security_group;strokeColor=#7AA116;fontColor=#248814;dashed=0;fontStyle=0;" vertex="1" parent="net-box-29d0aeb929b0">
             <mxGeometry x="30" y="50" width="220" height="210" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="net-res-112339ec9327" label="&lt;b&gt;rtb-7bfbfaee&lt;/b&gt;&lt;br&gt;Route table" tooltip="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-7bfbfaee" arns="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-7bfbfaee" resource_type="aws_route_table">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.router;fillColor=#8C4FFF;" vertex="1" parent="net-grp-57bc109690bc">
+        <UserObject id="net-res-0df08f2adb17" label="&lt;b&gt;rtb-561c82c8&lt;/b&gt;&lt;br&gt;Route table" tooltip="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-561c82c8" arns="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-561c82c8" resource_type="aws_route_table">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.router;fillColor=#8C4FFF;" vertex="1" parent="net-grp-7a8060797416">
             <mxGeometry x="911" y="50" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="net-res-8932dee3444e" label="&lt;b&gt;storefront-private&lt;/b&gt;&lt;br&gt;Route table" tooltip="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-abf4c4b4" arns="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-abf4c4b4" resource_type="aws_route_table">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.router;fillColor=#8C4FFF;" vertex="1" parent="net-grp-57bc109690bc">
+        <UserObject id="net-res-b2ecc2513fa7" label="&lt;b&gt;storefront-private&lt;/b&gt;&lt;br&gt;Route table" tooltip="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-e28b5541" arns="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-e28b5541" resource_type="aws_route_table">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.router;fillColor=#8C4FFF;" vertex="1" parent="net-grp-7a8060797416">
             <mxGeometry x="911" y="240" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="net-res-76b681098a66" label="&lt;b&gt;storefront-public&lt;/b&gt;&lt;br&gt;Route table" tooltip="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-260c9780" arns="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-260c9780" resource_type="aws_route_table">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.router;fillColor=#8C4FFF;" vertex="1" parent="net-grp-57bc109690bc">
+        <UserObject id="net-res-f3df9da6fa8d" label="&lt;b&gt;storefront-public&lt;/b&gt;&lt;br&gt;Route table" tooltip="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-bf60be68" arns="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-bf60be68" resource_type="aws_route_table">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.router;fillColor=#8C4FFF;" vertex="1" parent="net-grp-7a8060797416">
             <mxGeometry x="911" y="430" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="net-res-2dd3bb9dc16e" label="&lt;b&gt;storefront-s3&lt;/b&gt;&lt;br&gt;VPC endpoint" tooltip="arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-55746589" arns="arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-55746589" resource_type="aws_vpc_endpoint">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.endpoints;fillColor=#8C4FFF;" vertex="1" parent="net-grp-57bc109690bc">
+        <UserObject id="net-res-6eaecded0a00" label="&lt;b&gt;storefront-s3&lt;/b&gt;&lt;br&gt;VPC endpoint" tooltip="arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-40eb00b6" arns="arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-40eb00b6" resource_type="aws_vpc_endpoint">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.endpoints;fillColor=#8C4FFF;" vertex="1" parent="net-grp-7a8060797416">
             <mxGeometry x="911" y="620" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="net-res-b7e8160a8289" label="&lt;b&gt;default&lt;/b&gt;&lt;br&gt;Security group" tooltip="arn:aws:ec2:us-east-1:123456789012:security-group/sg-71a3ac0ec6bbd92b7" arns="arn:aws:ec2:us-east-1:123456789012:security-group/sg-71a3ac0ec6bbd92b7" resource_type="aws_security_group">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.network_firewall;fillColor=#DD344C;" vertex="1" parent="net-grp-57bc109690bc">
+        <UserObject id="net-res-f8192071c84a" label="&lt;b&gt;default&lt;/b&gt;&lt;br&gt;Security group" tooltip="arn:aws:ec2:us-east-1:123456789012:security-group/sg-156a39ed25de235cf" arns="arn:aws:ec2:us-east-1:123456789012:security-group/sg-156a39ed25de235cf" resource_type="aws_security_group">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.network_firewall;fillColor=#DD344C;" vertex="1" parent="net-grp-7a8060797416">
             <mxGeometry x="71" y="810" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="net-res-12977f40f713" label="&lt;b&gt;orders-web-sg&lt;/b&gt;&lt;br&gt;Security group" tooltip="arn:aws:ec2:us-east-1:123456789012:security-group/sg-2edfb301c8a045aa8" arns="arn:aws:ec2:us-east-1:123456789012:security-group/sg-2edfb301c8a045aa8" resource_type="aws_security_group">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.network_firewall;fillColor=#DD344C;" vertex="1" parent="net-grp-57bc109690bc">
+        <UserObject id="net-res-1fe9f472c0d0" label="&lt;b&gt;orders-web-sg&lt;/b&gt;&lt;br&gt;Security group" tooltip="arn:aws:ec2:us-east-1:123456789012:security-group/sg-2bf145296ea5159ab" arns="arn:aws:ec2:us-east-1:123456789012:security-group/sg-2bf145296ea5159ab" resource_type="aws_security_group">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.network_firewall;fillColor=#DD344C;" vertex="1" parent="net-grp-7a8060797416">
             <mxGeometry x="291" y="810" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="net-res-0b1fcf59888e" label="&lt;b&gt;storefront-alb-sg&lt;/b&gt;&lt;br&gt;Security group" tooltip="arn:aws:ec2:us-east-1:123456789012:security-group/sg-c6ec367b2a800f7fe" arns="arn:aws:ec2:us-east-1:123456789012:security-group/sg-c6ec367b2a800f7fe" resource_type="aws_security_group">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.network_firewall;fillColor=#DD344C;" vertex="1" parent="net-grp-57bc109690bc">
+        <UserObject id="net-res-5f0a1d4a3d0f" label="&lt;b&gt;storefront-alb-sg&lt;/b&gt;&lt;br&gt;Security group" tooltip="arn:aws:ec2:us-east-1:123456789012:security-group/sg-e4a0ee2dde2bb1f50" arns="arn:aws:ec2:us-east-1:123456789012:security-group/sg-e4a0ee2dde2bb1f50" resource_type="aws_security_group">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.network_firewall;fillColor=#DD344C;" vertex="1" parent="net-grp-7a8060797416">
             <mxGeometry x="511" y="810" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="net-res-4c006610e12c" label="&lt;b&gt;storefront-app&lt;/b&gt;&lt;br&gt;Security group" tooltip="arn:aws:ec2:us-east-1:123456789012:security-group/sg-7c3a665620cbf02dc" arns="arn:aws:ec2:us-east-1:123456789012:security-group/sg-7c3a665620cbf02dc" resource_type="aws_security_group">
-          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.network_firewall;fillColor=#DD344C;" vertex="1" parent="net-grp-57bc109690bc">
+        <UserObject id="net-res-b7a1de2815e7" label="&lt;b&gt;storefront-app&lt;/b&gt;&lt;br&gt;Security group" tooltip="arn:aws:ec2:us-east-1:123456789012:security-group/sg-12874fb82c9db66ed" arns="arn:aws:ec2:us-east-1:123456789012:security-group/sg-12874fb82c9db66ed" resource_type="aws_security_group">
+          <mxCell style="sketch=0;outlineConnect=0;fontColor=#232F3E;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.network_firewall;fillColor=#DD344C;" vertex="1" parent="net-grp-7a8060797416">
             <mxGeometry x="731" y="810" width="78" height="78" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="net-edge-e73ff7b8ea01" label="" relationships="route_table_association" evidence="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-260c9780#specifications.Associations[0].SubnetId">
-          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;dashed=1;endArrow=none;" edge="1" parent="net-grp-57bc109690bc" source="net-res-76b681098a66" target="net-grp-1a29b15399af">
+        <UserObject id="net-edge-bd899d8cc64a" label="" relationships="route_table_association" evidence="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-e28b5541#specifications.Associations[0].SubnetId">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;dashed=1;endArrow=none;" edge="1" parent="net-grp-7a8060797416" source="net-res-b2ecc2513fa7" target="net-grp-f77c3a46b980">
             <mxGeometry relative="1" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="net-edge-bd74c138bc1c" label="" relationships="route_table_association" evidence="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-260c9780#specifications.Associations[1].SubnetId">
-          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;dashed=1;endArrow=none;" edge="1" parent="net-grp-57bc109690bc" source="net-res-76b681098a66" target="net-grp-b9c5d9a6756b">
+        <UserObject id="net-edge-f820c7e5f0b7" label="pl-51417e29" relationships="route_target" evidence="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-e28b5541#specifications.Routes[2].GatewayId">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="net-grp-7a8060797416" source="net-res-b2ecc2513fa7" target="net-res-6eaecded0a00">
             <mxGeometry relative="1" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="net-edge-23606b99bfb1" label="0.0.0.0/0" relationships="route_target" evidence="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-260c9780#specifications.Routes[1].GatewayId">
-          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="net-grp-57bc109690bc" source="net-res-76b681098a66" target="net-res-c7e996398d23">
+        <UserObject id="net-edge-91269c0fb7fd" label="0.0.0.0/0" relationships="route_target" evidence="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-e28b5541#specifications.Routes[1].NatGatewayId">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="net-grp-7a8060797416" source="net-res-b2ecc2513fa7" target="net-res-723449b3d7ef">
             <mxGeometry relative="1" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="net-edge-9c7549258cb3" label="" relationships="route_table_association" evidence="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-abf4c4b4#specifications.Associations[0].SubnetId">
-          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;dashed=1;endArrow=none;" edge="1" parent="net-grp-57bc109690bc" source="net-res-8932dee3444e" target="net-grp-3931705c9679">
+        <UserObject id="net-edge-7944952f70eb" label="" relationships="route_table_association" evidence="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-bf60be68#specifications.Associations[0].SubnetId">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;dashed=1;endArrow=none;" edge="1" parent="net-grp-7a8060797416" source="net-res-f3df9da6fa8d" target="net-grp-534491810976">
             <mxGeometry relative="1" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="net-edge-6e89d1692c2b" label="pl-c6e0eb33" relationships="route_target" evidence="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-abf4c4b4#specifications.Routes[2].GatewayId">
-          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="net-grp-57bc109690bc" source="net-res-8932dee3444e" target="net-res-2dd3bb9dc16e">
+        <UserObject id="net-edge-6c71c616233f" label="" relationships="route_table_association" evidence="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-bf60be68#specifications.Associations[1].SubnetId">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;dashed=1;endArrow=none;" edge="1" parent="net-grp-7a8060797416" source="net-res-f3df9da6fa8d" target="net-grp-ddd5b4e2010f">
             <mxGeometry relative="1" as="geometry" />
           </mxCell>
         </UserObject>
-        <UserObject id="net-edge-04b33906aace" label="0.0.0.0/0" relationships="route_target" evidence="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-abf4c4b4#specifications.Routes[1].NatGatewayId">
-          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="net-grp-57bc109690bc" source="net-res-8932dee3444e" target="net-res-e013fe2bc3d9">
+        <UserObject id="net-edge-f72f9be07f9c" label="0.0.0.0/0" relationships="route_target" evidence="arn:aws:ec2:us-east-1:123456789012:route-table/rtb-bf60be68#specifications.Routes[1].GatewayId">
+          <mxCell style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#545B64;endArrow=block;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#F5F5F5;fontSize=11;" edge="1" parent="net-grp-7a8060797416" source="net-res-f3df9da6fa8d" target="net-res-ece4c1feca5b">
             <mxGeometry relative="1" as="geometry" />
           </mxCell>
         </UserObject>

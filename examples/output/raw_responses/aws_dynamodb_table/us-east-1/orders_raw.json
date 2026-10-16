@@ -2,14 +2,14 @@
   "DescribeTable": {
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Fri, 16 Oct 2026 08:29:14 GMT",
+        "date": "Fri, 16 Oct 2026 09:05:49 GMT",
         "server": "amazon.com",
-        "x-amz-crc32": "3165580995",
-        "x-amzn-requestid": "CgWivuxAuQ24tyHJTlgBfpdcbpIW64KuA0cUDoFMLSlfZqnY96dc"
+        "x-amz-crc32": "3452233101",
+        "x-amzn-requestid": "A5avbttVQMUxCXFHmOeYSFoCTRaFJUJDSqZF75lNBBKje5A2zztS"
       },
       "HTTPStatusCode": 200,
       "MaxAttemptsReached": true,
-      "RequestId": "CgWivuxAuQ24tyHJTlgBfpdcbpIW64KuA0cUDoFMLSlfZqnY96dc",
+      "RequestId": "A5avbttVQMUxCXFHmOeYSFoCTRaFJUJDSqZF75lNBBKje5A2zztS",
       "RetryAttempts": 0
     },
     "Table": {
@@ -22,7 +22,7 @@
       "BillingModeSummary": {
         "BillingMode": "PAY_PER_REQUEST"
       },
-      "CreationDateTime": "2026-10-16T08:29:12.764973+07:00",
+      "CreationDateTime": "2026-10-16T09:05:48.228366+07:00",
       "GlobalSecondaryIndexes": [],
       "ItemCount": 0,
       "KeySchema": [
@@ -46,14 +46,14 @@
   "ListTagsOfResource": {
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Fri, 16 Oct 2026 08:29:14 GMT",
+        "date": "Fri, 16 Oct 2026 09:05:49 GMT",
         "server": "amazon.com",
         "x-amz-crc32": "588556648",
-        "x-amzn-requestid": "wEYgEb7Jg3yPNGDMrCRWGH7KnOq9dWSJWiYCpBPKN1mzB1bQsJ4e"
+        "x-amzn-requestid": "PunaTdh9WYzbzIJtMFA08yVHaS1S3D8Cn3D1ZvqFzSHIsDgdAenQ"
       },
       "HTTPStatusCode": 200,
       "MaxAttemptsReached": true,
-      "RequestId": "wEYgEb7Jg3yPNGDMrCRWGH7KnOq9dWSJWiYCpBPKN1mzB1bQsJ4e",
+      "RequestId": "PunaTdh9WYzbzIJtMFA08yVHaS1S3D8Cn3D1ZvqFzSHIsDgdAenQ",
       "RetryAttempts": 0
     },
     "Tags": [

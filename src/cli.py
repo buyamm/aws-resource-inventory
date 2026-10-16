@@ -17,6 +17,7 @@ Requirements Coverage:
 
 from __future__ import annotations
 
+import json
 import logging
 import sys
 from collections.abc import Iterable
@@ -233,6 +234,16 @@ def _discovery_document(
         "resources": [asdict(r) for r in resources],
         "errors": [asdict(e) for e in discovery.get_errors()],
     }
+
+
+def _manifest_project_tags(output_dir: Path) -> dict[str, str]:
+    """``scope.project_tags`` of manifest.json (empty when absent or unreadable)."""
+    try:
+        manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    tags = (manifest.get("scope") or {}).get("project_tags") if isinstance(manifest, dict) else {}
+    return {str(k): str(v) for k, v in tags.items()} if isinstance(tags, dict) else {}
 
 
 def _load_specs_or_exit(output_dir: Path) -> tuple[list[ResourceSpec], int]:
@@ -619,7 +630,10 @@ def analyze(ctx: click.Context, output_dir: Path, validate_diagram: bool, export
     epilog="""\b
 Example:
   aws-inventory generate-iac --output-dir ./output
-  cd output/terraform && terraform init && ./import.sh && ./verify_state.sh""",
+  cd output/terraform/envs/<env>
+  terraform init -backend-config=bucket=<state bucket> -backend-config=key=<env>.tfstate \\
+    -backend-config=region=<region>
+  terraform plan && terraform apply && ./verify_state.sh""",
 )
 @existing_output_dir_option
 @click.option(
@@ -629,12 +643,15 @@ Example:
 )
 @click.pass_context
 def generate_iac(ctx: click.Context, output_dir: Path, terraform_dir: Path | None) -> None:
-    """Generate Terraform, import.sh and verify_state.sh from collected specs."""
+    """Generate Terraform modules and an environment root with import blocks."""
     console = _console(ctx)
     specs, exit_code = _load_specs_or_exit(output_dir)
     target = terraform_dir or output_dir / "terraform"
-    files = IaCGenerator().generate_terraform(specs, target)
+    generator = IaCGenerator(project_tags=_manifest_project_tags(output_dir))
+    files = generator.generate_terraform(specs, target)
+    env = generator.environment(specs)
     console.out(f"Generated {len(files)} Terraform files for {len(specs)} resources -> {target}")
+    console.out(f"Environment root: {target / 'envs' / env}")
     _refresh_checksums(output_dir)
     ctx.exit(exit_code)
 

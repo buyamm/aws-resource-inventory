@@ -1,17 +1,17 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:ecr:us-east-1:123456789012:repository/storefront-web",
-  "generated_at": "2026-10-16T01:29:14.603213Z",
+  "generated_at": "2026-10-16T02:05:50.002193Z",
   "metadata": {
     "api_version": "2015-09-21",
-    "checksum": "08e36d49656afe4a27d45712143b1b7fbd82aaa3a31d1127a1aa9a506627c242",
-    "collected_at": "2026-10-16T01:29:14Z",
+    "checksum": "e40c758b70ea60e4a8d90ec9dd27d1f3d2f5bf06d588235aa7ac0de2776307e5",
+    "collected_at": "2026-10-16T02:05:49Z",
     "collector_version": "0.1.0"
   },
   "region": "us-east-1",
   "resource_type": "aws_ecr_repository",
   "specifications": {
-    "createdAt": "2026-10-16T01:29:13+00:00",
+    "createdAt": "2026-10-16T02:05:48+00:00",
     "encryptionConfiguration": {
       "encryptionType": "AES256"
     },

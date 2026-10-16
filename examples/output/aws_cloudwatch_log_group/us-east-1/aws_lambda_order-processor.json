@@ -1,18 +1,18 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor",
-  "generated_at": "2026-10-16T01:29:14.603213Z",
+  "generated_at": "2026-10-16T02:05:50.002193Z",
   "metadata": {
     "api_version": "2014-03-28",
-    "checksum": "7ef2cb8e51874060043eee23a5209ada4eedc8a1277f4e0a5400ebf66f72133d",
-    "collected_at": "2026-10-16T01:29:14Z",
+    "checksum": "4b618454ba18a1ea7b31897e163c87e8b18f5f042a8783ab25547283fcba6290",
+    "collected_at": "2026-10-16T02:05:49Z",
     "collector_version": "0.1.0"
   },
   "region": "us-east-1",
   "resource_type": "aws_cloudwatch_log_group",
   "specifications": {
     "arn": "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor",
-    "creationTime": 1792114152786,
+    "creationTime": 1792116348246,
     "logGroupName": "/aws/lambda/order-processor",
     "metricFilterCount": 0,
     "retentionInDays": 14,

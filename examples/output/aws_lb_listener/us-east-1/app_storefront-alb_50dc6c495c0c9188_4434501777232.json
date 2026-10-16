@@ -1,0 +1,33 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434501777232",
+  "generated_at": "2026-10-16T02:05:50.002193Z",
+  "metadata": {
+    "api_version": "2015-12-01",
+    "checksum": "88f506359555305b47a30458eb7ba2d7f0ad93109b0dae33d03dd12522e19dc1",
+    "collected_at": "2026-10-16T02:05:49Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_lb_listener",
+  "specifications": {
+    "AlpnPolicy": [],
+    "Certificates": [
+      {
+        "CertificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/a2f4311b-2bbd-4ca0-97e7-018106634454"
+      }
+    ],
+    "DefaultActions": [
+      {
+        "TargetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188",
+        "Type": "forward"
+      }
+    ],
+    "ListenerArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434501777232",
+    "LoadBalancerArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188",
+    "Port": 443,
+    "Protocol": "HTTPS",
+    "SslPolicy": "ELBSecurityPolicy-2016-08",
+    "Tags": []
+  }
+}

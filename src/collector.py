@@ -415,7 +415,8 @@ class SpecCollector:
     def collect_security_group_spec(
         self, group_id: str, region: str = "", account_id: str = "", arn: str | None = None
     ) -> Result[ResourceSpec, CollectorError]:
-        """Security group: ``SecurityGroups[0]``."""
+        """Security group: ``SecurityGroups[0]`` + ``SecurityGroupRules`` (one per source,
+        sorted by rule id; Terraform imports rules by these ids)."""
         arn = arn or f"arn:aws:ec2:{region}:{account_id}:security-group/{group_id}"
         ctx = _Context(self, "ec2", arn, group_id)
         response = ctx.primary("describe_security_groups", GroupIds=[group_id])
@@ -424,7 +425,19 @@ class SpecCollector:
         groups = response.get("SecurityGroups", [])
         if not groups:
             return ctx.not_found()
-        return ctx.build("aws_security_group", region, account_id, dict(groups[0]))
+        specs = dict(groups[0])
+        rules = ctx.secondary(
+            "describe_security_group_rules",
+            "",
+            paginate=True,
+            Filters=[{"Name": "group-id", "Values": [group_id]}],
+        )
+        if rules is not None:
+            specs["SecurityGroupRules"] = sorted(
+                rules.get("SecurityGroupRules", []),
+                key=lambda rule: str(rule.get("SecurityGroupRuleId", "")),
+            )
+        return ctx.build("aws_security_group", region, account_id, specs)
 
     def collect_lambda_spec(
         self, function_name: str, region: str = "", account_id: str = "", arn: str | None = None

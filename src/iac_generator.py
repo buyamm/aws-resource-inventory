@@ -1,29 +1,32 @@
 """
 IaC Generator Module
 
-Generates Terraform (AWS provider ~> 5.0) from collected specs: one module per
-region directory, resource arguments mapped from AWS field names, companion
-resources for S3 and IAM, import and verification scripts.
+Generates a Terraform project (AWS provider ~> 5.0) from collected specs: resources
+grouped in modules (network, edge, compute, data, iam, observability) and one root
+configuration per environment (envs/<env>/) with providers, S3 backend, import blocks
+and a verification script. Resource arguments are mapped from AWS field names.
 
 Requirements Coverage:
 - Requirement 7.1: Generated from cached spec files only
-- Requirement 7.2: <terraform-dir>/<region>/<canonical_type>.tf, one module per region
+- Requirement 7.2: modules/ + envs/<env>/ layout that passes `terraform fmt -check`
 - Requirement 7.3: Per-type argument mapping; every top-level key listed as mapped/unmapped
-- Requirement 7.4: import.sh with provider-documented import ids (incl. companions)
-- Requirement 7.5: lifecycle.ignore_changes for redacted / unknowable values;
-  plan verification decided by `terraform plan -detailed-exitcode` exit code only
+- Requirement 7.4: imports.tf with provider-documented import ids (incl. companions)
+- Requirement 7.5: lifecycle.ignore_changes for redacted / unknowable values; plan
+  verification by `terraform plan -detailed-exitcode` exit code and the saved plan's actions
 - Requirement 7.6: verify_state.sh
 - Requirement 7.7: Traceability comments (spec file, ARN, region)
 - Requirement 14.1: Mappings for the network, edge and load-balancing types
 - Requirement 14.4: Mappings for the compute and data types (EventBridge targets as
   companion resources)
+- Requirement 16.1: Module assignment, environment root, providers and default_tags
+- Requirement 16.2: Cross-references through outputs/variables; snake_case names
+- Requirement 16.3: Security group rules as separate resources
 """
 
 from __future__ import annotations
 
 import json
 import re
-import shlex
 import subprocess
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -34,10 +37,8 @@ from src.parser import ResourceSpec
 from src.resource_types import (
     GLOBAL_REGION,
     canonical_type,
-    file_id,
     resource_id,
     spec_relpath,
-    type_dir,
 )
 
 DEFAULT_REGION = "us-east-1"
@@ -75,6 +76,31 @@ def hcl_string(value: str) -> str:
     return _escape_template(json.dumps(value))
 
 
+def _single_line(value: Any) -> bool:
+    """Values `terraform fmt` aligns: everything but multi-line objects (heredocs count)."""
+    return not (isinstance(value, dict) and value)
+
+
+def _aligned(pairs: list[tuple[str, str, bool]], pad: str) -> list[str]:
+    """``name = value`` lines; consecutive single-line pairs share one `=` column."""
+    lines: list[str] = []
+    chain: list[tuple[str, str]] = []
+
+    def flush() -> None:
+        width = max((len(name) for name, _ in chain), default=0)
+        lines.extend(f"{pad}{name.ljust(width)} = {text}" for name, text in chain)
+        chain.clear()
+
+    for name, text, single in pairs:
+        if single:
+            chain.append((name, text))
+        else:
+            flush()
+            lines.append(f"{pad}{name} = {text}")
+    flush()
+    return lines
+
+
 def render_value(value: Any, indent: int) -> str:
     pad = "  " * indent
     if isinstance(value, Raw):
@@ -96,28 +122,47 @@ def render_value(value: Any, indent: int) -> str:
     if isinstance(value, dict):
         if not value:
             return "{}"
-        lines = [
-            f"{pad}  {hcl_string(str(k))} = {render_value(v, indent + 1)}"
+        # Raw keys (provider addresses, resource names) are emitted unquoted.
+        pairs = [
+            (
+                str(k) if isinstance(k, Raw) else hcl_string(str(k)),
+                render_value(v, indent + 1),
+                _single_line(v),
+            )
             for k, v in sorted(value.items(), key=lambda kv: str(kv[0]))
         ]
-        return "{\n" + "\n".join(lines) + f"\n{pad}}}"
+        return "{\n" + "\n".join(_aligned(pairs, pad + "  ")) + f"\n{pad}}}"
     return hcl_string(str(value))
 
 
+BLANK: tuple[str, Any] = ("", None)
+
+
 def render_items(items: list[Item], indent: int) -> list[str]:
+    """HCL lines in `terraform fmt` layout. ``("", None)`` is a blank line, ``("# ...", None)``
+    a comment; both end an alignment group, like blocks and multi-line values."""
     pad = "  " * indent
     lines: list[str] = []
+    pairs: list[tuple[str, str, bool]] = []
+
+    def flush() -> None:
+        lines.extend(_aligned(pairs, pad))
+        pairs.clear()
+
     for item in items:
         if isinstance(item, Block):
+            flush()
             lines.append(f"{pad}{item.name} {{")
             lines.extend(render_items(item.items, indent + 1))
             lines.append(f"{pad}}}")
+            continue
+        name, value = item
+        if not name or name.startswith("#"):
+            flush()
+            lines.append(f"{pad}{name}" if name else "")
         else:
-            name, value = item
-            if name.startswith("#"):
-                lines.append(f"{pad}{name}")
-            else:
-                lines.append(f"{pad}{name} = {render_value(value, indent)}")
+            pairs.append((name, render_value(value, indent), _single_line(value)))
+    flush()
     return lines
 
 
@@ -140,7 +185,8 @@ def _contains_placeholder(value: Any) -> bool:
     return False
 
 
-def _tags(value: Any) -> dict[str, str]:
+def _raw_tags(value: Any) -> dict[str, str]:
+    """Tags given as a dict or as ``[{"Key"|"key": k, "Value"|"value": v}]``."""
     if isinstance(value, dict):
         return {str(k): str(v) for k, v in value.items()}
     result: dict[str, str] = {}
@@ -150,6 +196,20 @@ def _tags(value: Any) -> dict[str, str]:
             if key is not None:
                 result[str(key)] = str(item.get("Value", item.get("value", "")))
     return result
+
+
+def _tags(value: Any) -> dict[str, str]:
+    """Tags Terraform can manage: ``aws:`` tags belong to AWS and are left out."""
+    return {k: v for k, v in _raw_tags(value).items() if not k.startswith("aws:")}
+
+
+def _spec_tags(specifications: dict[str, Any]) -> dict[str, str]:
+    """Every tag of a spec, whatever field the API returns them in."""
+    tags: dict[str, str] = {}
+    for key in ("Tags", "tags", "TagList"):
+        tags.update(_raw_tags(specifications.get(key)))
+    tags.update(_raw_tags(_dict(specifications.get("bucket-tagging")).get("TagSet")))
+    return tags
 
 
 def _list(value: Any) -> list[Any]:
@@ -235,39 +295,34 @@ def _map_vpc(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
     return m
 
 
-def _sg_rule(permission: dict[str, Any], own_group_id: str, kind: str) -> Block:
-    rule: list[Item] = []
-    protocol = str(permission.get("IpProtocol", "-1"))
-    rule.append(("from_port", int(permission.get("FromPort", 0) or 0)))
-    rule.append(("to_port", int(permission.get("ToPort", 0) or 0)))
-    rule.append(("protocol", protocol))
-    ranges = _list(permission.get("IpRanges"))
-    v6_ranges = _list(permission.get("Ipv6Ranges"))
-    prefixes = _list(permission.get("PrefixListIds"))
-    pairs = _list(permission.get("UserIdGroupPairs"))
-    cidrs = [r.get("CidrIp") for r in ranges if isinstance(r, dict) and r.get("CidrIp")]
-    cidrs6 = [r.get("CidrIpv6") for r in v6_ranges if isinstance(r, dict) and r.get("CidrIpv6")]
-    prefix_ids = [p.get("PrefixListId") for p in prefixes if isinstance(p, dict)]
-    group_ids = [p.get("GroupId") for p in pairs if isinstance(p, dict) and p.get("GroupId")]
-    if cidrs:
-        rule.append(("cidr_blocks", cidrs))
-    if cidrs6:
-        rule.append(("ipv6_cidr_blocks", cidrs6))
-    if prefix_ids:
-        rule.append(("prefix_list_ids", [p for p in prefix_ids if p]))
-    others = [g for g in group_ids if g != own_group_id]
-    if others:
-        rule.append(("security_groups", others))
-    if own_group_id in group_ids:
-        rule.append(("self", True))
-    descriptions = {
-        d.get("Description")
-        for d in ranges + v6_ranges + prefixes + pairs
-        if isinstance(d, dict) and d.get("Description")
-    }
-    if len(descriptions) == 1:
-        rule.append(("description", descriptions.pop()))
-    return Block(kind, rule)
+def _port_label(value: Any) -> str:
+    return "any" if value in (None, -1, "-1") else str(value)
+
+
+def _sg_rule(
+    rule: dict[str, Any], group_ref: Raw, own_group_id: str, account_id: str
+) -> list[Item]:
+    """Arguments of one ``aws_vpc_security_group_{ingress,egress}_rule`` (Req 16.3)."""
+    protocol = str(rule.get("IpProtocol", "-1"))
+    reference = _dict(rule.get("ReferencedGroupInfo"))
+    group_id = reference.get("GroupId")
+    referenced: Any = group_id
+    if group_id and group_id == own_group_id:
+        referenced = group_ref
+    elif group_id and reference.get("UserId") not in (None, "", account_id):
+        referenced = f"{reference['UserId']}/{group_id}"
+    items: list[Item] = [("security_group_id", group_ref), ("ip_protocol", protocol)]
+    if protocol != "-1":
+        items += _items(("from_port", rule.get("FromPort")), ("to_port", rule.get("ToPort")))
+    items += _items(
+        ("cidr_ipv4", rule.get("CidrIpv4")),
+        ("cidr_ipv6", rule.get("CidrIpv6")),
+        ("prefix_list_id", rule.get("PrefixListId")),
+        ("referenced_security_group_id", referenced),
+        ("description", rule.get("Description")),
+        ("tags", _tags(rule.get("Tags"))),
+    )
+    return items
 
 
 def _map_security_group(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
@@ -275,15 +330,39 @@ def _map_security_group(s: dict[str, Any], name: str, spec: ResourceSpec) -> Map
     m.arg("name", s.get("GroupName"), "GroupName")
     m.arg("description", s.get("Description"), "Description")
     m.arg("vpc_id", s.get("VpcId"), "VpcId")
-    own = str(s.get("GroupId", ""))
-    for permission in _list(s.get("IpPermissions")):
-        if isinstance(permission, dict):
-            m.block(_sg_rule(permission, own, "ingress"), "IpPermissions")
-    for permission in _list(s.get("IpPermissionsEgress")):
-        if isinstance(permission, dict):
-            m.block(_sg_rule(permission, own, "egress"), "IpPermissionsEgress")
-    m.mapped.update({"IpPermissions", "IpPermissionsEgress", "GroupId"})
     m.arg("tags", _tags(s.get("Tags")), "Tags")
+    m.mapped.add("GroupId")
+    rules = s.get("SecurityGroupRules")
+    if not isinstance(rules, list):
+        # Without rule ids the rules cannot be imported: they stay unmanaged.
+        return m
+    # IpPermissions(Egress) describe the same rules, grouped by permission.
+    m.mapped.update({"SecurityGroupRules", "IpPermissions", "IpPermissionsEgress"})
+    ref = Raw(f"aws_security_group.{name}.id")
+    own = str(s.get("GroupId", ""))
+    used: set[str] = set()
+    for rule in rules:
+        if not isinstance(rule, dict) or not rule.get("SecurityGroupRuleId"):
+            continue
+        kind = "egress" if rule.get("IsEgress") else "ingress"
+        protocol = str(rule.get("IpProtocol", "-1"))
+        label = f"{kind}_all" if protocol == "-1" else f"{kind}_{protocol}"
+        if protocol != "-1":
+            low, high = _port_label(rule.get("FromPort")), _port_label(rule.get("ToPort"))
+            label += f"_{low}" if low == high else f"_{low}_{high}"
+        base = _companion_name(name, label)
+        candidate, counter = base, 2
+        while candidate in used:
+            candidate, counter = f"{base}_{counter}", counter + 1
+        used.add(candidate)
+        m.companions.append(
+            TfResource(
+                f"aws_vpc_security_group_{kind}_rule",
+                candidate,
+                _sg_rule(rule, ref, own, spec.account_id),
+                str(rule["SecurityGroupRuleId"]),
+            )
+        )
     return m
 
 
@@ -491,8 +570,13 @@ def _map_s3_bucket(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
     return m
 
 
+def snake(text: str) -> str:
+    """Lower-case snake_case: runs of other characters become one ``_``."""
+    return re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
+
+
 def _companion_name(base: str, suffix: str) -> str:
-    return f"{base}_{re.sub(r'[^A-Za-z0-9_-]', '_', suffix)}"
+    return snake(f"{base}_{suffix}") or base
 
 
 def _map_iam_role(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mapping:
@@ -1125,10 +1209,16 @@ def _map_route53_zone(s: dict[str, Any], name: str, spec: ResourceSpec) -> Mappi
         suffix = f"{record_name}_{record_type}"
         if record.get("SetIdentifier"):
             suffix += f"_{record['SetIdentifier']}"
+        relative = "apex" if record_name == zone_name else record_name
+        if zone_name and relative.endswith(f".{zone_name}"):
+            relative = relative[: -len(zone_name) - 1]
+        label = f"{relative.replace('*', 'wildcard')}_{record_type}"
+        if record.get("SetIdentifier"):
+            label += f"_{record['SetIdentifier']}"
         m.companions.append(
             TfResource(
                 "aws_route53_record",
-                _companion_name(name, suffix.replace(".", "_")),
+                _companion_name(name, label),
                 _record(record, zone_ref),
                 f"{zone_id}_{suffix}",
             )
@@ -1867,9 +1957,299 @@ MAPPERS: dict[str, Callable[[dict[str, Any], str, ResourceSpec], Mapping]] = {
 }
 
 
-def module_name(region: str) -> str:
-    """Terraform module / provider alias name of a region directory."""
+# ============================================================================
+# Project layout: modules/<module>/ and envs/<env>/ (Requirement 16)
+# ============================================================================
+
+# Module of every Supported_Resource_Type (companions follow their primary resource).
+MODULES: dict[str, tuple[str, ...]] = {
+    "iam": ("aws_iam_role",),
+    "observability": ("aws_cloudwatch_log_group",),
+    "network": (
+        "aws_vpc",
+        "aws_subnet",
+        "aws_route_table",
+        "aws_internet_gateway",
+        "aws_nat_gateway",
+        "aws_vpc_endpoint",
+        "aws_security_group",
+    ),
+    "edge": (
+        "aws_route53_zone",
+        "aws_acm_certificate",
+        "aws_wafv2_web_acl",
+        "aws_cloudfront_distribution",
+        "aws_lb",
+        "aws_lb_target_group",
+        "aws_lb_listener",
+    ),
+    "data": (
+        "aws_s3_bucket",
+        "aws_dynamodb_table",
+        "aws_db_instance",
+        "aws_elasticache_replication_group",
+        "aws_sqs_queue",
+        "aws_sns_topic",
+    ),
+    "compute": (
+        "aws_ecr_repository",
+        "aws_launch_template",
+        "aws_autoscaling_group",
+        "aws_instance",
+        "aws_ecs_cluster",
+        "aws_ecs_task_definition",
+        "aws_ecs_service",
+        "aws_lambda_function",
+        "aws_sfn_state_machine",
+        "aws_cloudwatch_event_rule",
+        "aws_scheduler_schedule",
+    ),
+}
+# Dependency order: later modules may read the outputs of earlier ones.
+MODULE_ORDER = tuple(MODULES)
+FALLBACK_MODULE = "compute"
+MODULE_SUMMARIES = {
+    "iam": "IAM roles with their attached and inline policies",
+    "observability": "CloudWatch log groups",
+    "network": (
+        "VPCs, subnets, route tables, internet and NAT gateways, VPC endpoints, "
+        "security groups and their rules"
+    ),
+    "edge": "Route 53 zones, ACM certificates, WAF web ACLs, CloudFront and load balancers",
+    "data": "S3 buckets, DynamoDB tables, RDS instances, ElastiCache, SQS queues and SNS topics",
+    "compute": (
+        "ECR, launch templates, Auto Scaling groups, EC2 instances, ECS, Lambda, "
+        "Step Functions, EventBridge rules and schedules"
+    ),
+}
+_TYPE_ORDER = {t: i for i, t in enumerate(t for types in MODULES.values() for t in types)}
+_MODULE_OF = {t: module for module, types in MODULES.items() for t in types}
+
+# Attribute other resources reference (module outputs expose it, keyed by resource name).
+REFERENCE_ATTRIBUTES = {
+    "aws_iam_role": "arn",
+    "aws_cloudwatch_log_group": "arn",
+    "aws_vpc": "id",
+    "aws_subnet": "id",
+    "aws_route_table": "id",
+    "aws_internet_gateway": "id",
+    "aws_nat_gateway": "id",
+    "aws_vpc_endpoint": "id",
+    "aws_security_group": "id",
+    "aws_route53_zone": "zone_id",
+    "aws_acm_certificate": "arn",
+    "aws_wafv2_web_acl": "arn",
+    "aws_cloudfront_distribution": "id",
+    "aws_lb": "arn",
+    "aws_lb_target_group": "arn",
+    "aws_lb_listener": "arn",
+    "aws_s3_bucket": "id",
+    "aws_dynamodb_table": "arn",
+    "aws_db_instance": "arn",
+    "aws_elasticache_replication_group": "arn",
+    "aws_sqs_queue": "arn",
+    "aws_sns_topic": "arn",
+    "aws_ecr_repository": "arn",
+    "aws_launch_template": "id",
+    "aws_autoscaling_group": "arn",
+    "aws_instance": "id",
+    "aws_ecs_cluster": "arn",
+    "aws_ecs_task_definition": "arn",
+    "aws_ecs_service": "id",
+    "aws_lambda_function": "arn",
+    "aws_sfn_state_machine": "arn",
+    "aws_cloudwatch_event_rule": "arn",
+    "aws_scheduler_schedule": "arn",
+}
+# Only distinctive values become references: ARNs and ids with these prefixes.
+_ID_PREFIXES = {
+    "aws_vpc": "vpc-",
+    "aws_subnet": "subnet-",
+    "aws_route_table": "rtb-",
+    "aws_internet_gateway": "igw-",
+    "aws_nat_gateway": "nat-",
+    "aws_vpc_endpoint": "vpce-",
+    "aws_security_group": "sg-",
+    "aws_launch_template": "lt-",
+    "aws_instance": "i-",
+}
+# Auto Scaling group ARNs built by discovery hold a wildcard instead of the group UUID.
+_NOT_REFERENCED = {"aws_autoscaling_group"}
+
+# Types whose Terraform resource has no `tags` argument (provider default_tags skip them).
+_UNTAGGED_TYPES = {
+    "aws_autoscaling_group",  # tag {} blocks
+    "aws_scheduler_schedule",
+    "aws_route_table_association",
+    "aws_iam_role_policy_attachment",
+    "aws_iam_role_policy",
+    "aws_s3_bucket_versioning",
+    "aws_s3_bucket_policy",
+    "aws_s3_bucket_server_side_encryption_configuration",
+    "aws_route53_record",
+    "aws_cloudwatch_event_target",
+}
+
+# Spec fields naming a resource when it has no Name tag.
+_NAME_FIELDS = {
+    "aws_security_group": "GroupName",
+    "aws_lb": "LoadBalancerName",
+    "aws_lb_target_group": "TargetGroupName",
+    "aws_route53_zone": "Name",
+    "aws_acm_certificate": "DomainName",
+    "aws_wafv2_web_acl": "Name",
+    "aws_ecs_cluster": "clusterName",
+    "aws_ecs_service": "serviceName",
+    "aws_launch_template": "LaunchTemplateName",
+    "aws_cloudwatch_event_rule": "Name",
+    "aws_scheduler_schedule": "Name",
+}
+_PROJECT_TAG_KEYS = {"project", "service", "application", "app"}
+_ENVIRONMENT_TAG_KEYS = {"environment", "env"}
+DEFAULT_ENVIRONMENT = "default"
+TERRAFORM_VERSION = ">= 1.5.0"  # import blocks
+_REDACTED_COMMENT = "# REDACTED: set manually"
+
+
+def module_for(tf_type: str) -> str:
+    return _MODULE_OF.get(tf_type, FALLBACK_MODULE)
+
+
+def output_name(tf_type: str) -> str:
+    """Module output (and input variable) holding the references of one type."""
+    attribute = REFERENCE_ATTRIBUTES.get(tf_type, "id")
+    return f"{tf_type.removeprefix('aws_')}_{'id' if attribute == 'zone_id' else attribute}s"
+
+
+def _plural(tf_type: str) -> str:
+    return tf_type.removeprefix("aws_").replace("_", " ") + "s"
+
+
+def provider_alias(region: str) -> str:
     return region.replace("-", "_")
+
+
+def _label(spec: ResourceSpec, tf_type: str) -> str:
+    """Human name: Name tag, else a type-specific field, else the resource id."""
+    s = spec.specifications or {}
+    name: Any = _spec_tags(s).get("Name")
+    if not name and tf_type == "aws_lb_listener" and s.get("Protocol") and s.get("Port"):
+        name = f"{s['Protocol']}_{s['Port']}"
+    if not name and tf_type == "aws_cloudfront_distribution":
+        aliases = _quantity_items(_dict(s.get("DistributionConfig")).get("Aliases"))
+        name = aliases[0] if aliases else None
+    if not name and tf_type in _NAME_FIELDS:
+        name = s.get(_NAME_FIELDS[tf_type])
+    return name if isinstance(name, str) and name else resource_id(spec)
+
+
+def _strip_prefixes(name: str, prefixes: tuple[str, ...]) -> str:
+    changed = True
+    while changed:
+        changed = False
+        for prefix in prefixes:
+            if name == prefix:
+                return ""
+            if name.startswith(f"{prefix}_"):
+                name, changed = name[len(prefix) + 1 :], True
+                break
+    return name
+
+
+def _most_common(values: list[str]) -> str | None:
+    counts: dict[str, int] = {}
+    for value in values:
+        counts[value] = counts.get(value, 0) + 1
+    ranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+    return ranked[0][0] if ranked else None
+
+
+@dataclass
+class _Entry:
+    """One spec in the project: its module, Terraform resources and mapped keys."""
+
+    spec: ResourceSpec
+    module: str
+    resources: list[TfResource]
+    mapping: Mapping
+
+
+@dataclass
+class _Project:
+    environment: str
+    region: str
+    aliases: list[str]  # regions of the aliased providers
+    entries: list[_Entry]
+    inputs: dict[str, dict[str, str]]  # module -> {variable: source module}
+    outputs: dict[str, dict[str, dict[Any, Any]]]  # module -> {output: {name: expression}}
+    module_aliases: dict[str, list[str]]  # module -> aliases its resources use
+    default_tags: dict[str, str]
+    output_types: dict[str, str]  # output name -> resource type
+
+    def modules(self) -> list[str]:
+        present = {entry.module for entry in self.entries}
+        return [m for m in MODULE_ORDER if m in present]
+
+    def describe(self, output: str, where: str) -> str:
+        tf_type = self.output_types[output]
+        attribute = REFERENCE_ATTRIBUTES.get(tf_type, "id")
+        label = attribute.upper() if attribute in ("id", "arn") else attribute.replace("_", " ")
+        return f"{label}s of the {_plural(tf_type)} {where}, keyed by resource name"
+
+
+def _arrange(items: list[Item]) -> list[Item]:
+    """Meta-arguments, arguments, blocks, tags, lifecycle (blank line between groups);
+    a ``# REDACTED`` comment stays above its argument, other notes open the arguments."""
+    meta: list[Item] = []
+    notes: list[Item] = []
+    arguments: list[Item] = []
+    blocks: list[Item] = []
+    tags: list[Item] = []
+    lifecycle: list[Item] = []
+    pending: list[Item] = []
+    for item in items:
+        if isinstance(item, Block):
+            group = lifecycle if item.name == "lifecycle" else blocks
+        else:
+            name = item[0]
+            if name == _REDACTED_COMMENT:
+                pending.append(item)
+                continue
+            if name.startswith("#"):
+                notes.append(item)
+                continue
+            group = meta if name == "provider" else tags if name == "tags" else arguments
+        group.extend(pending)
+        pending.clear()
+        group.append(item)
+    result: list[Item] = []
+    for group in (meta, notes + arguments, blocks, tags, lifecycle):
+        if group:
+            if result:
+                result.append(BLANK)
+            result.extend(group)
+    return result
+
+
+def _render_resource(resource: TfResource) -> list[str]:
+    lines = [f'resource "{resource.tf_type}" "{resource.name}" {{']
+    lines.extend(render_items(_arrange(resource.items), 1))
+    lines.append("}")
+    return lines
+
+
+def _file(*blocks: list[str], header: str = "") -> str:
+    parts = ["\n".join(block) for block in blocks if block]
+    text = "\n\n".join(parts)
+    return (f"{header}\n\n" if header else "") + text + "\n"
+
+
+def _hcl(items: list[Item]) -> list[str]:
+    return render_items(items, 0)
+
+
+def _comment(text: str) -> list[str]:
+    return [f"# {line}".rstrip() for line in text.splitlines()]
 
 
 # ============================================================================
@@ -1880,8 +2260,12 @@ def module_name(region: str) -> str:
 class IaCGenerator:
     """Terraform generator for collected ResourceSpecs."""
 
-    def __init__(self, output_dir: str | Path | None = None) -> None:
+    def __init__(
+        self, output_dir: str | Path | None = None, project_tags: dict[str, str] | None = None
+    ) -> None:
         self.output_dir = Path(output_dir).resolve() if output_dir else None
+        # Tags of the collection scope (manifest.json); their values are name prefixes.
+        self.project_tags = dict(project_tags or {})
 
     # ------------------------------------------------------------------
     # Names and types
@@ -1894,24 +2278,48 @@ class IaCGenerator:
         normalized = resource_type.lower().strip()
         return normalized if normalized.startswith("aws_") else f"aws_{normalized}"
 
-    @staticmethod
-    def _base_name(spec: ResourceSpec) -> str:
-        name = file_id(resource_id(spec)).replace(".", "_")
-        return name if re.match(r"[A-Za-z_]", name) else f"r_{name}"
+    def _prefixes(self, specs: list[ResourceSpec]) -> tuple[str, ...]:
+        """Project and environment names stripped from resource names (longest first)."""
+        values = set(self.project_tags.values())
+        keys = _PROJECT_TAG_KEYS | _ENVIRONMENT_TAG_KEYS
+        for spec in specs:
+            for key, value in _spec_tags(spec.specifications or {}).items():
+                if key.lower() in keys:
+                    values.add(value)
+        prefixes = {snake(v) for v in values} - {""}
+        return tuple(sorted(prefixes, key=lambda p: (-len(p), p)))
+
+    def environment(self, specs: list[ResourceSpec]) -> str:
+        """Environment directory name: the most common `environment` tag value."""
+        values = [v for k, v in self.project_tags.items() if k.lower() in _ENVIRONMENT_TAG_KEYS]
+        if not values:
+            values = [
+                v
+                for spec in specs
+                for k, v in _spec_tags(spec.specifications or {}).items()
+                if k.lower() in _ENVIRONMENT_TAG_KEYS
+            ]
+        value = _most_common(values) or DEFAULT_ENVIRONMENT
+        return re.sub(r"[^a-z0-9_-]+", "-", value.lower()).strip("-") or DEFAULT_ENVIRONMENT
 
     def assign_names(self, specs: list[ResourceSpec]) -> dict[str, str]:
-        """Unique Terraform resource names per (region, type), keyed by ARN."""
-        used: set[tuple[str, str, str]] = set()
-        names: dict[str, str] = {}
+        """snake_case Terraform names, project prefix stripped, unique per type (by ARN)."""
+        prefixes = self._prefixes(specs)
+        candidates = []
         for spec in specs:
-            region = spec.region or GLOBAL_REGION
             tf_type = self._tf_resource_type(spec.resource_type)
-            base = self._base_name(spec)
+            base = _strip_prefixes(snake(_label(spec, tf_type)), prefixes) or "main"
+            if not re.match(r"[a-z_]", base):
+                base = f"r_{base}"
+            candidates.append((tf_type, base, spec.arn))
+        used: set[tuple[str, str]] = set()
+        names: dict[str, str] = {}
+        for tf_type, base, arn in sorted(candidates):
             candidate, counter = base, 2
-            while (region, tf_type, candidate) in used:
+            while (tf_type, candidate) in used:
                 candidate, counter = f"{base}_{counter}", counter + 1
-            used.add((region, tf_type, candidate))
-            names[spec.arn] = candidate
+            used.add((tf_type, candidate))
+            names[arn] = candidate
         return names
 
     # ------------------------------------------------------------------
@@ -1927,124 +2335,428 @@ class IaCGenerator:
         for item in mapping.items:
             if _contains_placeholder(item if isinstance(item, Block) else item[1]):
                 ignore.append(item.name if isinstance(item, Block) else item[0])
-                items.append(("# REDACTED: set manually", None))
+                items.append((_REDACTED_COMMENT, None))
             items.append(item)
         if ignore:
             items.append(Block("lifecycle", [("ignore_changes", [Raw(i) for i in ignore])]))
         main = TfResource(tf_type, name, items, mapping.import_id or resource_id(spec))
         return [main, *mapping.companions], mapping
 
-    def generate_resource_block(self, spec: ResourceSpec, name: str | None = None) -> str:
-        """Terraform for one spec (main resource + companions) with traceability comments."""
-        name = name or self._base_name(spec)
-        resources, mapping = self._resources(spec, name)
+    @staticmethod
+    def _comments(spec: ResourceSpec, main: TfResource, mapping: Mapping) -> list[str]:
         keys = sorted(spec.specifications or {})
         mapped = [k for k in keys if k in mapping.mapped]
         unmapped = [k for k in keys if k not in mapping.mapped]
-        region = spec.region or GLOBAL_REGION
         lines = [
-            f"# Resource: {resources[0].tf_type}.{name}",
+            f"# Resource: {main.tf_type}.{main.name}",
             f"# Source specification: {spec_relpath(spec)}",
             f"# ARN: {spec.arn}",
-            f"# Region: {region}",
+            f"# Region: {spec.region or GLOBAL_REGION}",
         ]
         if mapped:
             lines.append(f"# mapped: {', '.join(mapped)}")
         lines.extend(f"# unmapped: {key}" for key in unmapped)
-        for resource in resources:
-            lines.append(f'resource "{resource.tf_type}" "{resource.name}" {{')
-            lines.extend(render_items(resource.items, 1))
-            lines.append("}")
-            lines.append("")
-        return "\n".join(lines)
+        return lines
+
+    def _render_entry(self, entry: _Entry) -> list[str]:
+        lines = self._comments(entry.spec, entry.resources[0], entry.mapping)
+        for index, resource in enumerate(entry.resources):
+            if index:
+                lines.append("")
+            lines.extend(_render_resource(resource))
+        return lines
+
+    def generate_resource_block(self, spec: ResourceSpec, name: str | None = None) -> str:
+        """Terraform for one spec (main resource + companions) with traceability comments."""
+        name = name or self.assign_names([spec])[spec.arn]
+        resources, mapping = self._resources(spec, name)
+        module = module_for(resources[0].tf_type)
+        return "\n".join(self._render_entry(_Entry(spec, module, resources, mapping))) + "\n"
+
+    # ------------------------------------------------------------------
+    # Project model
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _provider_region(spec: ResourceSpec, tf_type: str) -> str | None:
+        """Region of the provider managing a resource; None = any (IAM, Route 53)."""
+        if spec.region and spec.region != GLOBAL_REGION:
+            return spec.region
+        if tf_type in ("aws_s3_bucket", "aws_cloudfront_distribution", "aws_wafv2_web_acl"):
+            return DEFAULT_REGION  # S3 buckets keep the us-east-1 provider of earlier releases
+        return None
+
+    def _project(self, specs: list[ResourceSpec]) -> _Project:
+        names = self.assign_names(specs)
+        regional = [s.region for s in specs if s.region and s.region != GLOBAL_REGION]
+        region = _most_common(regional) or DEFAULT_REGION
+
+        entries: list[_Entry] = []
+        for spec in specs:
+            resources, mapping = self._resources(spec, names[spec.arn])
+            entries.append(_Entry(spec, module_for(resources[0].tf_type), resources, mapping))
+        entries.sort(
+            key=lambda e: (
+                MODULE_ORDER.index(e.module),
+                _TYPE_ORDER.get(e.resources[0].tf_type, len(_TYPE_ORDER)),
+                e.resources[0].tf_type,
+                e.resources[0].name,
+            )
+        )
+        self._dedupe_companions(entries)
+
+        # Distinctive values of managed resources -> (module, type, name, attribute).
+        index: dict[str, tuple[str, str, str, str]] = {}
+        for entry in entries:
+            main = entry.resources[0]
+            attribute = REFERENCE_ATTRIBUTES.get(main.tf_type)
+            if attribute is None or main.tf_type in _NOT_REFERENCED:
+                continue
+            value = entry.spec.arn if attribute == "arn" else resource_id(entry.spec)
+            prefix = _ID_PREFIXES.get(main.tf_type, "arn:")
+            if value.startswith(prefix):
+                index.setdefault(value, (entry.module, main.tf_type, main.name, attribute))
+
+        inputs: dict[str, dict[str, str]] = {}
+        for entry in entries:
+            needed = inputs.setdefault(entry.module, {})
+            for position, resource in enumerate(entry.resources):
+                own = (resource.tf_type, resource.name) if position == 0 else None
+                resource.items = _resolve(resource.items, index, entry.module, own, needed)
+
+        aliases: set[str] = set()
+        module_aliases: dict[str, set[str]] = {}
+        for entry in entries:
+            provider_region = self._provider_region(entry.spec, entry.resources[0].tf_type)
+            if provider_region is None or provider_region == region:
+                continue
+            alias = provider_alias(provider_region)
+            aliases.add(provider_region)
+            module_aliases.setdefault(entry.module, set()).add(alias)
+            for resource in entry.resources:
+                resource.items.insert(0, ("provider", Raw(f"aws.{alias}")))
+
+        default_tags = _common_tags([r for e in entries for r in e.resources])
+
+        outputs: dict[str, dict[str, dict[Any, Any]]] = {}
+        output_types: dict[str, str] = {}
+        for entry in entries:
+            main = entry.resources[0]
+            attribute = REFERENCE_ATTRIBUTES.get(main.tf_type, "id")
+            output_types[output_name(main.tf_type)] = main.tf_type
+            values = outputs.setdefault(entry.module, {}).setdefault(output_name(main.tf_type), {})
+            values[Raw(main.name)] = Raw(f"{main.tf_type}.{main.name}.{attribute}")
+
+        return _Project(
+            environment=self.environment(specs),
+            region=region,
+            aliases=sorted(aliases),
+            entries=entries,
+            inputs={m: v for m, v in inputs.items() if v},
+            outputs=outputs,
+            module_aliases={m: sorted(a) for m, a in module_aliases.items()},
+            default_tags=default_tags,
+            output_types=output_types,
+        )
+
+    @staticmethod
+    def _dedupe_companions(entries: list[_Entry]) -> None:
+        used = {(e.resources[0].tf_type, e.resources[0].name) for e in entries}
+        for entry in entries:
+            for resource in entry.resources[1:]:
+                base, counter = resource.name, 2
+                while (resource.tf_type, resource.name) in used:
+                    resource.name, counter = f"{base}_{counter}", counter + 1
+                used.add((resource.tf_type, resource.name))
 
     # ------------------------------------------------------------------
     # Files
     # ------------------------------------------------------------------
 
-    def _providers_tf(self, regions: list[str]) -> str:
-        lines = [
-            "terraform {",
-            '  required_version = ">= 1.5.0"',
-            "  required_providers {",
-            "    aws = {",
-            '      source  = "hashicorp/aws"',
-            f'      version = "{AWS_PROVIDER_VERSION}"',
-            "    }",
-            "  }",
-            "}",
-            "",
-            "# Default provider: global resources (S3, IAM) use us-east-1",
-            'provider "aws" {',
-            f'  region = "{DEFAULT_REGION}"',
-            "}",
-        ]
-        for region in regions:
-            lines += [
-                "",
-                'provider "aws" {',
-                f'  alias  = "{module_name(region)}"',
-                f'  region = "{region}"',
-                "}",
-            ]
-        return "\n".join(lines) + "\n"
-
     @staticmethod
-    def _versions_tf() -> str:
-        return (
-            "terraform {\n  required_providers {\n    aws = {\n"
-            '      source = "hashicorp/aws"\n    }\n  }\n}\n'
+    def _versions(aliases: list[str]) -> list[str]:
+        provider: dict[Any, Any] = {
+            Raw("source"): "hashicorp/aws",
+            Raw("version"): AWS_PROVIDER_VERSION,
+        }
+        if aliases:
+            provider[Raw("configuration_aliases")] = [Raw(f"aws.{a}") for a in aliases]
+        return _hcl(
+            [
+                Block(
+                    "terraform",
+                    [
+                        ("required_version", TERRAFORM_VERSION),
+                        BLANK,
+                        Block("required_providers", [("aws", provider)]),
+                    ],
+                )
+            ]
         )
 
-    @staticmethod
-    def _main_tf(directories: list[str]) -> str:
-        lines = ["# One module per region directory (generated by AWS Resource Inventory)"]
-        for directory in directories:
-            provider = "aws" if directory == GLOBAL_REGION else f"aws.{module_name(directory)}"
-            lines += [
-                "",
-                f'module "{module_name(directory)}" {{',
-                f'  source = "./{directory}"',
-                "  providers = {",
-                f"    aws = {provider}",
-                "  }",
-                "}",
+    def _module_files(self, project: _Project, module: str) -> dict[str, str]:
+        entries = [e for e in project.entries if e.module == module]
+        header = "\n".join(
+            [
+                f"# Module {module}",
+                f"# {MODULE_SUMMARIES.get(module, 'Other resources')}.",
+                "# Generated by AWS Resource Inventory from the collected specifications;",
+                "# every resource names its source specification file.",
             ]
-        return "\n".join(lines) + "\n"
+        )
+        main = _file(*(self._render_entry(e) for e in entries), header=header)
+
+        variables = []
+        for variable, source in sorted(project.inputs.get(module, {}).items()):
+            description = project.describe(variable, f"managed by the {source} module")
+            variables.append(
+                _hcl(
+                    [
+                        Block(
+                            f'variable "{variable}"',
+                            [("description", description), ("type", Raw("map(string)"))],
+                        )
+                    ]
+                )
+            )
+        outputs = []
+        for name, values in sorted(project.outputs.get(module, {}).items()):
+            description = project.describe(name, "in this module")
+            outputs.append(
+                _hcl([Block(f'output "{name}"', [("description", description), ("value", values)])])
+            )
+        return {
+            f"modules/{module}/main.tf": main,
+            f"modules/{module}/variables.tf": (
+                _file(*variables) if variables else "# This module has no input variables.\n"
+            ),
+            f"modules/{module}/outputs.tf": _file(*outputs),
+            f"modules/{module}/versions.tf": _file(
+                self._versions(project.module_aliases.get(module, []))
+            ),
+            f"modules/{module}/README.md": self._module_readme(project, module, entries),
+        }
+
+    def _module_readme(self, project: _Project, module: str, entries: list[_Entry]) -> str:
+        lines = [
+            f"# Module `{module}`",
+            "",
+            f"{MODULE_SUMMARIES.get(module, 'Other resources')}, generated by AWS Resource "
+            "Inventory from the collected specifications. Values are the collected ones; "
+            "references to resources of other modules are input variables.",
+            "",
+            "## Resources",
+            "",
+            "| Address | Source specification | ARN |",
+            "|---|---|---|",
+        ]
+        for entry in entries:
+            for resource in entry.resources:
+                lines.append(
+                    f"| `{resource.tf_type}.{resource.name}` | `{spec_relpath(entry.spec)}` "
+                    f"| `{entry.spec.arn}` |"
+                )
+        inputs = project.inputs.get(module, {})
+        lines += ["", "## Inputs", ""]
+        if inputs:
+            lines += ["| Name | Type | From module |", "|---|---|---|"]
+            lines += [f"| `{n}` | `map(string)` | `{s}` |" for n, s in sorted(inputs.items())]
+        else:
+            lines.append("None.")
+        lines += ["", "## Outputs", "", "| Name | Keys |", "|---|---|"]
+        for name, values in sorted(project.outputs.get(module, {}).items()):
+            keys = ", ".join(f"`{k}`" for k in sorted(str(k) for k in values))
+            lines.append(f"| `{name}` | {keys} |")
+        usage = [f'module "{module}" {{', f'  source = "../../modules/{module}"']
+        if inputs:
+            usage.append("")
+            width = max(len(n) for n in inputs)
+            usage += [f"  {n.ljust(width)} = module.{s}.{n}" for n, s in sorted(inputs.items())]
+        usage.append("}")
+        lines += ["", "## Usage", "", "```hcl", *usage, "```", ""]
+        return "\n".join(lines)
+
+    def _env_files(self, project: _Project) -> dict[str, str]:
+        env = project.environment
+        modules = project.modules()
+        module_blocks = []
+        for module in modules:
+            items: list[Item] = [("source", f"../../modules/{module}")]
+            aliases = project.module_aliases.get(module, [])
+            if aliases:
+                providers: dict[Any, Any] = {Raw("aws"): Raw("aws")}
+                providers.update({Raw(f"aws.{a}"): Raw(f"aws.{a}") for a in aliases})
+                items += [BLANK, ("providers", providers)]
+            inputs = project.inputs.get(module, {})
+            if inputs:
+                items.append(BLANK)
+                items += [(n, Raw(f"module.{s}.{n}")) for n, s in sorted(inputs.items())]
+            module_blocks.append(_hcl([Block(f'module "{module}"', items)]))
+
+        default_tags_block = Block("default_tags", [("tags", Raw("var.default_tags"))])
+        providers_blocks = [
+            _hcl([Block('provider "aws"', [("region", project.region), BLANK, default_tags_block])])
+        ]
+        for region in project.aliases:
+            providers_blocks.append(
+                _hcl(
+                    [
+                        Block(
+                            'provider "aws"',
+                            [
+                                ("alias", provider_alias(region)),
+                                ("region", region),
+                                BLANK,
+                                default_tags_block,
+                            ],
+                        )
+                    ]
+                )
+            )
+
+        outputs = []
+        for module in modules:
+            for name in sorted(project.outputs.get(module, {})):
+                description = project.describe(name, f"of module {module}")
+                outputs.append(
+                    _hcl(
+                        [
+                            Block(
+                                f'output "{name}"',
+                                [
+                                    ("description", description),
+                                    ("value", Raw(f"module.{module}.{name}")),
+                                ],
+                            )
+                        ]
+                    )
+                )
+
+        imports = []
+        for entry in project.entries:
+            for resource in entry.resources:
+                address = f"module.{entry.module}.{resource.tf_type}.{resource.name}"
+                imports.append(
+                    _comment(f"{spec_relpath(entry.spec)}")
+                    + _hcl([Block("import", [("to", Raw(address)), ("id", resource.import_id)])])
+                )
+
+        backend_note = "\n".join(
+            [
+                "# Remote state in S3; bucket, key and region are given at init time:",
+                "#   terraform init \\",
+                '#     -backend-config="bucket=<state bucket>" \\',
+                f'#     -backend-config="key={env}/terraform.tfstate" \\',
+                f'#     -backend-config="region={project.region}" \\',
+                '#     -backend-config="use_lockfile=true"   # Terraform >= 1.10',
+                "# To try the configuration with local state, add backend_override.tf:",
+                '#   terraform { backend "local" {} }',
+            ]
+        )
+        variables = _hcl(
+            [
+                Block(
+                    'variable "default_tags"',
+                    [
+                        (
+                            "description",
+                            "Tags every taggable resource of this environment carries "
+                            "(provider default_tags)",
+                        ),
+                        ("type", Raw("map(string)")),
+                        ("default", {}),
+                    ],
+                )
+            ]
+        )
+        tfvars_note = "\n".join(
+            [
+                "# Tags common to every taggable resource collected for this environment;",
+                "# they are left out of the resource blocks and applied by default_tags.",
+            ]
+        )
+        return {
+            f"envs/{env}/main.tf": _file(
+                *module_blocks,
+                header=f"# Environment {env}: one block per module (generated by "
+                "AWS Resource Inventory).",
+            ),
+            f"envs/{env}/providers.tf": _file(*providers_blocks),
+            f"envs/{env}/backend.tf": _file(
+                _hcl([Block("terraform", [Block('backend "s3"', [("encrypt", True)])])]),
+                header=backend_note,
+            ),
+            f"envs/{env}/versions.tf": _file(self._versions([])),
+            f"envs/{env}/variables.tf": _file(variables),
+            f"envs/{env}/terraform.tfvars": _file(
+                _hcl([("default_tags", project.default_tags)]), header=tfvars_note
+            ),
+            f"envs/{env}/outputs.tf": _file(*outputs),
+            f"envs/{env}/imports.tf": _file(
+                *imports,
+                header="\n".join(
+                    [
+                        "# One import block per generated resource (Terraform >= 1.5):",
+                        "# `terraform plan` lists them, `terraform apply` records them in state",
+                        "# without changing the resources when the plan has no other changes.",
+                    ]
+                ),
+            ),
+            f"envs/{env}/verify_state.sh": self.generate_verification_script([]),
+        }
+
+    def _readme(self, project: _Project) -> str:
+        env = project.environment
+        modules = "\n".join(
+            f"| `modules/{m}/` | {MODULE_SUMMARIES.get(m, '')} |" for m in project.modules()
+        )
+        return f"""# Terraform
+
+Generated by AWS Resource Inventory from the collected specifications (`aws-inventory
+generate-iac`). Every resource block names its source specification file and ARN.
+
+| Directory | Contents |
+|---|---|
+{modules}
+| `envs/{env}/` | Root configuration: modules, providers, S3 backend, `imports.tf`, `verify_state.sh` |
+
+Each module has `main.tf`, `variables.tf`, `outputs.tf`, `versions.tf` and a `README.md`.
+References between resources use Terraform expressions; a resource of another module is
+reached through that module's outputs, wired in `envs/{env}/main.tf`.
+
+## Import the existing resources
+
+```bash
+cd envs/{env}
+terraform init -backend-config="bucket=<state bucket>" \\
+  -backend-config="key={env}/terraform.tfstate" -backend-config="region={project.region}"
+terraform plan       # expected: N to import, 0 to add, 0 to change, 0 to destroy
+terraform apply      # records the imports in state; nothing else changes
+./verify_state.sh    # exit 0 = configuration matches AWS
+```
+
+Values the collector could not read (redacted secrets, Lambda code, the RDS master
+password) are marked `# REDACTED: set manually` or listed in `lifecycle.ignore_changes`.
+"""
+
+    def build_files(self, specs: list[ResourceSpec]) -> dict[str, str]:
+        """{relative path: content} of the Terraform project (Requirements 7.2, 16.1)."""
+        project = self._project(specs)
+        files: dict[str, str] = {"README.md": self._readme(project)}
+        for module in project.modules():
+            files.update(self._module_files(project, module))
+        files.update(self._env_files(project))
+        return dict(sorted(files.items()))
 
     def generate_terraform(
         self, specs: list[ResourceSpec], target_dir: str | Path | None = None
     ) -> dict[str, str]:
-        """
-        Write the Terraform project and return {relative path: content} of every file:
-        providers.tf, main.tf, <region>/versions.tf, <region>/<type>.tf, import.sh,
-        verify_state.sh.
+        """Write the Terraform project and return {relative path: content} of every file:
+        README.md, modules/<module>/*, envs/<env>/* (including imports.tf and verify_state.sh).
         """
         dest = Path(target_dir).resolve() if target_dir else (self.output_dir or Path.cwd())
         dest.mkdir(parents=True, exist_ok=True)
-        names = self.assign_names(specs)
-
-        groups: dict[tuple[str, str], list[str]] = {}
-        for spec in specs:
-            key = (spec.region or GLOBAL_REGION, type_dir(spec.resource_type))
-            groups.setdefault(key, []).append(self.generate_resource_block(spec, names[spec.arn]))
-
-        files: dict[str, str] = {}
-        directories = sorted(
-            {region for region, _ in groups}, key=lambda r: (r != GLOBAL_REGION, r)
-        )
-        for (region, res_type), blocks in sorted(groups.items()):
-            files[f"{region}/{res_type}.tf"] = (
-                f"# Generated by AWS Resource Inventory\n# Region: {region} | Type: {res_type}\n\n"
-                + "\n".join(blocks)
-            )
-        for directory in directories:
-            files[f"{directory}/versions.tf"] = self._versions_tf()
-        files["providers.tf"] = self._providers_tf([d for d in directories if d != GLOBAL_REGION])
-        files["main.tf"] = self._main_tf(directories)
-        files["import.sh"] = self.generate_import_script(specs)
-        files["verify_state.sh"] = self.generate_verification_script(specs)
-
+        files = self.build_files(specs)
         for rel_path, content in files.items():
             path = dest / rel_path
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -2053,57 +2765,58 @@ class IaCGenerator:
                 path.chmod(0o755)
         return files
 
-    def generate_import_script(self, specs: list[ResourceSpec]) -> str:
-        """One idempotent `terraform import` per generated resource block (Req 7.4)."""
-        names = self.assign_names(specs)
-        lines = [
-            "#!/usr/bin/env bash",
-            "# Terraform import commands generated by AWS Resource Inventory (Requirement 7.4).",
-            "# Run from the Terraform root after `terraform init`; imported addresses are skipped.",
-            "set -euo pipefail",
-            "",
-        ]
-        for spec in specs:
-            prefix = f"module.{module_name(spec.region or GLOBAL_REGION)}."
-            resources, _ = self._resources(spec, names[spec.arn])
-            for resource in resources:
-                address = shlex.quote(f"{prefix}{resource.tf_type}.{resource.name}")
-                import_id = shlex.quote(resource.import_id)
-                lines.append(
-                    f"terraform state show {address} >/dev/null 2>&1 || "
-                    f"terraform import {address} {import_id}"
-                )
-        lines += ["", "echo 'Terraform import completed.'"]
-        return "\n".join(lines) + "\n"
+    def generate_imports(self, specs: list[ResourceSpec]) -> str:
+        """imports.tf: one `import` block per generated resource (Requirement 7.4)."""
+        project = self._project(specs)
+        return self._env_files(project)[f"envs/{project.environment}/imports.tf"]
 
     def generate_verification_script(self, specs: list[ResourceSpec]) -> str:
-        """Script comparing the Terraform configuration with AWS (Req 7.5, 7.6)."""
+        """verify_state.sh for envs/<env> (Requirements 7.5, 7.6)."""
         return """#!/usr/bin/env bash
 # Verify that the generated Terraform matches the actual AWS resources (Requirements 7.5, 7.6).
+# Success: the plan has no changes, or only imports whose configuration already matches.
 # Exit codes: 0 = no changes, 2 = changes detected, 1 = error.
 set -uo pipefail
+cd "$(dirname "$0")"
 
 if [ ! -d ".terraform" ]; then
   terraform init -input=false || exit 1
 fi
 
-terraform plan -detailed-exitcode -no-color -input=false > plan_output.txt 2>&1
+terraform plan -detailed-exitcode -no-color -input=false -out=verify.tfplan > plan_output.txt 2>&1
 PLAN_EXIT=$?
 cat plan_output.txt
 
 case $PLAN_EXIT in
   0) echo "SUCCESS: zero changes - Terraform configuration matches AWS."; exit 0 ;;
-  2) echo "CHANGES DETECTED: review plan_output.txt."; exit 2 ;;
+  2)
+    if terraform show -json verify.tfplan | python3 -c 'import json, sys
+changes = json.load(sys.stdin).get("resource_changes", [])
+sys.exit(0 if all(c["change"]["actions"] == ["no-op"] for c in changes) else 1)'; then
+      echo "SUCCESS: zero changes - only imports pending (terraform apply records them)."
+      exit 0
+    fi
+    echo "CHANGES DETECTED: review plan_output.txt."; exit 2 ;;
   *) echo "ERROR: terraform plan failed."; exit 1 ;;
 esac
 """
 
     def verify_terraform_plan(self, tf_dir: str | Path) -> tuple[bool, str]:
-        """Run `terraform plan -detailed-exitcode`; decide by exit code only (Req 7.5)."""
+        """Run `terraform plan -detailed-exitcode` (Req 7.5): exit code 0 is success; exit
+        code 2 is success only when every resource change of the saved plan is a no-op
+        (imports whose configuration matches AWS); anything else is an error."""
+        cwd = Path(tf_dir)
         try:
             result = subprocess.run(  # noqa: S603 - fixed terraform command
-                ["terraform", "plan", "-detailed-exitcode", "-no-color", "-input=false"],
-                cwd=Path(tf_dir),
+                [
+                    "terraform",
+                    "plan",
+                    "-detailed-exitcode",
+                    "-no-color",
+                    "-input=false",
+                    "-out=verify.tfplan",
+                ],
+                cwd=cwd,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -2113,6 +2826,96 @@ esac
         output = f"{result.stdout or ''}\n{result.stderr or ''}".strip()
         if result.returncode == 0:
             return True, "Zero changes: Terraform state matches actual AWS resources."
-        if result.returncode == 2:
-            return False, f"Changes detected in terraform plan:\n{output}"
-        return False, f"Error: terraform plan failed with exit code {result.returncode}:\n{output}"
+        if result.returncode != 2:
+            return (
+                False,
+                f"Error: terraform plan failed with exit code {result.returncode}:\n{output}",
+            )
+        shown = subprocess.run(  # noqa: S603 - fixed terraform command
+            ["terraform", "show", "-json", "verify.tfplan"],
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        try:
+            changes = json.loads(shown.stdout or "{}").get("resource_changes", [])
+        except json.JSONDecodeError:
+            changes = None
+        if isinstance(changes, list):
+            changed = [
+                str(c.get("address"))
+                for c in changes
+                if _dict(c.get("change")).get("actions") != ["no-op"]
+            ]
+            if not changed:
+                pending = sum(1 for c in changes if _dict(c.get("change")).get("importing"))
+                return True, f"Zero changes: {pending} imports pending, configuration matches AWS."
+            return False, "Changes detected in terraform plan:\n" + "\n".join(changed) + (
+                f"\n{output}"
+            )
+        return False, f"Changes detected in terraform plan:\n{output}"
+
+
+def _resolve(
+    items: list[Item],
+    index: dict[str, tuple[str, str, str, str]],
+    module: str,
+    own: tuple[str, str] | None,
+    needed: dict[str, str],
+) -> list[Item]:
+    """Replace values equal to a managed resource's id/ARN by a reference (Req 16.2):
+    ``<type>.<name>.<attribute>`` in the same module, ``var.<output>["<name>"]`` otherwise.
+    Map values (tags, environment variables) and JSON documents stay literal."""
+
+    def value(v: Any) -> Any:
+        if isinstance(v, (Raw, Heredoc)):
+            return v
+        if isinstance(v, str):
+            target = index.get(v)
+            if target is None or (target[1], target[2]) == own:
+                return v
+            source, tf_type, name, attribute = target
+            if source == module:
+                return Raw(f"{tf_type}.{name}.{attribute}")
+            needed[output_name(tf_type)] = source
+            return Raw(f'var.{output_name(tf_type)}["{name}"]')
+        if isinstance(v, list):
+            return [value(x) for x in v]
+        return v
+
+    resolved: list[Item] = []
+    for item in items:
+        if isinstance(item, Block):
+            resolved.append(Block(item.name, _resolve(item.items, index, module, own, needed)))
+        elif item[0].startswith("#") or not item[0]:
+            resolved.append(item)
+        else:
+            resolved.append((item[0], value(item[1])))
+    return resolved
+
+
+def _common_tags(resources: list[TfResource]) -> dict[str, str]:
+    """Tags every taggable resource carries; removed from the resources (provider
+    default_tags apply them). Any taggable resource without them empties the set."""
+    taggable = [r for r in resources if r.tf_type not in _UNTAGGED_TYPES]
+    common: dict[str, str] | None = None
+    for resource in taggable:
+        tags: dict[str, str] = {}
+        for item in resource.items:
+            if not isinstance(item, Block) and item[0] == "tags" and isinstance(item[1], dict):
+                tags = item[1]
+        common = tags if common is None else {k: v for k, v in common.items() if tags.get(k) == v}
+    if not common:
+        return {}
+    for resource in taggable:
+        kept: list[Item] = []
+        for item in resource.items:
+            if not isinstance(item, Block) and item[0] == "tags" and isinstance(item[1], dict):
+                rest = {k: v for k, v in item[1].items() if k not in common}
+                if rest:
+                    kept.append(("tags", rest))
+                continue
+            kept.append(item)
+        resource.items = kept
+    return dict(sorted(common.items()))

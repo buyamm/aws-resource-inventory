@@ -1,0 +1,64 @@
+# AWS Resource: `aws_launch_template` - `lt-bad06a08aee200bf2`
+
+## Overview
+
+| Property          | Value                                                                   |
+| ----------------- | ----------------------------------------------------------------------- |
+| Resource Type     | aws_launch_template                                                     |
+| ARN               | arn:aws:ec2:us-east-1:123456789012:launch-template/lt-bad06a08aee200bf2 |
+| Region            | us-east-1                                                               |
+| Account ID        | 123456789012                                                            |
+| Collected At      | 2026-10-16T02:05:49Z                                                    |
+| Collector Version | 0.1.0                                                                   |
+
+
+## Configuration Specifications
+
+| Configuration Key    | Value                          |
+| -------------------- | ------------------------------ |
+| CreateTime           | 2026-10-16T02:05:48+00:00      |
+| CreatedBy            | arn:aws:iam::123456789012:root |
+| DefaultVersionNumber | 1                              |
+| LatestVersionNumber  | 1                              |
+| LaunchTemplateId     | lt-bad06a08aee200bf2           |
+| LaunchTemplateName   | storefront-worker              |
+
+
+## Resource Tags
+
+| Tag Key | Tag Value         |
+| ------- | ----------------- |
+| Name    | storefront-worker |
+| service | storefront        |
+
+
+### Launchtemplatedata
+
+```json
+{
+  "IamInstanceProfile": {
+    "Name": "orders-app-role"
+  },
+  "ImageId": "ami-12c6146b",
+  "InstanceType": "t3.small",
+  "SecurityGroupIds": [
+    "sg-12874fb82c9db66ed"
+  ],
+  "TagSpecifications": [
+    {
+      "ResourceType": "launch-template",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "storefront-worker"
+        },
+        {
+          "Key": "service",
+          "Value": "storefront"
+        }
+      ]
+    }
+  ]
+}
+```
+

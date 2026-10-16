@@ -8,7 +8,7 @@
 | ARN               | arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188 |
 | Region            | us-east-1                                                                                            |
 | Account ID        | 123456789012                                                                                         |
-| Collected At      | 2026-10-16T01:29:14Z                                                                                 |
+| Collected At      | 2026-10-16T02:05:49Z                                                                                 |
 | Collector Version | 0.1.0                                                                                                |
 
 
@@ -17,14 +17,14 @@
 | Configuration Key     | Value                                                                                                |
 | --------------------- | ---------------------------------------------------------------------------------------------------- |
 | CanonicalHostedZoneId | Z2P70J7EXAMPLE                                                                                       |
-| CreatedTime           | 2026-10-16T01:29:13.124000+00:00                                                                     |
+| CreatedTime           | 2026-10-16T02:05:48.575000+00:00                                                                     |
 | DNSName               | storefront-alb-1.us-east-1.elb.amazonaws.com                                                         |
 | IpAddressType         | ipv4                                                                                                 |
 | LoadBalancerArn       | arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188 |
 | LoadBalancerName      | storefront-alb                                                                                       |
 | Scheme                | internet-facing                                                                                      |
 | Type                  | application                                                                                          |
-| VpcId                 | vpc-7c4f2f1d                                                                                         |
+| VpcId                 | vpc-660d36ef                                                                                         |
 
 
 ## Resource Tags
@@ -48,22 +48,22 @@
 
 | SubnetId        | ZoneName   |
 | --------------- | ---------- |
-| subnet-91c2dcc6 | us-east-1a |
-| subnet-9134f3a5 | us-east-1b |
+| subnet-2cf4f53a | us-east-1a |
+| subnet-4db17d3d | us-east-1b |
 
 
 ### Listeners
 
 | AlpnPolicy | Certificates                                                                                                | DefaultActions                                                                                                                            | ListenerArn                                                                                                    | LoadBalancerArn                                                                                      | Port | Protocol | SslPolicy                 |
 | ---------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---- | -------- | ------------------------- |
-| []         | [{'CertificateArn': 'arn:aws:acm:us-east-1:123456789012:certificate/8f72f034-ca75-4120-acc5-f35a9fd3885d'}] | [{'Type': 'forward', 'TargetGroupArn': 'arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188'}] | arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434536313232 | arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188 | 443  | HTTPS    | ELBSecurityPolicy-2016-08 |
+| []         | [{'CertificateArn': 'arn:aws:acm:us-east-1:123456789012:certificate/a2f4311b-2bbd-4ca0-97e7-018106634454'}] | [{'Type': 'forward', 'TargetGroupArn': 'arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188'}] | arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434501777232 | arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188 | 443  | HTTPS    | ELBSecurityPolicy-2016-08 |
 
 
 ### Securitygroups
 
 ```json
 [
-  "sg-c6ec367b2a800f7fe"
+  "sg-e4a0ee2dde2bb1f50"
 ]
 ```
 

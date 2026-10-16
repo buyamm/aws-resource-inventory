@@ -8,7 +8,7 @@
 | ARN               | arn:aws:ecr:us-east-1:123456789012:repository/storefront-web |
 | Region            | us-east-1                                                    |
 | Account ID        | 123456789012                                                 |
-| Collected At      | 2026-10-16T01:29:14Z                                         |
+| Collected At      | 2026-10-16T02:05:49Z                                         |
 | Collector Version | 0.1.0                                                        |
 
 
@@ -16,7 +16,7 @@
 
 | Configuration Key  | Value                                                        |
 | ------------------ | ------------------------------------------------------------ |
-| createdAt          | 2026-10-16T01:29:13+00:00                                    |
+| createdAt          | 2026-10-16T02:05:48+00:00                                    |
 | imageTagMutability | IMMUTABLE                                                    |
 | registryId         | 123456789012                                                 |
 | repositoryArn      | arn:aws:ecr:us-east-1:123456789012:repository/storefront-web |

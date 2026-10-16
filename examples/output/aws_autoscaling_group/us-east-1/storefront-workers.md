@@ -5,10 +5,10 @@
 | Property          | Value                                                                                                                                    |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Resource Type     | aws_autoscaling_group                                                                                                                    |
-| ARN               | arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:9bbe6615-958a-43a1-81c1-b9c0e0c23918:autoScalingGroupName/storefront-workers |
+| ARN               | arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:fddff19a-c8c9-4401-9bef-23ac1c8a6198:autoScalingGroupName/storefront-workers |
 | Region            | us-east-1                                                                                                                                |
 | Account ID        | 123456789012                                                                                                                             |
-| Collected At      | 2026-10-16T01:29:14Z                                                                                                                     |
+| Collected At      | 2026-10-16T02:05:49Z                                                                                                                     |
 | Collector Version | 0.1.0                                                                                                                                    |
 
 
@@ -16,7 +16,7 @@
 
 | Configuration Key                | Value                                                                                                                                    |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| AutoScalingGroupARN              | arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:9bbe6615-958a-43a1-81c1-b9c0e0c23918:autoScalingGroupName/storefront-workers |
+| AutoScalingGroupARN              | arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:fddff19a-c8c9-4401-9bef-23ac1c8a6198:autoScalingGroupName/storefront-workers |
 | AutoScalingGroupName             | storefront-workers                                                                                                                       |
 | CapacityRebalance                | False                                                                                                                                    |
 | CreatedTime                      | 2013-05-06T17:47:15.107000+00:00                                                                                                         |
@@ -28,7 +28,7 @@
 | MinSize                          | 1                                                                                                                                        |
 | NewInstancesProtectedFromScaleIn | False                                                                                                                                    |
 | ServiceLinkedRoleARN             | arn:aws:iam::123456789012:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling                                   |
-| VPCZoneIdentifier                | subnet-30a75c4f                                                                                                                          |
+| VPCZoneIdentifier                | subnet-4d897e3d                                                                                                                          |
 
 
 ## Resource Tags
@@ -51,14 +51,14 @@
 
 | AvailabilityZone | HealthStatus | InstanceId          | InstanceType | LaunchTemplate                                                                                                 | LifecycleState | ProtectedFromScaleIn |
 | ---------------- | ------------ | ------------------- | ------------ | -------------------------------------------------------------------------------------------------------------- | -------------- | -------------------- |
-| us-east-1a       | Healthy      | i-7c15a7e2df90fa017 | t3.small     | {'LaunchTemplateId': 'lt-c743f2f076e986059', 'LaunchTemplateName': 'storefront-worker', 'Version': '$Default'} | InService      | False                |
+| us-east-1a       | Healthy      | i-b892b745a8c407b02 | t3.small     | {'LaunchTemplateId': 'lt-bad06a08aee200bf2', 'LaunchTemplateName': 'storefront-worker', 'Version': '$Default'} | InService      | False                |
 
 
 ### Launchtemplate
 
 ```json
 {
-  "LaunchTemplateId": "lt-c743f2f076e986059",
+  "LaunchTemplateId": "lt-bad06a08aee200bf2",
   "LaunchTemplateName": "storefront-worker",
   "Version": "$Default"
 }

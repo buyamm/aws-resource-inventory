@@ -97,7 +97,7 @@ flowchart TB
     AE --> AJ["analysis/analysis.json<br/>analysis/analysis.md"]
     AE --> DG["DiagramGenerator"] --> DR["diagrams/architecture.drawio"]
     AE --> DOC["documentation.py"] --> DM["docs/infrastructure.md"]
-    Specs --> IAC["IaCGenerator"] --> TF["terraform/ main.tf, providers.tf,<br/>#lt;region#gt;/#lt;type#gt;.tf, import.sh, verify_state.sh"]
+    Specs --> IAC["IaCGenerator"] --> TF["terraform/ modules/#lt;module#gt;/,<br/>envs/#lt;env#gt;/ (imports.tf, verify_state.sh)"]
     AJ --> V{"verify_output_dir"}
     Specs --> V
     CK["checksums.sha256"] --> V

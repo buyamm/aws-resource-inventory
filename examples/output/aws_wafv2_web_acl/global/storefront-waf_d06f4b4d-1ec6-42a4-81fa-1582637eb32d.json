@@ -1,0 +1,34 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/d06f4b4d-1ec6-42a4-81fa-1582637eb32d",
+  "generated_at": "2026-10-16T02:05:50.002193Z",
+  "metadata": {
+    "api_version": "2019-07-29",
+    "checksum": "1776ccb37578ae841f33455abe3631c5ee4c5d9ad866b83376f9415ce1ba53a0",
+    "collected_at": "2026-10-16T02:05:49Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "global",
+  "resource_type": "aws_wafv2_web_acl",
+  "specifications": {
+    "ARN": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/d06f4b4d-1ec6-42a4-81fa-1582637eb32d",
+    "DefaultAction": {
+      "Allow": {}
+    },
+    "Description": "Edge protection for the storefront",
+    "Id": "d06f4b4d-1ec6-42a4-81fa-1582637eb32d",
+    "Name": "storefront-waf",
+    "Rules": [],
+    "Tags": [
+      {
+        "Key": "service",
+        "Value": "storefront"
+      }
+    ],
+    "VisibilityConfig": {
+      "CloudWatchMetricsEnabled": true,
+      "MetricName": "storefront-waf",
+      "SampledRequestsEnabled": true
+    }
+  }
+}

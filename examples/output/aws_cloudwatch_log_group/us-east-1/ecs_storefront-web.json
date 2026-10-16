@@ -1,18 +1,18 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:logs:us-east-1:123456789012:log-group:/ecs/storefront-web",
-  "generated_at": "2026-10-16T01:29:14.603213Z",
+  "generated_at": "2026-10-16T02:05:50.002193Z",
   "metadata": {
     "api_version": "2014-03-28",
-    "checksum": "704c87cea18a695b0dade537401cf0d14192d59b17f62a3a1f6659dcaa9d7a77",
-    "collected_at": "2026-10-16T01:29:14Z",
+    "checksum": "15bdd0e893f6a2a3e472aa5b572583e5af10e416710da3f3e875f3b5a0f2174a",
+    "collected_at": "2026-10-16T02:05:49Z",
     "collector_version": "0.1.0"
   },
   "region": "us-east-1",
   "resource_type": "aws_cloudwatch_log_group",
   "specifications": {
     "arn": "arn:aws:logs:us-east-1:123456789012:log-group:/ecs/storefront-web",
-    "creationTime": 1792114153257,
+    "creationTime": 1792116348681,
     "logGroupName": "/ecs/storefront-web",
     "metricFilterCount": 0,
     "retentionInDays": 30,

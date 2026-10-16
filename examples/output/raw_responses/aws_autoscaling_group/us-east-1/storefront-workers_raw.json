@@ -2,7 +2,7 @@
   "DescribeAutoScalingGroups": {
     "AutoScalingGroups": [
       {
-        "AutoScalingGroupARN": "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:9bbe6615-958a-43a1-81c1-b9c0e0c23918:autoScalingGroupName/storefront-workers",
+        "AutoScalingGroupARN": "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:fddff19a-c8c9-4401-9bef-23ac1c8a6198:autoScalingGroupName/storefront-workers",
         "AutoScalingGroupName": "storefront-workers",
         "AvailabilityZones": [
           "us-east-1a"
@@ -17,10 +17,10 @@
           {
             "AvailabilityZone": "us-east-1a",
             "HealthStatus": "Healthy",
-            "InstanceId": "i-7c15a7e2df90fa017",
+            "InstanceId": "i-b892b745a8c407b02",
             "InstanceType": "t3.small",
             "LaunchTemplate": {
-              "LaunchTemplateId": "lt-c743f2f076e986059",
+              "LaunchTemplateId": "lt-bad06a08aee200bf2",
               "LaunchTemplateName": "storefront-worker",
               "Version": "$Default"
             },
@@ -29,7 +29,7 @@
           }
         ],
         "LaunchTemplate": {
-          "LaunchTemplateId": "lt-c743f2f076e986059",
+          "LaunchTemplateId": "lt-bad06a08aee200bf2",
           "LaunchTemplateName": "storefront-worker",
           "Version": "$Default"
         },
@@ -52,12 +52,12 @@
         "TerminationPolicies": [
           "Default"
         ],
-        "VPCZoneIdentifier": "subnet-30a75c4f"
+        "VPCZoneIdentifier": "subnet-4d897e3d"
       }
     ],
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Fri, 16 Oct 2026 08:29:14 GMT",
+        "date": "Fri, 16 Oct 2026 09:05:49 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,

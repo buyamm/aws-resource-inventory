@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:iam::123456789012:role/order-lambda-role",
-  "generated_at": "2026-10-16T01:29:14.603213Z",
+  "generated_at": "2026-10-16T02:05:50.002193Z",
   "metadata": {
     "api_version": "2010-05-08",
-    "checksum": "e0d055cab5a47787ed59fd5ab85eed1cf6db2d704e7489339ad30b23d01fd956",
-    "collected_at": "2026-10-16T01:29:14Z",
+    "checksum": "f25f33238ee838cfa6e7d9e0248bf99eaa5eee1e83744398101d1e9f0e307f62",
+    "collected_at": "2026-10-16T02:05:49Z",
     "collector_version": "0.1.0"
   },
   "region": "global",
@@ -25,7 +25,7 @@
       "Version": "2012-10-17"
     },
     "AttachedPolicies": [],
-    "CreateDate": "2026-10-16T01:29:12.737000+00:00",
+    "CreateDate": "2026-10-16T02:05:48.200000+00:00",
     "Description": "Execution role for order-processor",
     "InlinePolicies": {
       "too-broad": {
@@ -41,7 +41,7 @@
     },
     "MaxSessionDuration": 3600,
     "Path": "/",
-    "RoleId": "AROARZPUZDIKDRE7FWEIT",
+    "RoleId": "AROARZPUZDIKMAF3QCWFB",
     "RoleLastUsed": {},
     "RoleName": "order-lambda-role"
   }

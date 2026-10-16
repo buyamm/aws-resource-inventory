@@ -8,7 +8,7 @@
 | ARN               | arn:aws:ecs:us-east-1:123456789012:service/storefront/web |
 | Region            | us-east-1                                                 |
 | Account ID        | 123456789012                                              |
-| Collected At      | 2026-10-16T01:29:14Z                                      |
+| Collected At      | 2026-10-16T02:05:49Z                                      |
 | Collector Version | 0.1.0                                                     |
 
 
@@ -39,7 +39,7 @@
 
 | createdAt                        | desiredCount | id                         | launchType | pendingCount | runningCount | status  | taskDefinition                                                      | updatedAt                        |
 | -------------------------------- | ------------ | -------------------------- | ---------- | ------------ | ------------ | ------- | ------------------------------------------------------------------- | -------------------------------- |
-| 2026-10-16T08:29:13.277437+07:00 | 2            | ecs-svc/487704048739958131 | FARGATE    | 2            | 0            | PRIMARY | arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1 | 2026-10-16T08:29:13.277442+07:00 |
+| 2026-10-16T09:05:48.701159+07:00 | 2            | ecs-svc/973443177218465221 | FARGATE    | 2            | 0            | PRIMARY | arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1 | 2026-10-16T09:05:48.701164+07:00 |
 
 
 ### Loadbalancers
@@ -56,10 +56,10 @@
   "awsvpcConfiguration": {
     "assignPublicIp": "DISABLED",
     "securityGroups": [
-      "sg-7c3a665620cbf02dc"
+      "sg-12874fb82c9db66ed"
     ],
     "subnets": [
-      "subnet-30a75c4f"
+      "subnet-4d897e3d"
     ]
   }
 }

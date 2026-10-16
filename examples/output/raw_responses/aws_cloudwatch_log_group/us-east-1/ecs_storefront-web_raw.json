@@ -2,7 +2,7 @@
   "DescribeLogGroups": {
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Fri, 16 Oct 2026 08:29:14 GMT",
+        "date": "Fri, 16 Oct 2026 09:05:49 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,
@@ -12,7 +12,7 @@
     "logGroups": [
       {
         "arn": "arn:aws:logs:us-east-1:123456789012:log-group:/ecs/storefront-web",
-        "creationTime": 1792114153257,
+        "creationTime": 1792116348681,
         "logGroupName": "/ecs/storefront-web",
         "metricFilterCount": 0,
         "retentionInDays": 30,
@@ -23,7 +23,7 @@
   "ListTagsLogGroup": {
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Fri, 16 Oct 2026 08:29:14 GMT",
+        "date": "Fri, 16 Oct 2026 09:05:49 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,

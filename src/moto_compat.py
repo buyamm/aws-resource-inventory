@@ -16,6 +16,10 @@ no request is sent anywhere):
 Responses follow the shapes of the ElastiCache API reference. Every other ElastiCache
 operation is left to moto.
 
+moto 4.2 returns one ``DescribeSecurityGroupRules`` entry per permission (first CIDR
+only, no referenced group, no description). An ``after-call`` handler replaces them with
+one entry per source, as AWS returns them (extra sources get ids derived from moto's).
+
 moto 4.2 also drops the ``networkConfiguration`` of ECS services. An ``after-call``
 handler keeps the configuration given to ``CreateService`` and adds it to the
 ``CreateService`` and ``DescribeServices`` responses (keyed by service ARN). The handlers are registered in ``botocore.handlers`` when this
@@ -31,6 +35,7 @@ does nothing.
 
 from __future__ import annotations
 
+import hashlib
 import os
 import threading
 from collections.abc import Callable, Iterator
@@ -356,12 +361,86 @@ def _ecs_after_call(parsed: Any, model: Any, context: dict[str, Any], **_: Any) 
             service["networkConfiguration"] = network
 
 
+def _rule_sources(rule: Any, account: str) -> list[dict[str, Any]]:
+    """One ``SecurityGroupRules`` source per CIDR, referenced group and prefix list."""
+    sources: list[dict[str, Any]] = []
+    for item in rule.ip_ranges:
+        if "CidrIpv6" in item:
+            source: dict[str, Any] = {"CidrIpv6": item["CidrIpv6"]}
+        elif "CidrIp" in item:
+            source = {"CidrIpv4": item["CidrIp"]}
+        else:
+            continue
+        sources.append({**source, **_description(item)})
+    for group in rule.source_groups:
+        if group.get("GroupId"):
+            owner = group.get("OwnerId") or group.get("UserId") or account
+            reference = {"GroupId": group["GroupId"], "UserId": owner}
+            sources.append({"ReferencedGroupInfo": reference, **_description(group)})
+    for prefix in rule.prefix_list_ids:
+        if prefix.get("PrefixListId"):
+            sources.append({"PrefixListId": prefix["PrefixListId"], **_description(prefix)})
+    return sources
+
+
+def _description(item: dict[str, Any]) -> dict[str, Any]:
+    return {"Description": item["Description"]} if item.get("Description") else {}
+
+
+def _rule_id(base: str, index: int) -> str:
+    if index == 0:
+        return base
+    return "sgr-" + hashlib.sha256(f"{base}/{index}".encode()).hexdigest()[:17]
+
+
+def _security_group_rules_after_call(
+    parsed: Any, model: Any, context: dict[str, Any], **_: Any
+) -> None:
+    """Replace moto's per-permission ``SecurityGroupRules`` with one entry per source."""
+    if not _STORE.active or not isinstance(parsed, dict):
+        return
+    if getattr(model, "name", "") != "DescribeSecurityGroupRules":
+        return
+    region = str(context.get("client_region") or "us-east-1")
+    groups = sorted(
+        {
+            (str(r.get("GroupOwnerId") or DEFAULT_ACCOUNT), str(r["GroupId"]))
+            for r in parsed.get("SecurityGroupRules") or []
+            if r.get("GroupId")
+        }
+    )
+    try:
+        from moto.ec2.models import ec2_backends
+    except ImportError:  # pragma: no cover - moto is a test dependency
+        return
+    rules: list[dict[str, Any]] = []
+    for account, group_id in groups:
+        group = ec2_backends[account][region].get_security_group_from_id(group_id)
+        if group is None:
+            continue
+        for rule in [*group.ingress_rules, *group.egress_rules]:
+            all_protocols = rule.ip_protocol == "-1"
+            base = {
+                "GroupId": group_id,
+                "GroupOwnerId": account,
+                "IsEgress": bool(rule.is_egress),
+                "IpProtocol": rule.ip_protocol,
+                "FromPort": -1 if all_protocols else rule.from_port,
+                "ToPort": -1 if all_protocols else rule.to_port,
+                "Tags": [],
+            }
+            for index, source in enumerate(_rule_sources(rule, account)):
+                rules.append({**base, **source, "SecurityGroupRuleId": _rule_id(rule.id, index)})
+    parsed["SecurityGroupRules"] = rules
+
+
 # The response handler is registered last on every "before-call", so other before-call
 # handlers (the benchmark's latency injector) still run for these operations.
 _HANDLERS: list[tuple[Any, ...]] = [
     (f"before-parameter-build.{_SERVICE}", _capture_params),
     ("before-parameter-build.ecs.CreateService", _capture_params),
     ("after-call.ecs", _ecs_after_call),
+    ("after-call.ec2.DescribeSecurityGroupRules", _security_group_rules_after_call),
     ("before-call", _respond, handlers.REGISTER_LAST),
 ]
 for _handler in _HANDLERS:

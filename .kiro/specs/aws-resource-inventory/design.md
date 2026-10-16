@@ -51,7 +51,7 @@ Binding scope decisions are listed in requirements.md §"Scope decisions". In sh
 | `src/output_generator.py` | JSON/Markdown/raw/checksum/summary files, `load_specs()` from Output_Dir. |
 | `src/analysis_engine.py` | Relationship rules (single source), patterns, security findings, citations, `AnalysisReport` (+ JSON serialization, `analysis.md`). |
 | `src/diagram_generator.py` | `.drawio` generation (Overview + Network detail pages) from specs + relationships; optional `drawio-ai validate` and draw.io PNG export. |
-| `src/iac_generator.py` | Terraform generation per type mapping, `import.sh`, `verify_state.sh`, `verify_terraform_plan()`. |
+| `src/iac_generator.py` | Terraform `modules/` + `envs/<env>/` generation per type mapping (references, names, `default_tags`), `imports.tf`, `verify_state.sh`, `verify_terraform_plan()`. |
 | `src/documentation.py` | `docs/infrastructure.md` from an `AnalysisReport` (every statement cited). |
 | `src/metrics.py` | Phase timer, run metrics, time-savings computation, `collection_report.json`. |
 | `src/aws_session.py` | boto3 session creation (profile, assume-role, botocore retry config), account id lookup. |
@@ -183,7 +183,7 @@ Every module that needs a type name, file name or id uses these functions; no mo
 |---|---|---|
 | `aws_instance` | `ec2.describe_instances(InstanceIds=[id])` | the `Instances[0]` object |
 | `aws_vpc` | `ec2.describe_vpcs(VpcIds=[id])`, `ec2.describe_vpc_attribute(Attribute=enableDnsSupport / enableDnsHostnames)` | `Vpcs[0]` + `EnableDnsSupport: bool`, `EnableDnsHostnames: bool` |
-| `aws_security_group` | `ec2.describe_security_groups(GroupIds=[id])` | `SecurityGroups[0]` |
+| `aws_security_group` | `ec2.describe_security_groups(GroupIds=[id])`; `describe_security_group_rules(Filters=[group-id])` (paginated) | `SecurityGroups[0]` + `SecurityGroupRules` (one entry per rule source: `SecurityGroupRuleId`, `IsEgress`, `IpProtocol`, `FromPort`, `ToPort`, one of `CidrIpv4`/`CidrIpv6`/`PrefixListId`/`ReferencedGroupInfo`, `Description`, `Tags`; sorted by rule id) |
 | `aws_lambda_function` | `lambda.get_function(FunctionName=id)` | `Configuration` object + `Tags` (dict, from the same response) |
 | `aws_db_instance` | `rds.describe_db_instances(DBInstanceIdentifier=id)` | `DBInstances[0]` |
 | `aws_cloudwatch_log_group` | `logs.describe_log_groups(logGroupNamePrefix=id)`, `logs.list_tags_log_group(logGroupName=id)` | the log group whose `logGroupName == id` + `tags` |
@@ -332,7 +332,7 @@ def verify_output_dir(output_dir) -> VerificationReport       # Req 8.3 / 8.4
 ├── analysis/analysis.json  analysis/analysis.md   # `analyze`
 ├── diagrams/architecture.drawio      # `analyze`
 ├── docs/infrastructure.md            # `generate-docs`
-├── terraform/...                     # `generate-iac`
+├── terraform/README.md  terraform/modules/<module>/  terraform/envs/<env>/   # `generate-iac` (Req 16)
 └── checksums.sha256  checksums.json  # regenerated after every command that writes files
 ```
 
@@ -410,7 +410,7 @@ Mapping from Specifications to Terraform arguments (AWS provider ~> 5.0). Values
 |---|---|---|---|---|
 | `aws_instance` | `ami`←ImageId, `instance_type`, `subnet_id`, `vpc_security_group_ids`←SecurityGroups[].GroupId, `key_name`, `iam_instance_profile`←last segment of IamInstanceProfile.Arn, `ebs_optimized`, `monitoring`←Monitoring.State=="enabled", `tags`←Tags | – | InstanceId | `user_data`, `user_data_base64` |
 | `aws_vpc` | `cidr_block`, `instance_tenancy`, `enable_dns_support`, `enable_dns_hostnames`, `tags` | – | VpcId | – |
-| `aws_security_group` | `name`←GroupName, `description`, `vpc_id`, `ingress`/`egress` blocks from IpPermissions/IpPermissionsEgress (`from_port`/`to_port` 0 when absent, `protocol`←IpProtocol, `cidr_blocks`, `ipv6_cidr_blocks`, `prefix_list_ids`, `security_groups`, `self`), `tags` | – | GroupId | – |
+| `aws_security_group` | `name`←GroupName, `description`, `vpc_id`, `tags`; no inline rules | `aws_vpc_security_group_ingress_rule` / `_egress_rule` per `SecurityGroupRules` entry (`security_group_id`, `ip_protocol`, `from_port`/`to_port` unless `-1`, `cidr_ipv4` / `cidr_ipv6` / `prefix_list_id` / `referenced_security_group_id` (own group = reference, other account = `<account>/<group>`), `description`, `tags`; id = `SecurityGroupRuleId`; named `<group>_<ingress|egress>_<protocol|all>[_<from>[_<to>]]`). Without `SecurityGroupRules` the rules stay unmanaged and `IpPermissions*` unmapped | GroupId | – |
 | `aws_lambda_function` | `function_name`, `role`, `handler`, `runtime`, `memory_size`, `timeout`, `description`, `architectures`, `layers`←Layers[].Arn, `environment { variables }`, `vpc_config { subnet_ids, security_group_ids }` (when SubnetIds non-empty), `tags`, `filename = "lambda_<name>.zip"` placeholder | – | FunctionName | `filename`, `source_code_hash` |
 | `aws_db_instance` | `identifier`, `engine`, `engine_version`, `instance_class`, `allocated_storage`, `storage_type`, `multi_az`, `publicly_accessible`, `storage_encrypted`, `kms_key_id`, `db_subnet_group_name`, `vpc_security_group_ids`, `username`←MasterUsername, `backup_retention_period`, `tags`←TagList | – | DBInstanceIdentifier | `password` |
 | `aws_cloudwatch_log_group` | `name`, `retention_in_days`, `kms_key_id`, `tags` | – | logGroupName | – |
@@ -442,15 +442,64 @@ Mapping from Specifications to Terraform arguments (AWS provider ~> 5.0). Values
 | `aws_cloudwatch_event_rule` | `name`, `event_bus_name` (custom buses), `description`, `schedule_expression`, `event_pattern` (heredoc), `state`, `role_arn`, `tags` | `aws_cloudwatch_event_target` per target (`rule` reference, `target_id`, `arn`, `role_arn`, `input`, `input_path`, `input_transformer {}`, `ecs_target {}`, `retry_policy {}`, `dead_letter_config {}`; id `[<bus>/]<rule>/<target id>`) | `[<bus>/]<name>` | – |
 | `aws_scheduler_schedule` | `name`, `group_name`, `description`, `schedule_expression`, `schedule_expression_timezone`, `start_date`, `end_date`, `state`, `kms_key_arn`, `flexible_time_window {}`, `target { arn, role_arn, input, retry_policy {}, dead_letter_config {}, sqs_parameters {} }` | – | `<group>/<name>` | – |
 
-JSON documents given as strings (policies, redrive policies) become heredocs of pretty JSON; an empty string means the attribute is not set and emits no argument. Unknown types fall back to emitting every identifier-like top-level key as an argument (debug aid only). Terraform resource names are `file_id` with `.` → `_` (hyphens are valid in Terraform names), prefixed with `r_` when not starting with a letter or `_`, and de-duplicated per (region, type) with `_2`, `_3`, ... Companion resources reuse the bucket name (S3) or use `<role name>_<policy name>` (IAM).
+JSON documents given as strings (policies, redrive policies) become heredocs of pretty JSON; an empty string means the attribute is not set and emits no argument. Unknown types fall back to emitting every identifier-like top-level key as an argument (debug aid only). Tags whose key starts with `aws:` are never emitted (Terraform cannot set them).
 
-Above each block the generator writes `# Resource`, `# Source specification` (spec path relative to Output_Dir), `# ARN`, `# Region`, `# mapped: ...` and one `# unmapped: <key>` per unconsumed key. Strings are emitted as JSON-escaped HCL literals with `${`/`%{` escaped; policy and state machine documents as `<<-EOT` heredocs of pretty JSON.
+Above each block the generator writes `# Resource`, `# Source specification` (spec path relative to Output_Dir), `# ARN`, `# Region`, `# mapped: ...` and one `# unmapped: <key>` per unconsumed key. Strings are emitted as JSON-escaped HCL literals with `${`/`%{` escaped; policy and state machine documents as `<<-EOT` heredocs of pretty JSON. Output follows `terraform fmt`: two-space indent, `=` aligned over consecutive single-line arguments (a comment, blank line, block or multi-line map ends the group), and inside a resource: `provider`, arguments, blocks, `tags`, `lifecycle`, separated by blank lines (a `# REDACTED` comment stays above its argument).
 
-Terraform only loads `.tf` files of the root directory, so each region directory is a module: root `main.tf` declares `module "<region_with_underscores>" { source = "./<region>"; providers = { aws = aws.<alias> } }` (`global` uses the default provider), root `providers.tf` holds the `terraform {}` requirements, the default `us-east-1` provider and one aliased provider per region; each region directory has a `versions.tf` with `required_providers`. Import addresses are therefore `module.<module>.<type>.<name>`. The generated project passes `terraform validate` (checked against the sample account).
+### Project layout (Req 7.2, 16.1)
 
-`verify_terraform_plan(tf_dir) -> (bool, str)` runs `terraform plan -detailed-exitcode -no-color -input=false` and decides **only by exit code** (0 = ok, 2 = changes, else error; missing `terraform` binary = error).
+```
+terraform/
+├── README.md                       # layout + import workflow
+├── modules/<module>/               # only modules holding resources
+│   ├── main.tf                     # resource blocks with traceability comments
+│   ├── variables.tf                # map(string) inputs it uses (references to other modules)
+│   ├── outputs.tf                  # one map per type: resource name -> reference attribute
+│   ├── versions.tf                 # required_version, aws ~> 5.0 (+ configuration_aliases)
+│   └── README.md                   # resources (address, spec file, ARN), inputs, outputs, usage
+└── envs/<env>/
+    ├── main.tf                     # module blocks in dependency order, inputs = other modules' outputs
+    ├── providers.tf                # default provider (main region) + aliases, default_tags { tags = var.default_tags }
+    ├── backend.tf                  # backend "s3" { encrypt = true }; bucket/key/region via -backend-config
+    ├── variables.tf  terraform.tfvars   # default_tags (tags common to every taggable resource)
+    ├── outputs.tf                  # every module output re-exported
+    ├── versions.tf                 # required_version >= 1.5.0 (import blocks)
+    ├── imports.tf                  # one import block per resource (comment: source spec file)
+    └── verify_state.sh
+```
 
-Known limitations (documented in README): resource types outside the registry are not generated; WAF rules and non-default listener certificates are not mapped; SNS subscriptions, Auto Scaling mixed-instances policies and ECS cluster capacity-provider associations are not mapped; S3 lifecycle/CORS/website/ACL and DynamoDB TTL/PITR are not mapped (left unmanaged, so they do not cause plan diffs); security group rules with differing per-range descriptions are emitted without descriptions.
+| Module | Types (order inside main.tf) |
+|---|---|
+| `iam` | `aws_iam_role` (+ policy attachments, inline policies) |
+| `observability` | `aws_cloudwatch_log_group` |
+| `network` | `aws_vpc`, `aws_subnet`, `aws_route_table` (+ associations), `aws_internet_gateway`, `aws_nat_gateway`, `aws_vpc_endpoint`, `aws_security_group` (+ rules) |
+| `edge` | `aws_route53_zone` (+ records), `aws_acm_certificate`, `aws_wafv2_web_acl`, `aws_cloudfront_distribution`, `aws_lb`, `aws_lb_target_group`, `aws_lb_listener` |
+| `data` | `aws_s3_bucket` (+ companions), `aws_dynamodb_table`, `aws_db_instance`, `aws_elasticache_replication_group`, `aws_sqs_queue`, `aws_sns_topic` |
+| `compute` | `aws_ecr_repository`, `aws_launch_template`, `aws_autoscaling_group`, `aws_instance`, `aws_ecs_cluster`, `aws_ecs_task_definition`, `aws_ecs_service`, `aws_lambda_function`, `aws_sfn_state_machine`, `aws_cloudwatch_event_rule` (+ targets), `aws_scheduler_schedule`; unknown types |
+
+The module order is the dependency order: references only point to earlier modules (compute → data/edge/network/iam, data/edge → network), so the module graph has no cycle.
+
+Environment: the most common value of the `environment`/`env` tag (project tags of `manifest.json` first), lower-cased with other characters than `[a-z0-9_-]` replaced by `-`; `default` without such a tag. One environment root per run; resources of several environments end up in the root of the most common one.
+
+Providers: the default provider uses the region holding the most regional specs (ties alphabetical; `us-east-1` without regional specs). A resource whose provider region differs gets `provider = aws.<alias>` (alias = region with `-` → `_`), the module lists the alias in `configuration_aliases` and the root passes `providers = { aws = aws, aws.<alias> = aws.<alias> }`. Provider regions: the spec region; `us-east-1` for S3 buckets, CloudFront distributions and CloudFront-scope web ACLs; none (default provider) for IAM roles and Route 53 zones. `default_tags` = tags (minus `aws:` keys) present with the same value on every taggable resource — every resource except `aws_autoscaling_group` (tag blocks), `aws_scheduler_schedule`, route table associations, IAM policy attachments/inline policies, S3 companions, Route 53 records and EventBridge targets. Those tags are removed from the resource blocks; a single taggable resource without them (e.g. an untagged security group rule) empties the set.
+
+### Names and references (Req 16.2)
+
+Names: snake_case (`[^a-z0-9]+` → `_`) of the `Name` tag, else the name field (security group `GroupName`, load balancer / target group / web ACL / zone / rule / schedule name, ECS cluster and service name, launch template name, certificate domain, first CloudFront alias, listener `<Protocol>_<Port>`), else the resource id. Prefixes stripped (repeatedly, longest first): snake_case values of the manifest project tags, of tags `project`/`service`/`application`/`app` and of `environment`/`env` on any spec. Empty → `main`; leading digit → `r_`. Unique per type in (type, name, ARN) order with `_2`, `_3`, ... Companions: `<name>_<suffix>` in snake_case (IAM: policy name; route table association: subnet/gateway id; Route 53 record: name relative to the zone (`apex`, `*` → `wildcard`) + type [+ set id]; EventBridge target: target id; security group rule: see table), de-duplicated per type.
+
+References: each primary resource of a type in the table below registers its distinctive value — its ARN (`spec.arn`) or its resource id when it starts with the type's id prefix (`vpc-`, `subnet-`, `rtb-`, `igw-`, `nat-`, `vpce-`, `sg-`, `lt-`, `i-`). Every argument value or list element (blocks included, map values and heredocs excluded) equal to a registered value becomes `<type>.<name>.<attribute>` in the same module or `var.<output>["<name>"]` across modules (the variable is declared in the consuming module and wired from the owning module's output); a resource never references itself. Auto Scaling group ARNs (built with a wildcard) are not registered.
+
+| Attribute | Types | Output name |
+|---|---|---|
+| `id` | vpc, subnet, route table, internet/NAT gateway, VPC endpoint, security group, launch template, instance, CloudFront distribution, S3 bucket, ECS service | `<type without aws_>_ids` |
+| `zone_id` | Route 53 zone | `route53_zone_ids` |
+| `arn` | every other type | `<type without aws_>_arns` |
+
+### Verification (Req 7.5, 7.6)
+
+`verify_terraform_plan(env_dir) -> (bool, str)` runs `terraform plan -detailed-exitcode -no-color -input=false -out=verify.tfplan`: exit 0 = ok; exit 2 = `terraform show -json verify.tfplan`, ok when every `resource_changes[].change.actions` is `["no-op"]` (imports pending), else "changes detected" with the changed addresses; other codes and a missing `terraform` binary = error. `verify_state.sh` does the same (JSON check with `python3`) from its own directory, after `terraform init` when `.terraform` is missing. Users run `terraform plan` (expect only imports), `terraform apply` (records the imports) and `verify_state.sh`; the live test never applies and uses `backend_override.tf` (`backend "local" {}`).
+
+Known limitations (documented in README): resource types outside the registry are not generated; S3 buckets are managed through the `us-east-1` provider whatever their region; one environment root per run; WAF rules and non-default listener certificates are not mapped; SNS subscriptions, Auto Scaling mixed-instances policies and ECS cluster capacity-provider associations are not mapped; S3 lifecycle/CORS/website/ACL and DynamoDB TTL/PITR are not mapped (left unmanaged, so they do not cause plan diffs); security group rules of Output_Dirs collected before `SecurityGroupRules` existed are left unmanaged.
 
 ## Documentation Generator (`src/documentation.py`)
 
@@ -499,7 +548,7 @@ Entry point `aws-inventory = "src.cli:main"`. Global options: `--log-level [DEBU
 | `discover` | `--region` (repeatable), `--project-tag KEY=VALUE` (repeatable, AND), `--include-defaults`, `--profile`, `--role-arn`, `--external-id`, `--output-dir` (default `./output`) | yes | `discovery.json` |
 | `collect` | same as discover + `--max-workers` (default 10) | yes | everything in "Output directory layout" up to `summary_report.md`, plus checksums |
 | `analyze` | `--output-dir`, `--validate-diagram`, `--export-png` | no | `analysis/`, `diagrams/`, checksums |
-| `generate-iac` | `--output-dir`, `--terraform-dir` | no | `terraform/`, checksums |
+| `generate-iac` | `--output-dir`, `--terraform-dir` | no | `terraform/` (`README.md`, `modules/`, `envs/<env>/`), checksums; project tags read from `manifest.json` |
 | `generate-docs` | `--output-dir` | no | `docs/infrastructure.md` (runs analysis in memory), checksums |
 | `verify` | `--output-dir` | no | nothing |
 | `mcp-serve` | `--cache-dir` (required) | no | nothing |

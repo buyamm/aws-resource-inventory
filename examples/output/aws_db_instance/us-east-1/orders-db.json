@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:rds:us-east-1:123456789012:db:orders-db",
-  "generated_at": "2026-10-16T01:29:14.603213Z",
+  "generated_at": "2026-10-16T02:05:50.002193Z",
   "metadata": {
     "api_version": "2014-10-31",
-    "checksum": "5d2f824784a5e385d7da20865f7d48f05f8d32856a83bf9271ec4f2938d1072a",
-    "collected_at": "2026-10-16T01:29:14Z",
+    "checksum": "3a7f9a2e57b95b22fec3a2e5dd6ef79df0086f895ef59d43d64cf664f4e7eed0",
+    "collected_at": "2026-10-16T02:05:49Z",
     "collector_version": "0.1.0"
   },
   "region": "us-east-1",
@@ -36,11 +36,11 @@
           "SubnetAvailabilityZone": {
             "Name": "us-east-1a"
           },
-          "SubnetIdentifier": "subnet-30a75c4f",
+          "SubnetIdentifier": "subnet-4d897e3d",
           "SubnetStatus": "Active"
         }
       ],
-      "VpcId": "vpc-7c4f2f1d"
+      "VpcId": "vpc-660d36ef"
     },
     "DbInstancePort": 5432,
     "DbiResourceId": "db-M5ENSHXFPU6XHZ4G4ZEI5QIO2U",
@@ -53,7 +53,7 @@
     "Engine": "postgres",
     "EngineVersion": "9.3.3",
     "IAMDatabaseAuthenticationEnabled": false,
-    "InstanceCreateTime": "2026-10-16T01:29:12.979000+00:00",
+    "InstanceCreateTime": "2026-10-16T02:05:48.380000+00:00",
     "LicenseModel": "None",
     "MasterUsername": "orders_admin",
     "MultiAZ": false,
@@ -79,7 +79,7 @@
     "VpcSecurityGroups": [
       {
         "Status": "active",
-        "VpcSecurityGroupId": "sg-2edfb301c8a045aa8"
+        "VpcSecurityGroupId": "sg-2bf145296ea5159ab"
       }
     ]
   }

@@ -1,17 +1,17 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:states:us-east-1:123456789012:stateMachine:order-flow",
-  "generated_at": "2026-10-16T01:29:14.603213Z",
+  "generated_at": "2026-10-16T02:05:50.002193Z",
   "metadata": {
     "api_version": "2016-11-23",
-    "checksum": "5247039d16b12665dfea113e754a6077d980966c697d8d6c503e8b29a87e219a",
-    "collected_at": "2026-10-16T01:29:14Z",
+    "checksum": "e25ed9c8e0ec9225fb6050cbe87d136cd4ce7fc7997afe2cf222fab23596f69b",
+    "collected_at": "2026-10-16T02:05:49Z",
     "collector_version": "0.1.0"
   },
   "region": "us-east-1",
   "resource_type": "aws_sfn_state_machine",
   "specifications": {
-    "creationDate": "2026-10-16T01:29:12.824000+00:00",
+    "creationDate": "2026-10-16T02:05:48.364000+00:00",
     "definition": "{\"StartAt\": \"Process\", \"States\": {\"Process\": {\"Type\": \"Task\", \"Resource\": \"arn:aws:lambda:us-east-1:123456789012:function:order-processor\", \"End\": true}}}",
     "name": "order-flow",
     "roleArn": "arn:aws:iam::123456789012:role/order-lambda-role",

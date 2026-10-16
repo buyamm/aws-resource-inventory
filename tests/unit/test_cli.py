@@ -300,7 +300,7 @@ def test_cli_offline_pipeline_after_collect_req_8_3(runner, tmp_path, sample_acc
     assert (out / "analysis" / "analysis.json").is_file()
     assert (out / "analysis" / "analysis.md").is_file()
     assert (out / "diagrams" / "architecture.drawio").is_file()
-    assert (out / "terraform" / "import.sh").is_file()
+    assert (out / "terraform" / "envs" / "default" / "imports.tf").is_file()
     assert "[cite:" in (out / "docs" / "infrastructure.md").read_text(encoding="utf-8")
 
     result = runner.invoke(cli, ["verify", "--output-dir", str(out)])
@@ -472,3 +472,16 @@ def test_cli_analyze_export_png_req_15_4(
     calls.clear()
     assert runner.invoke(cli, ["analyze", "--output-dir", str(out)]).exit_code == 0
     assert calls == []
+
+
+def test_cli_generate_iac_reads_project_tags_from_manifest_req_16_2(tmp_path):
+    """generate-iac strips the collection scope's project tag values from resource names."""
+    from src.cli import _manifest_project_tags
+
+    assert _manifest_project_tags(tmp_path) == {}
+    (tmp_path / "manifest.json").write_text(
+        json.dumps({"scope": {"project_tags": {"team": "acme"}}}), encoding="utf-8"
+    )
+    assert _manifest_project_tags(tmp_path) == {"team": "acme"}
+    (tmp_path / "manifest.json").write_text("not json", encoding="utf-8")
+    assert _manifest_project_tags(tmp_path) == {}

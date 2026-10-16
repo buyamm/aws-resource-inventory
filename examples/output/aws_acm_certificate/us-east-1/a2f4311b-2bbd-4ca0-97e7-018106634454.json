@@ -1,0 +1,68 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:acm:us-east-1:123456789012:certificate/a2f4311b-2bbd-4ca0-97e7-018106634454",
+  "generated_at": "2026-10-16T02:05:50.002193Z",
+  "metadata": {
+    "api_version": "2015-12-08",
+    "checksum": "0acb5d0b3101f2b8d89d323abf5c33abf0c1478b9095d13802384b39811de876",
+    "collected_at": "2026-10-16T02:05:49Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_acm_certificate",
+  "specifications": {
+    "CertificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/a2f4311b-2bbd-4ca0-97e7-018106634454",
+    "CreatedAt": "2026-10-16T02:05:48.534219+07:00",
+    "DomainName": "shop.example.com",
+    "DomainValidationOptions": [
+      {
+        "DomainName": "shop.example.com",
+        "ResourceRecord": {
+          "Name": "_d930b28be6c5927595552b219965053e.shop.example.com.",
+          "Type": "CNAME",
+          "Value": "_c9edd76ee4a0e2a74388032f3861cc50.ykybfrwcxw.acm-validations.aws."
+        },
+        "ValidationDomain": "shop.example.com",
+        "ValidationMethod": "DNS",
+        "ValidationStatus": "PENDING_VALIDATION"
+      },
+      {
+        "DomainName": "api.example.com",
+        "ResourceRecord": {
+          "Name": "_d930b28be6c5927595552b219965053e.api.example.com.",
+          "Type": "CNAME",
+          "Value": "_c9edd76ee4a0e2a74388032f3861cc50.ykybfrwcxw.acm-validations.aws."
+        },
+        "ValidationDomain": "api.example.com",
+        "ValidationMethod": "DNS",
+        "ValidationStatus": "PENDING_VALIDATION"
+      }
+    ],
+    "ExtendedKeyUsages": [],
+    "InUseBy": [],
+    "IssuedAt": "2026-10-16T02:05:48.534219+07:00",
+    "Issuer": "Amazon",
+    "KeyAlgorithm": "RSA_2048",
+    "NotAfter": "2027-10-16T02:05:48+07:00",
+    "NotBefore": "2026-10-16T02:05:48+07:00",
+    "Options": {
+      "CertificateTransparencyLoggingPreference": "ENABLED"
+    },
+    "RenewalEligibility": "INELIGIBLE",
+    "Serial": "193746196831395315679682213309026386579125191715",
+    "SignatureAlgorithm": "SHA512WITHRSA",
+    "Status": "PENDING_VALIDATION",
+    "Subject": "CN=shop.example.com",
+    "SubjectAlternativeNames": [
+      "shop.example.com",
+      "api.example.com"
+    ],
+    "Tags": [
+      {
+        "Key": "service",
+        "Value": "storefront"
+      }
+    ],
+    "Type": "AMAZON_ISSUED"
+  }
+}

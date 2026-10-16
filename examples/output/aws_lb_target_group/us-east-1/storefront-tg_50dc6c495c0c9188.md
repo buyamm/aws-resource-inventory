@@ -8,7 +8,7 @@
 | ARN               | arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188 |
 | Region            | us-east-1                                                                                      |
 | Account ID        | 123456789012                                                                                   |
-| Collected At      | 2026-10-16T01:29:14Z                                                                           |
+| Collected At      | 2026-10-16T02:05:49Z                                                                           |
 | Collector Version | 0.1.0                                                                                          |
 
 
@@ -31,7 +31,7 @@
 | TargetGroupName            | storefront-tg                                                                                  |
 | TargetType                 | ip                                                                                             |
 | UnhealthyThresholdCount    | 2                                                                                              |
-| VpcId                      | vpc-7c4f2f1d                                                                                   |
+| VpcId                      | vpc-660d36ef                                                                                   |
 
 
 ## Resource Tags

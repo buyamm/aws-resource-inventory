@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:iam::123456789012:role/storefront-task-role",
-  "generated_at": "2026-10-16T01:29:14.603213Z",
+  "generated_at": "2026-10-16T02:05:50.002193Z",
   "metadata": {
     "api_version": "2010-05-08",
-    "checksum": "b346f49fc97aa6d002a5b8d5164c584f7f17063eb049a1777cc55a3d1e9538de",
-    "collected_at": "2026-10-16T01:29:14Z",
+    "checksum": "020747f16984437f64e8a34ecaa951ff5838c4b063fafc6b2cfe751e290c9416",
+    "collected_at": "2026-10-16T02:05:49Z",
     "collector_version": "0.1.0"
   },
   "region": "global",
@@ -25,11 +25,11 @@
       "Version": "2012-10-17"
     },
     "AttachedPolicies": [],
-    "CreateDate": "2026-10-16T01:29:13.243000+00:00",
+    "CreateDate": "2026-10-16T02:05:48.669000+00:00",
     "InlinePolicies": {},
     "MaxSessionDuration": 3600,
     "Path": "/",
-    "RoleId": "AROARZPUZDIKEO4SY26UU",
+    "RoleId": "AROARZPUZDIKKIKVH42PU",
     "RoleLastUsed": {},
     "RoleName": "storefront-task-role",
     "Tags": [

@@ -2,7 +2,7 @@
   "GetRole": {
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Fri, 16 Oct 2026 08:29:14 GMT",
+        "date": "Fri, 16 Oct 2026 09:05:49 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,
@@ -24,10 +24,10 @@
         ],
         "Version": "2012-10-17"
       },
-      "CreateDate": "2026-10-16T01:29:13.243000+00:00",
+      "CreateDate": "2026-10-16T02:05:48.669000+00:00",
       "MaxSessionDuration": 3600,
       "Path": "/",
-      "RoleId": "AROARZPUZDIKEO4SY26UU",
+      "RoleId": "AROARZPUZDIKKIKVH42PU",
       "RoleLastUsed": {},
       "RoleName": "storefront-task-role",
       "Tags": [
@@ -43,7 +43,7 @@
     "IsTruncated": false,
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Fri, 16 Oct 2026 08:29:14 GMT",
+        "date": "Fri, 16 Oct 2026 09:05:49 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,
@@ -57,7 +57,7 @@
     "PolicyNames": [],
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Fri, 16 Oct 2026 08:29:14 GMT",
+        "date": "Fri, 16 Oct 2026 09:05:49 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,

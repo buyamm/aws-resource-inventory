@@ -1,0 +1,116 @@
+{
+  "DescribeSecurityGroupRules": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Fri, 16 Oct 2026 09:05:49 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": null,
+      "RetryAttempts": 0
+    },
+    "SecurityGroupRules": [
+      {
+        "CidrIpv4": "0.0.0.0/0",
+        "FromPort": 22,
+        "GroupId": "sg-2bf145296ea5159ab",
+        "GroupOwnerId": "123456789012",
+        "IpProtocol": "tcp",
+        "IsEgress": false,
+        "SecurityGroupRuleId": "sgr-10daa5d732bb0dd4f",
+        "Tags": [],
+        "ToPort": 22
+      },
+      {
+        "FromPort": 5432,
+        "GroupId": "sg-2bf145296ea5159ab",
+        "GroupOwnerId": "123456789012",
+        "IpProtocol": "tcp",
+        "IsEgress": false,
+        "ReferencedGroupInfo": {
+          "GroupId": "sg-12874fb82c9db66ed",
+          "UserId": "123456789012"
+        },
+        "SecurityGroupRuleId": "sgr-0b71b21c710e9b06f",
+        "Tags": [],
+        "ToPort": 5432
+      },
+      {
+        "CidrIpv4": "0.0.0.0/0",
+        "FromPort": -1,
+        "GroupId": "sg-2bf145296ea5159ab",
+        "GroupOwnerId": "123456789012",
+        "IpProtocol": "-1",
+        "IsEgress": true,
+        "SecurityGroupRuleId": "sgr-83596752ef1fde5e1",
+        "Tags": [],
+        "ToPort": -1
+      }
+    ]
+  },
+  "DescribeSecurityGroups": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Fri, 16 Oct 2026 09:05:49 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "59dbff89-35bd-4eac-99ed-be587EXAMPLE",
+      "RetryAttempts": 0
+    },
+    "SecurityGroups": [
+      {
+        "Description": "Web tier",
+        "GroupId": "sg-2bf145296ea5159ab",
+        "GroupName": "orders-web-sg",
+        "IpPermissions": [
+          {
+            "FromPort": 22,
+            "IpProtocol": "tcp",
+            "IpRanges": [
+              {
+                "CidrIp": "0.0.0.0/0"
+              }
+            ],
+            "Ipv6Ranges": [],
+            "PrefixListIds": [],
+            "ToPort": 22,
+            "UserIdGroupPairs": []
+          },
+          {
+            "FromPort": 5432,
+            "IpProtocol": "tcp",
+            "IpRanges": [],
+            "Ipv6Ranges": [],
+            "PrefixListIds": [],
+            "ToPort": 5432,
+            "UserIdGroupPairs": [
+              {
+                "GroupId": "sg-12874fb82c9db66ed",
+                "UserId": "123456789012"
+              }
+            ]
+          }
+        ],
+        "IpPermissionsEgress": [
+          {
+            "IpProtocol": "-1",
+            "IpRanges": [
+              {
+                "CidrIp": "0.0.0.0/0"
+              }
+            ],
+            "Ipv6Ranges": [],
+            "PrefixListIds": [],
+            "UserIdGroupPairs": []
+          }
+        ],
+        "OwnerId": "123456789012",
+        "Tags": [],
+        "VpcId": "vpc-660d36ef"
+      }
+    ]
+  }
+}
