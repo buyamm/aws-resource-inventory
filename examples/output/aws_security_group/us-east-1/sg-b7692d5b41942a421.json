@@ -1,0 +1,114 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-b7692d5b41942a421",
+  "generated_at": "2026-10-16T02:30:23.985216Z",
+  "metadata": {
+    "api_version": "2016-11-15",
+    "checksum": "56656818c7d04193e800cb50facffd63d837bfea111816bf862bd38f9d0be966",
+    "collected_at": "2026-10-16T02:30:23Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_security_group",
+  "specifications": {
+    "Description": "Storefront tasks and cache",
+    "GroupId": "sg-b7692d5b41942a421",
+    "GroupName": "storefront-app-sg",
+    "IpPermissions": [
+      {
+        "FromPort": 80,
+        "IpProtocol": "tcp",
+        "IpRanges": [],
+        "Ipv6Ranges": [],
+        "PrefixListIds": [],
+        "ToPort": 80,
+        "UserIdGroupPairs": [
+          {
+            "GroupId": "sg-e351ba83453fe3b63",
+            "UserId": "123456789012"
+          }
+        ]
+      },
+      {
+        "FromPort": 6379,
+        "IpProtocol": "tcp",
+        "IpRanges": [],
+        "Ipv6Ranges": [],
+        "PrefixListIds": [],
+        "ToPort": 6379,
+        "UserIdGroupPairs": [
+          {
+            "GroupId": "sg-b7692d5b41942a421",
+            "UserId": "123456789012"
+          }
+        ]
+      }
+    ],
+    "IpPermissionsEgress": [
+      {
+        "IpProtocol": "-1",
+        "IpRanges": [
+          {
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "Ipv6Ranges": [],
+        "PrefixListIds": [],
+        "UserIdGroupPairs": []
+      }
+    ],
+    "OwnerId": "123456789012",
+    "SecurityGroupRules": [
+      {
+        "FromPort": 6379,
+        "GroupId": "sg-b7692d5b41942a421",
+        "GroupOwnerId": "123456789012",
+        "IpProtocol": "tcp",
+        "IsEgress": false,
+        "ReferencedGroupInfo": {
+          "GroupId": "sg-b7692d5b41942a421",
+          "UserId": "123456789012"
+        },
+        "SecurityGroupRuleId": "sgr-9d0c8cdd25bf9e25b",
+        "Tags": [],
+        "ToPort": 6379
+      },
+      {
+        "FromPort": 80,
+        "GroupId": "sg-b7692d5b41942a421",
+        "GroupOwnerId": "123456789012",
+        "IpProtocol": "tcp",
+        "IsEgress": false,
+        "ReferencedGroupInfo": {
+          "GroupId": "sg-e351ba83453fe3b63",
+          "UserId": "123456789012"
+        },
+        "SecurityGroupRuleId": "sgr-fe3ba9b2082dd23dc",
+        "Tags": [],
+        "ToPort": 80
+      },
+      {
+        "CidrIpv4": "0.0.0.0/0",
+        "FromPort": -1,
+        "GroupId": "sg-b7692d5b41942a421",
+        "GroupOwnerId": "123456789012",
+        "IpProtocol": "-1",
+        "IsEgress": true,
+        "SecurityGroupRuleId": "sgr-ffb44cdf38aa3f177",
+        "Tags": [],
+        "ToPort": -1
+      }
+    ],
+    "Tags": [
+      {
+        "Key": "Name",
+        "Value": "storefront-app"
+      },
+      {
+        "Key": "service",
+        "Value": "storefront"
+      }
+    ],
+    "VpcId": "vpc-040f0f81"
+  }
+}

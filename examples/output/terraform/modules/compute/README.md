@@ -7,10 +7,10 @@ ECR, launch templates, Auto Scaling groups, EC2 instances, ECS, Lambda, Step Fun
 | Address | Source specification | ARN |
 |---|---|---|
 | `aws_ecr_repository.web` | `aws_ecr_repository/us-east-1/storefront-web.json` | `arn:aws:ecr:us-east-1:123456789012:repository/storefront-web` |
-| `aws_launch_template.worker` | `aws_launch_template/us-east-1/lt-bad06a08aee200bf2.json` | `arn:aws:ec2:us-east-1:123456789012:launch-template/lt-bad06a08aee200bf2` |
-| `aws_autoscaling_group.workers` | `aws_autoscaling_group/us-east-1/storefront-workers.json` | `arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:fddff19a-c8c9-4401-9bef-23ac1c8a6198:autoScalingGroupName/storefront-workers` |
-| `aws_instance.i_b892b745a8c407b02` | `aws_instance/us-east-1/i-b892b745a8c407b02.json` | `arn:aws:ec2:us-east-1:123456789012:instance/i-b892b745a8c407b02` |
-| `aws_instance.orders_web_1` | `aws_instance/us-east-1/i-5e2db2f538089c39d.json` | `arn:aws:ec2:us-east-1:123456789012:instance/i-5e2db2f538089c39d` |
+| `aws_launch_template.worker` | `aws_launch_template/us-east-1/lt-4fe346ea9a7834369.json` | `arn:aws:ec2:us-east-1:123456789012:launch-template/lt-4fe346ea9a7834369` |
+| `aws_autoscaling_group.workers` | `aws_autoscaling_group/us-east-1/storefront-workers.json` | `arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:f970678c-021d-4578-9657-1164773d5b3d:autoScalingGroupName/storefront-workers` |
+| `aws_instance.i_3bd88a7f905f64de6` | `aws_instance/us-east-1/i-3bd88a7f905f64de6.json` | `arn:aws:ec2:us-east-1:123456789012:instance/i-3bd88a7f905f64de6` |
+| `aws_instance.orders_web_1` | `aws_instance/us-east-1/i-565d781fe501611ba.json` | `arn:aws:ec2:us-east-1:123456789012:instance/i-565d781fe501611ba` |
 | `aws_ecs_cluster.main` | `aws_ecs_cluster/us-east-1/storefront.json` | `arn:aws:ecs:us-east-1:123456789012:cluster/storefront` |
 | `aws_ecs_task_definition.web_1` | `aws_ecs_task_definition/us-east-1/storefront-web_1.json` | `arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1` |
 | `aws_ecs_service.web` | `aws_ecs_service/us-east-1/storefront_web.json` | `arn:aws:ecs:us-east-1:123456789012:service/storefront/web` |
@@ -40,7 +40,7 @@ ECR, launch templates, Auto Scaling groups, EC2 instances, ECS, Lambda, Step Fun
 | `ecs_cluster_arns` | `main` |
 | `ecs_service_ids` | `web` |
 | `ecs_task_definition_arns` | `web_1` |
-| `instance_ids` | `i_b892b745a8c407b02`, `orders_web_1` |
+| `instance_ids` | `i_3bd88a7f905f64de6`, `orders_web_1` |
 | `lambda_function_arns` | `order_processor` |
 | `launch_template_ids` | `worker` |
 | `scheduler_schedule_arns` | `cleanup` |

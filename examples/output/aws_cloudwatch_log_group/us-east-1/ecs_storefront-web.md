@@ -8,7 +8,7 @@
 | ARN               | arn:aws:logs:us-east-1:123456789012:log-group:/ecs/storefront-web |
 | Region            | us-east-1                                                         |
 | Account ID        | 123456789012                                                      |
-| Collected At      | 2026-10-16T02:05:49Z                                              |
+| Collected At      | 2026-10-16T02:30:23Z                                              |
 | Collector Version | 0.1.0                                                             |
 
 
@@ -17,7 +17,7 @@
 | Configuration Key | Value                                                             |
 | ----------------- | ----------------------------------------------------------------- |
 | arn               | arn:aws:logs:us-east-1:123456789012:log-group:/ecs/storefront-web |
-| creationTime      | 1792116348681                                                     |
+| creationTime      | 1792117822721                                                     |
 | logGroupName      | /ecs/storefront-web                                               |
 | metricFilterCount | 0                                                                 |
 | retentionInDays   | 30                                                                |

@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:iam::123456789012:role/storefront-scheduler-role",
-  "generated_at": "2026-10-16T02:05:50.002193Z",
+  "generated_at": "2026-10-16T02:30:23.985216Z",
   "metadata": {
     "api_version": "2010-05-08",
-    "checksum": "4cc0970c767c92302493ec8b1ffb5141aa2414a0861dac66ce483b80118b422d",
-    "collected_at": "2026-10-16T02:05:49Z",
+    "checksum": "70e7c582d877110511667c46b2abc1abaab4cdb16974398c93c6faf8799d545f",
+    "collected_at": "2026-10-16T02:30:23Z",
     "collector_version": "0.1.0"
   },
   "region": "global",
@@ -25,11 +25,11 @@
       "Version": "2012-10-17"
     },
     "AttachedPolicies": [],
-    "CreateDate": "2026-10-16T02:05:48.676000+00:00",
+    "CreateDate": "2026-10-16T02:30:22.716000+00:00",
     "InlinePolicies": {},
     "MaxSessionDuration": 3600,
     "Path": "/",
-    "RoleId": "AROARZPUZDIKK7VWUBKWN",
+    "RoleId": "AROARZPUZDIKEZCMGJJ5Q",
     "RoleLastUsed": {},
     "RoleName": "storefront-scheduler-role",
     "Tags": [

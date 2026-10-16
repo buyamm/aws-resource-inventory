@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188",
-  "generated_at": "2026-10-16T02:05:50.002193Z",
+  "generated_at": "2026-10-16T02:30:23.985216Z",
   "metadata": {
     "api_version": "2015-12-01",
-    "checksum": "d0ab3e3ccd508c5a418179799dfad5ca8e10b59264fad0f42363e2de3d316478",
-    "collected_at": "2026-10-16T02:05:49Z",
+    "checksum": "d7e36f9387051d7872aa624776285ddd6a1ef7773352890f19cc1530fb0bea92",
+    "collected_at": "2026-10-16T02:30:23Z",
     "collector_version": "0.1.0"
   },
   "region": "us-east-1",
@@ -68,6 +68,6 @@
     "TargetGroupName": "storefront-tg",
     "TargetType": "ip",
     "UnhealthyThresholdCount": 2,
-    "VpcId": "vpc-660d36ef"
+    "VpcId": "vpc-040f0f81"
   }
 }

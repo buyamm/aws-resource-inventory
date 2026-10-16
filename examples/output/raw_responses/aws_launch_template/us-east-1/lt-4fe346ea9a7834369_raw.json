@@ -1,0 +1,81 @@
+{
+  "DescribeLaunchTemplateVersions": {
+    "LaunchTemplateVersions": [
+      {
+        "CreateTime": "2026-10-16T02:30:22+00:00",
+        "CreatedBy": "arn:aws:iam::123456789012:root",
+        "DefaultVersion": false,
+        "LaunchTemplateData": {
+          "IamInstanceProfile": {
+            "Name": "orders-app-role"
+          },
+          "ImageId": "ami-12c6146b",
+          "InstanceType": "t3.small",
+          "SecurityGroupIds": [
+            "sg-b7692d5b41942a421"
+          ],
+          "TagSpecifications": [
+            {
+              "ResourceType": "launch-template",
+              "Tags": [
+                {
+                  "Key": "Name",
+                  "Value": "storefront-worker"
+                },
+                {
+                  "Key": "service",
+                  "Value": "storefront"
+                }
+              ]
+            }
+          ]
+        },
+        "LaunchTemplateId": "lt-4fe346ea9a7834369",
+        "LaunchTemplateName": "storefront-worker",
+        "VersionDescription": "",
+        "VersionNumber": 1
+      }
+    ],
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Fri, 16 Oct 2026 09:30:23 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "65cadec1-b364-4354-8ca8-4176dexample",
+      "RetryAttempts": 0
+    }
+  },
+  "DescribeLaunchTemplates": {
+    "LaunchTemplates": [
+      {
+        "CreateTime": "2026-10-16T02:30:22+00:00",
+        "CreatedBy": "arn:aws:iam::123456789012:root",
+        "DefaultVersionNumber": 1,
+        "LatestVersionNumber": 1,
+        "LaunchTemplateId": "lt-4fe346ea9a7834369",
+        "LaunchTemplateName": "storefront-worker",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "storefront-worker"
+          },
+          {
+            "Key": "service",
+            "Value": "storefront"
+          }
+        ]
+      }
+    ],
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Fri, 16 Oct 2026 09:30:23 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RetryAttempts": 0
+    }
+  }
+}

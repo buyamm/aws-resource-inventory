@@ -1,0 +1,129 @@
+{
+  "DescribeSecurityGroupRules": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Fri, 16 Oct 2026 09:30:23 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": null,
+      "RetryAttempts": 0
+    },
+    "SecurityGroupRules": [
+      {
+        "FromPort": 80,
+        "GroupId": "sg-b7692d5b41942a421",
+        "GroupOwnerId": "123456789012",
+        "IpProtocol": "tcp",
+        "IsEgress": false,
+        "ReferencedGroupInfo": {
+          "GroupId": "sg-e351ba83453fe3b63",
+          "UserId": "123456789012"
+        },
+        "SecurityGroupRuleId": "sgr-fe3ba9b2082dd23dc",
+        "Tags": [],
+        "ToPort": 80
+      },
+      {
+        "FromPort": 6379,
+        "GroupId": "sg-b7692d5b41942a421",
+        "GroupOwnerId": "123456789012",
+        "IpProtocol": "tcp",
+        "IsEgress": false,
+        "ReferencedGroupInfo": {
+          "GroupId": "sg-b7692d5b41942a421",
+          "UserId": "123456789012"
+        },
+        "SecurityGroupRuleId": "sgr-9d0c8cdd25bf9e25b",
+        "Tags": [],
+        "ToPort": 6379
+      },
+      {
+        "CidrIpv4": "0.0.0.0/0",
+        "FromPort": -1,
+        "GroupId": "sg-b7692d5b41942a421",
+        "GroupOwnerId": "123456789012",
+        "IpProtocol": "-1",
+        "IsEgress": true,
+        "SecurityGroupRuleId": "sgr-ffb44cdf38aa3f177",
+        "Tags": [],
+        "ToPort": -1
+      }
+    ]
+  },
+  "DescribeSecurityGroups": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Fri, 16 Oct 2026 09:30:23 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "59dbff89-35bd-4eac-99ed-be587EXAMPLE",
+      "RetryAttempts": 0
+    },
+    "SecurityGroups": [
+      {
+        "Description": "Storefront tasks and cache",
+        "GroupId": "sg-b7692d5b41942a421",
+        "GroupName": "storefront-app-sg",
+        "IpPermissions": [
+          {
+            "FromPort": 80,
+            "IpProtocol": "tcp",
+            "IpRanges": [],
+            "Ipv6Ranges": [],
+            "PrefixListIds": [],
+            "ToPort": 80,
+            "UserIdGroupPairs": [
+              {
+                "GroupId": "sg-e351ba83453fe3b63",
+                "UserId": "123456789012"
+              }
+            ]
+          },
+          {
+            "FromPort": 6379,
+            "IpProtocol": "tcp",
+            "IpRanges": [],
+            "Ipv6Ranges": [],
+            "PrefixListIds": [],
+            "ToPort": 6379,
+            "UserIdGroupPairs": [
+              {
+                "GroupId": "sg-b7692d5b41942a421",
+                "UserId": "123456789012"
+              }
+            ]
+          }
+        ],
+        "IpPermissionsEgress": [
+          {
+            "IpProtocol": "-1",
+            "IpRanges": [
+              {
+                "CidrIp": "0.0.0.0/0"
+              }
+            ],
+            "Ipv6Ranges": [],
+            "PrefixListIds": [],
+            "UserIdGroupPairs": []
+          }
+        ],
+        "OwnerId": "123456789012",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "storefront-app"
+          },
+          {
+            "Key": "service",
+            "Value": "storefront"
+          }
+        ],
+        "VpcId": "vpc-040f0f81"
+      }
+    ]
+  }
+}

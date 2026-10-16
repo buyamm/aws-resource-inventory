@@ -2,7 +2,7 @@
   "DescribeServices": {
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Fri, 16 Oct 2026 09:05:49 GMT",
+        "date": "Fri, 16 Oct 2026 09:30:23 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,
@@ -15,15 +15,15 @@
         "clusterArn": "arn:aws:ecs:us-east-1:123456789012:cluster/storefront",
         "deployments": [
           {
-            "createdAt": "2026-10-16T09:05:48.701159+07:00",
+            "createdAt": "2026-10-16T09:30:22.742405+07:00",
             "desiredCount": 2,
-            "id": "ecs-svc/973443177218465221",
+            "id": "ecs-svc/36630206401078120",
             "launchType": "FARGATE",
             "pendingCount": 2,
             "runningCount": 0,
             "status": "PRIMARY",
             "taskDefinition": "arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1",
-            "updatedAt": "2026-10-16T09:05:48.701164+07:00"
+            "updatedAt": "2026-10-16T09:30:22.742411+07:00"
           }
         ],
         "desiredCount": 2,
@@ -40,10 +40,10 @@
           "awsvpcConfiguration": {
             "assignPublicIp": "DISABLED",
             "securityGroups": [
-              "sg-12874fb82c9db66ed"
+              "sg-b7692d5b41942a421"
             ],
             "subnets": [
-              "subnet-4d897e3d"
+              "subnet-7f177dcb"
             ]
           }
         },

@@ -4,8 +4,8 @@
 # every resource names its source specification file.
 
 # Resource: aws_route53_zone.example_com
-# Source specification: aws_route53_zone/global/ACA19C6IIUY2GFZ.json
-# ARN: arn:aws:route53:::hostedzone/ACA19C6IIUY2GFZ
+# Source specification: aws_route53_zone/global/F2D50YHDFNN6736.json
+# ARN: arn:aws:route53:::hostedzone/F2D50YHDFNN6736
 # Region: global
 # mapped: Config, Id, Name, ResourceRecordSets, Tags
 # unmapped: CallerReference
@@ -37,15 +37,15 @@ resource "aws_route53_record" "example_com_shop_a" {
   type    = "A"
 
   alias {
-    name                   = "uyrz52o28gvy9.cloudfront.net"
+    name                   = "egydycao61es5.cloudfront.net"
     zone_id                = "Z2FDTNDATAQYW2"
     evaluate_target_health = false
   }
 }
 
 # Resource: aws_acm_certificate.shop_example_com
-# Source specification: aws_acm_certificate/us-east-1/a2f4311b-2bbd-4ca0-97e7-018106634454.json
-# ARN: arn:aws:acm:us-east-1:123456789012:certificate/a2f4311b-2bbd-4ca0-97e7-018106634454
+# Source specification: aws_acm_certificate/us-east-1/1492cb3f-a6df-47d4-892f-f87748ae6367.json
+# ARN: arn:aws:acm:us-east-1:123456789012:certificate/1492cb3f-a6df-47d4-892f-f87748ae6367
 # Region: us-east-1
 # mapped: CertificateArn, DomainName, DomainValidationOptions, KeyAlgorithm, Options, SubjectAlternativeNames, Tags, Type
 # unmapped: CreatedAt
@@ -62,7 +62,7 @@ resource "aws_route53_record" "example_com_shop_a" {
 # unmapped: Subject
 resource "aws_acm_certificate" "shop_example_com" {
   domain_name               = "shop.example.com"
-  subject_alternative_names = ["shop.example.com", "api.example.com"]
+  subject_alternative_names = ["api.example.com", "shop.example.com"]
   validation_method         = "DNS"
   key_algorithm             = "RSA_2048"
 
@@ -76,8 +76,8 @@ resource "aws_acm_certificate" "shop_example_com" {
 }
 
 # Resource: aws_wafv2_web_acl.waf
-# Source specification: aws_wafv2_web_acl/global/storefront-waf_d06f4b4d-1ec6-42a4-81fa-1582637eb32d.json
-# ARN: arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/d06f4b4d-1ec6-42a4-81fa-1582637eb32d
+# Source specification: aws_wafv2_web_acl/global/storefront-waf_b5e7fc2f-fa34-44a4-8362-0cb65c2450a9.json
+# ARN: arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/b5e7fc2f-fa34-44a4-8362-0cb65c2450a9
 # Region: global
 # mapped: ARN, DefaultAction, Description, Id, Name, Tags, VisibilityConfig
 # unmapped: Rules
@@ -102,8 +102,8 @@ resource "aws_wafv2_web_acl" "waf" {
 }
 
 # Resource: aws_cloudfront_distribution.shop_example_com
-# Source specification: aws_cloudfront_distribution/global/X5E0C4JHPHC9C.json
-# ARN: arn:aws:cloudfront::123456789012:distribution/X5E0C4JHPHC9C
+# Source specification: aws_cloudfront_distribution/global/RXBBW1AS174FR.json
+# ARN: arn:aws:cloudfront::123456789012:distribution/RXBBW1AS174FR
 # Region: global
 # mapped: ARN, DistributionConfig, Id, Tags
 # unmapped: ActiveTrustedKeyGroups
@@ -232,8 +232,8 @@ resource "aws_lb_target_group" "tg" {
 }
 
 # Resource: aws_lb_listener.https_443
-# Source specification: aws_lb_listener/us-east-1/app_storefront-alb_50dc6c495c0c9188_4434501777232.json
-# ARN: arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434501777232
+# Source specification: aws_lb_listener/us-east-1/app_storefront-alb_50dc6c495c0c9188_4434489454224.json
+# ARN: arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434489454224
 # Region: us-east-1
 # mapped: AlpnPolicy, Certificates, DefaultActions, ListenerArn, LoadBalancerArn, Port, Protocol, SslPolicy, Tags
 resource "aws_lb_listener" "https_443" {

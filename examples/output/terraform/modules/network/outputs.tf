@@ -17,7 +17,7 @@ output "route_table_ids" {
   value = {
     private      = aws_route_table.private.id
     public       = aws_route_table.public.id
-    rtb_561c82c8 = aws_route_table.rtb_561c82c8.id
+    rtb_8fc56d9e = aws_route_table.rtb_8fc56d9e.id
   }
 }
 

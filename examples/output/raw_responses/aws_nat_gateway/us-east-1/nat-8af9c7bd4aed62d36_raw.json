@@ -1,0 +1,43 @@
+{
+  "DescribeNatGateways": {
+    "NatGateways": [
+      {
+        "ConnectivityType": "None",
+        "CreateTime": "2026-10-16T02:30:22.494000+00:00",
+        "NatGatewayAddresses": [
+          {
+            "AllocationId": "eipalloc-5131c8a1",
+            "AssociationId": "eipassoc-19b04446",
+            "NetworkInterfaceId": "eni-5b7086f3",
+            "PrivateIp": "10.141.29.253",
+            "PublicIp": "127.187.195.255"
+          }
+        ],
+        "NatGatewayId": "nat-8af9c7bd4aed62d36",
+        "State": "available",
+        "SubnetId": "subnet-084ef767",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "storefront-nat"
+          },
+          {
+            "Key": "service",
+            "Value": "storefront"
+          }
+        ],
+        "VpcId": "vpc-040f0f81"
+      }
+    ],
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Fri, 16 Oct 2026 09:30:23 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "bfed02c6-dae9-47c0-86a2-example",
+      "RetryAttempts": 0
+    }
+  }
+}

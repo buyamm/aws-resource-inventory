@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:sns:us-east-1:123456789012:storefront-events",
-  "generated_at": "2026-10-16T02:05:50.002193Z",
+  "generated_at": "2026-10-16T02:30:23.985216Z",
   "metadata": {
     "api_version": "2010-03-31",
-    "checksum": "548601ead8c0d139994035678b25ea29f8358428cdecb3362678f20675424e08",
-    "collected_at": "2026-10-16T02:05:49Z",
+    "checksum": "85c46fac37281c5ea5cbce517330847d89d0f016a684df45656ed8e647ac2d4d",
+    "collected_at": "2026-10-16T02:30:23Z",
     "collector_version": "0.1.0"
   },
   "region": "us-east-1",
@@ -27,7 +27,7 @@
         "Endpoint": "arn:aws:sqs:us-east-1:123456789012:storefront-orders",
         "Owner": "123456789012",
         "Protocol": "sqs",
-        "SubscriptionArn": "arn:aws:sns:us-east-1:123456789012:storefront-events:54573983-ec87-4ceb-8724-f04719e8c78c",
+        "SubscriptionArn": "arn:aws:sns:us-east-1:123456789012:storefront-events:e21eb8bf-e942-4f1a-9e3c-363645db1129",
         "TopicArn": "arn:aws:sns:us-east-1:123456789012:storefront-events"
       }
     ],

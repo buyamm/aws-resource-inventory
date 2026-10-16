@@ -2,7 +2,7 @@
   "DescribeLogGroups": {
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Fri, 16 Oct 2026 09:05:49 GMT",
+        "date": "Fri, 16 Oct 2026 09:30:23 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,
@@ -12,7 +12,7 @@
     "logGroups": [
       {
         "arn": "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor",
-        "creationTime": 1792116348246,
+        "creationTime": 1792117822322,
         "logGroupName": "/aws/lambda/order-processor",
         "metricFilterCount": 0,
         "retentionInDays": 14,
@@ -23,7 +23,7 @@
   "ListTagsLogGroup": {
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Fri, 16 Oct 2026 09:05:49 GMT",
+        "date": "Fri, 16 Oct 2026 09:30:23 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,

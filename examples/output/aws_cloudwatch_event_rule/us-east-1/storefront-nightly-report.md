@@ -8,7 +8,7 @@
 | ARN               | arn:aws:events:us-east-1:123456789012:rule/storefront-nightly-report |
 | Region            | us-east-1                                                            |
 | Account ID        | 123456789012                                                         |
-| Collected At      | 2026-10-16T02:05:49Z                                                 |
+| Collected At      | 2026-10-16T02:30:23Z                                                 |
 | Collector Version | 0.1.0                                                                |
 
 

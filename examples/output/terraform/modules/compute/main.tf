@@ -26,8 +26,8 @@ resource "aws_ecr_repository" "web" {
 }
 
 # Resource: aws_launch_template.worker
-# Source specification: aws_launch_template/us-east-1/lt-bad06a08aee200bf2.json
-# ARN: arn:aws:ec2:us-east-1:123456789012:launch-template/lt-bad06a08aee200bf2
+# Source specification: aws_launch_template/us-east-1/lt-4fe346ea9a7834369.json
+# ARN: arn:aws:ec2:us-east-1:123456789012:launch-template/lt-4fe346ea9a7834369
 # Region: us-east-1
 # mapped: LaunchTemplateData, LaunchTemplateId, LaunchTemplateName, Tags
 # unmapped: CreateTime
@@ -52,7 +52,7 @@ resource "aws_launch_template" "worker" {
 
 # Resource: aws_autoscaling_group.workers
 # Source specification: aws_autoscaling_group/us-east-1/storefront-workers.json
-# ARN: arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:fddff19a-c8c9-4401-9bef-23ac1c8a6198:autoScalingGroupName/storefront-workers
+# ARN: arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:f970678c-021d-4578-9657-1164773d5b3d:autoScalingGroupName/storefront-workers
 # Region: us-east-1
 # mapped: AutoScalingGroupARN, AutoScalingGroupName, AvailabilityZones, CapacityRebalance, DefaultCooldown, DesiredCapacity, HealthCheckGracePeriod, HealthCheckType, LaunchTemplate, LoadBalancerNames, MaxSize, MinSize, NewInstancesProtectedFromScaleIn, ServiceLinkedRoleARN, Tags, TargetGroupARNs, TerminationPolicies, VPCZoneIdentifier
 # unmapped: CreatedTime
@@ -82,9 +82,9 @@ resource "aws_autoscaling_group" "workers" {
   }
 }
 
-# Resource: aws_instance.i_b892b745a8c407b02
-# Source specification: aws_instance/us-east-1/i-b892b745a8c407b02.json
-# ARN: arn:aws:ec2:us-east-1:123456789012:instance/i-b892b745a8c407b02
+# Resource: aws_instance.i_3bd88a7f905f64de6
+# Source specification: aws_instance/us-east-1/i-3bd88a7f905f64de6.json
+# ARN: arn:aws:ec2:us-east-1:123456789012:instance/i-3bd88a7f905f64de6
 # Region: us-east-1
 # mapped: EbsOptimized, ImageId, InstanceId, InstanceType, Monitoring, SecurityGroups, SubnetId, Tags, VpcId
 # unmapped: AmiLaunchIndex
@@ -107,7 +107,7 @@ resource "aws_autoscaling_group" "workers" {
 # unmapped: StateReason
 # unmapped: StateTransitionReason
 # unmapped: VirtualizationType
-resource "aws_instance" "i_b892b745a8c407b02" {
+resource "aws_instance" "i_3bd88a7f905f64de6" {
   ami           = "ami-12c6146b"
   instance_type = "t3.small"
   subnet_id     = var.subnet_ids["orders_private_a"]
@@ -124,8 +124,8 @@ resource "aws_instance" "i_b892b745a8c407b02" {
 }
 
 # Resource: aws_instance.orders_web_1
-# Source specification: aws_instance/us-east-1/i-5e2db2f538089c39d.json
-# ARN: arn:aws:ec2:us-east-1:123456789012:instance/i-5e2db2f538089c39d
+# Source specification: aws_instance/us-east-1/i-565d781fe501611ba.json
+# ARN: arn:aws:ec2:us-east-1:123456789012:instance/i-565d781fe501611ba
 # Region: us-east-1
 # mapped: EbsOptimized, IamInstanceProfile, ImageId, InstanceId, InstanceType, Monitoring, SecurityGroups, SubnetId, Tags, VpcId
 # unmapped: AmiLaunchIndex

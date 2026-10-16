@@ -8,7 +8,7 @@
 | ARN               | arn:aws:iam::123456789012:role/storefront-scheduler-role |
 | Region            | global                                                   |
 | Account ID        | 123456789012                                             |
-| Collected At      | 2026-10-16T02:05:49Z                                     |
+| Collected At      | 2026-10-16T02:30:23Z                                     |
 | Collector Version | 0.1.0                                                    |
 
 
@@ -17,10 +17,10 @@
 | Configuration Key  | Value                                                    |
 | ------------------ | -------------------------------------------------------- |
 | Arn                | arn:aws:iam::123456789012:role/storefront-scheduler-role |
-| CreateDate         | 2026-10-16T02:05:48.676000+00:00                         |
+| CreateDate         | 2026-10-16T02:30:22.716000+00:00                         |
 | MaxSessionDuration | 3600                                                     |
 | Path               | /                                                        |
-| RoleId             | AROARZPUZDIKK7VWUBKWN                                    |
+| RoleId             | AROARZPUZDIKEZCMGJJ5Q                                    |
 | RoleName           | storefront-scheduler-role                                |
 
 

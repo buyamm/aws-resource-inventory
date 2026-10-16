@@ -1,0 +1,62 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-47bf1246",
+  "generated_at": "2026-10-16T02:30:23.985216Z",
+  "metadata": {
+    "api_version": "2016-11-15",
+    "checksum": "bf816db5ab2668109b9ae45277bf153261ed1116a5ae229ef5d53d2e162ad5d1",
+    "collected_at": "2026-10-16T02:30:23Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_route_table",
+  "specifications": {
+    "Associations": [
+      {
+        "AssociationState": {
+          "State": "associated"
+        },
+        "Main": false,
+        "RouteTableAssociationId": "rtbassoc-0ca13bc7",
+        "RouteTableId": "rtb-47bf1246",
+        "SubnetId": "subnet-084ef767"
+      },
+      {
+        "AssociationState": {
+          "State": "associated"
+        },
+        "Main": false,
+        "RouteTableAssociationId": "rtbassoc-c45279ac",
+        "RouteTableId": "rtb-47bf1246",
+        "SubnetId": "subnet-a6f66dc7"
+      }
+    ],
+    "OwnerId": "123456789012",
+    "RouteTableId": "rtb-47bf1246",
+    "Routes": [
+      {
+        "DestinationCidrBlock": "10.0.0.0/16",
+        "GatewayId": "local",
+        "Origin": "CreateRouteTable",
+        "State": "active"
+      },
+      {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": "igw-c94e6ba3",
+        "Origin": "CreateRoute",
+        "State": "active"
+      }
+    ],
+    "Tags": [
+      {
+        "Key": "Name",
+        "Value": "storefront-public"
+      },
+      {
+        "Key": "service",
+        "Value": "storefront"
+      }
+    ],
+    "VpcId": "vpc-040f0f81"
+  }
+}

@@ -15,22 +15,22 @@
     },
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "x-amzn-requestid": "DD3SviMJBUvtGP8pazQzWKGKlxRZS2kq4mp62Xd3cSwb9wJj7eX0"
+        "x-amzn-requestid": "qBwvpX4QHgZjqex4RJOX9S87tcK2OO09Ab3HPsHuhMtPXhwraH9x"
       },
       "HTTPStatusCode": 200,
       "MaxAttemptsReached": true,
-      "RequestId": "DD3SviMJBUvtGP8pazQzWKGKlxRZS2kq4mp62Xd3cSwb9wJj7eX0",
+      "RequestId": "qBwvpX4QHgZjqex4RJOX9S87tcK2OO09Ab3HPsHuhMtPXhwraH9x",
       "RetryAttempts": 0
     }
   },
   "GetBucketTagging": {
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "x-amzn-requestid": "ZbdvCZSk3KZbKzdxWf2Po5y5TEHVHHqQ0vewREfl8vmcQN2pWTbO"
+        "x-amzn-requestid": "dKjdpKeT6o44fvnGAzkEzPaLmEfI5B13u4rRGYgh2WbRmy2jMqLl"
       },
       "HTTPStatusCode": 200,
       "MaxAttemptsReached": true,
-      "RequestId": "ZbdvCZSk3KZbKzdxWf2Po5y5TEHVHHqQ0vewREfl8vmcQN2pWTbO",
+      "RequestId": "dKjdpKeT6o44fvnGAzkEzPaLmEfI5B13u4rRGYgh2WbRmy2jMqLl",
       "RetryAttempts": 0
     },
     "TagSet": [
@@ -43,11 +43,11 @@
   "GetBucketVersioning": {
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "x-amzn-requestid": "tIDkdWcRnyOGs0gv2Ab0S6VwhUxOCfw0vKAJjBoWDnxT0bbFXh1Q"
+        "x-amzn-requestid": "tDCeZSjogNZdSSYiyyrluRx9U7kebvv2cXznWvz3OTACk94Kip3i"
       },
       "HTTPStatusCode": 200,
       "MaxAttemptsReached": true,
-      "RequestId": "tIDkdWcRnyOGs0gv2Ab0S6VwhUxOCfw0vKAJjBoWDnxT0bbFXh1Q",
+      "RequestId": "tDCeZSjogNZdSSYiyyrluRx9U7kebvv2cXznWvz3OTACk94Kip3i",
       "RetryAttempts": 0
     }
   }

@@ -1,14 +1,14 @@
 {
   "GetFunction": {
     "Code": {
-      "Location": "s3://awslambda-us-east-1-tasks.s3-us-east-1.amazonaws.com/order-processor-9e9080dd-314c-4bf5-a512-f2c33818a590",
+      "Location": "s3://awslambda-us-east-1-tasks.s3-us-east-1.amazonaws.com/order-processor-005c9658-bd92-4306-9eb6-108d450f1440",
       "RepositoryType": "S3"
     },
     "Configuration": {
       "Architectures": [
         "x86_64"
       ],
-      "CodeSha256": "7lkn8531C+XxS7wd8KVRAtABr9F1HQuS88AF7iSN4PE=",
+      "CodeSha256": "66O5H779WpbjY6zV1UJtC25a/4BBzrYUKT9AnfCLiVA=",
       "CodeSize": 164,
       "Description": "",
       "Environment": {
@@ -23,7 +23,7 @@
       "FunctionArn": "arn:aws:lambda:us-east-1:123456789012:function:order-processor",
       "FunctionName": "order-processor",
       "Handler": "handler.handler",
-      "LastModified": "2026-10-16T02:05:48.237161000Z",
+      "LastModified": "2026-10-16T02:30:22.313090000Z",
       "LastUpdateStatus": "Successful",
       "Layers": [],
       "MemorySize": 256,

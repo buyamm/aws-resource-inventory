@@ -1,0 +1,55 @@
+{
+  "GetWebACL": {
+    "LockToken": "[REDACTED]",
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "content-type": "application/json",
+        "date": "Fri, 16 Oct 2026 09:30:23 GMT",
+        "server": "amazon.com",
+        "x-amzn-requestid": "LJ5SNxs3ubCCC57mhi3bPfCYxFW0GHCf0zyfwdJTd6y2xDC8Bmjb"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "LJ5SNxs3ubCCC57mhi3bPfCYxFW0GHCf0zyfwdJTd6y2xDC8Bmjb",
+      "RetryAttempts": 0
+    },
+    "WebACL": {
+      "ARN": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/b5e7fc2f-fa34-44a4-8362-0cb65c2450a9",
+      "DefaultAction": {
+        "Allow": {}
+      },
+      "Description": "Edge protection for the storefront",
+      "Id": "b5e7fc2f-fa34-44a4-8362-0cb65c2450a9",
+      "Name": "storefront-waf",
+      "Rules": [],
+      "VisibilityConfig": {
+        "CloudWatchMetricsEnabled": true,
+        "MetricName": "storefront-waf",
+        "SampledRequestsEnabled": true
+      }
+    }
+  },
+  "ListTagsForResource": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "content-type": "application/json",
+        "date": "Fri, 16 Oct 2026 09:30:23 GMT",
+        "server": "amazon.com",
+        "x-amzn-requestid": "Zh6sSyrfR2NPhG56lNlZrAZLdy90foEkwSEhIpJyuZj9GTYqueCK"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "Zh6sSyrfR2NPhG56lNlZrAZLdy90foEkwSEhIpJyuZj9GTYqueCK",
+      "RetryAttempts": 0
+    },
+    "TagInfoForResource": {
+      "ResourceARN": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/b5e7fc2f-fa34-44a4-8362-0cb65c2450a9",
+      "TagList": [
+        {
+          "Key": "service",
+          "Value": "storefront"
+        }
+      ]
+    }
+  }
+}

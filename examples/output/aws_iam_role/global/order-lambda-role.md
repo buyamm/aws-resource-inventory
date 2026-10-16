@@ -8,7 +8,7 @@
 | ARN               | arn:aws:iam::123456789012:role/order-lambda-role |
 | Region            | global                                           |
 | Account ID        | 123456789012                                     |
-| Collected At      | 2026-10-16T02:05:49Z                             |
+| Collected At      | 2026-10-16T02:30:23Z                             |
 | Collector Version | 0.1.0                                            |
 
 
@@ -17,11 +17,11 @@
 | Configuration Key  | Value                                            |
 | ------------------ | ------------------------------------------------ |
 | Arn                | arn:aws:iam::123456789012:role/order-lambda-role |
-| CreateDate         | 2026-10-16T02:05:48.200000+00:00                 |
+| CreateDate         | 2026-10-16T02:30:22.277000+00:00                 |
 | Description        | Execution role for order-processor               |
 | MaxSessionDuration | 3600                                             |
 | Path               | /                                                |
-| RoleId             | AROARZPUZDIKMAF3QCWFB                            |
+| RoleId             | AROARZPUZDIKC65IJSP6U                            |
 | RoleName           | order-lambda-role                                |
 
 

@@ -6,15 +6,15 @@ Route 53 zones, ACM certificates, WAF web ACLs, CloudFront and load balancers, g
 
 | Address | Source specification | ARN |
 |---|---|---|
-| `aws_route53_zone.example_com` | `aws_route53_zone/global/ACA19C6IIUY2GFZ.json` | `arn:aws:route53:::hostedzone/ACA19C6IIUY2GFZ` |
-| `aws_route53_record.example_com_api_a` | `aws_route53_zone/global/ACA19C6IIUY2GFZ.json` | `arn:aws:route53:::hostedzone/ACA19C6IIUY2GFZ` |
-| `aws_route53_record.example_com_shop_a` | `aws_route53_zone/global/ACA19C6IIUY2GFZ.json` | `arn:aws:route53:::hostedzone/ACA19C6IIUY2GFZ` |
-| `aws_acm_certificate.shop_example_com` | `aws_acm_certificate/us-east-1/a2f4311b-2bbd-4ca0-97e7-018106634454.json` | `arn:aws:acm:us-east-1:123456789012:certificate/a2f4311b-2bbd-4ca0-97e7-018106634454` |
-| `aws_wafv2_web_acl.waf` | `aws_wafv2_web_acl/global/storefront-waf_d06f4b4d-1ec6-42a4-81fa-1582637eb32d.json` | `arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/d06f4b4d-1ec6-42a4-81fa-1582637eb32d` |
-| `aws_cloudfront_distribution.shop_example_com` | `aws_cloudfront_distribution/global/X5E0C4JHPHC9C.json` | `arn:aws:cloudfront::123456789012:distribution/X5E0C4JHPHC9C` |
+| `aws_route53_zone.example_com` | `aws_route53_zone/global/F2D50YHDFNN6736.json` | `arn:aws:route53:::hostedzone/F2D50YHDFNN6736` |
+| `aws_route53_record.example_com_api_a` | `aws_route53_zone/global/F2D50YHDFNN6736.json` | `arn:aws:route53:::hostedzone/F2D50YHDFNN6736` |
+| `aws_route53_record.example_com_shop_a` | `aws_route53_zone/global/F2D50YHDFNN6736.json` | `arn:aws:route53:::hostedzone/F2D50YHDFNN6736` |
+| `aws_acm_certificate.shop_example_com` | `aws_acm_certificate/us-east-1/1492cb3f-a6df-47d4-892f-f87748ae6367.json` | `arn:aws:acm:us-east-1:123456789012:certificate/1492cb3f-a6df-47d4-892f-f87748ae6367` |
+| `aws_wafv2_web_acl.waf` | `aws_wafv2_web_acl/global/storefront-waf_b5e7fc2f-fa34-44a4-8362-0cb65c2450a9.json` | `arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/b5e7fc2f-fa34-44a4-8362-0cb65c2450a9` |
+| `aws_cloudfront_distribution.shop_example_com` | `aws_cloudfront_distribution/global/RXBBW1AS174FR.json` | `arn:aws:cloudfront::123456789012:distribution/RXBBW1AS174FR` |
 | `aws_lb.alb` | `aws_lb/us-east-1/app_storefront-alb_50dc6c495c0c9188.json` | `arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188` |
 | `aws_lb_target_group.tg` | `aws_lb_target_group/us-east-1/storefront-tg_50dc6c495c0c9188.json` | `arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188` |
-| `aws_lb_listener.https_443` | `aws_lb_listener/us-east-1/app_storefront-alb_50dc6c495c0c9188_4434501777232.json` | `arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434501777232` |
+| `aws_lb_listener.https_443` | `aws_lb_listener/us-east-1/app_storefront-alb_50dc6c495c0c9188_4434489454224.json` | `arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434489454224` |
 
 ## Inputs
 

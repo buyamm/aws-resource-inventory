@@ -1,0 +1,36 @@
+{
+  "DescribeInternetGateways": {
+    "InternetGateways": [
+      {
+        "Attachments": [
+          {
+            "State": "available",
+            "VpcId": "vpc-040f0f81"
+          }
+        ],
+        "InternetGatewayId": "igw-c94e6ba3",
+        "OwnerId": "123456789012",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "storefront-igw"
+          },
+          {
+            "Key": "service",
+            "Value": "storefront"
+          }
+        ]
+      }
+    ],
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Fri, 16 Oct 2026 09:30:23 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "59dbff89-35bd-4eac-99ed-be587EXAMPLE",
+      "RetryAttempts": 0
+    }
+  }
+}

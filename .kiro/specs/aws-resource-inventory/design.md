@@ -59,7 +59,7 @@ Binding scope decisions are listed in requirements.md §"Scope decisions". In sh
 | `src/mcp_stdio.py` | FastMCP stdio adapter + environment sandboxing. |
 | `src/cli.py` | Click CLI `aws-inventory`, logging setup with sanitizing filter, exit codes. |
 | `src/sample_account.py` | Demo/test only: builds the sample account (every Supported_Resource_Type) inside moto. |
-| `src/moto_compat.py` | Demo/test only: ElastiCache replication groups and cache subnet groups, which moto 4.x lacks, served from memory by a botocore `before-call` handler (registered last, per account and region) inside `mock_elasticache_replication_groups()`; the same context restores the ECS service `networkConfiguration` moto drops (`after-call` on `CreateService`/`DescribeServices`). Imported before any session is created (`tests/conftest.py`, `scripts/demo.py`, `scripts/benchmark.py`). |
+| `src/moto_compat.py` | Demo/test only: ElastiCache replication groups and cache subnet groups, which moto 4.x lacks, served from memory by a botocore `before-call` handler (registered last, per account and region) inside `mock_elasticache_replication_groups()`; the same context restores the ECS service `networkConfiguration` moto drops (`after-call` on `CreateService`/`DescribeServices`) and rebuilds `DescribeSecurityGroupRules` with one entry per source (moto answers one per permission). Imported before any session is created (`tests/conftest.py`, `scripts/demo.py`, `scripts/benchmark.py`). |
 
 ## Development Methodology: Test-Driven Development
 

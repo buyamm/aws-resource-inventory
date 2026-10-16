@@ -1,0 +1,35 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-7f177dcb",
+  "generated_at": "2026-10-16T02:30:23.985216Z",
+  "metadata": {
+    "api_version": "2016-11-15",
+    "checksum": "ddeb2de748bc91206905c8b32e3442ed5256ae4512fdc4066267089c5d6d2e5d",
+    "collected_at": "2026-10-16T02:30:23Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_subnet",
+  "specifications": {
+    "AssignIpv6AddressOnCreation": false,
+    "AvailabilityZone": "us-east-1a",
+    "AvailabilityZoneId": "use1-az6",
+    "AvailableIpAddressCount": 249,
+    "CidrBlock": "10.0.1.0/24",
+    "DefaultForAz": false,
+    "Ipv6CidrBlockAssociationSet": [],
+    "Ipv6Native": false,
+    "MapPublicIpOnLaunch": false,
+    "OwnerId": "123456789012",
+    "State": "available",
+    "SubnetArn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-7f177dcb",
+    "SubnetId": "subnet-7f177dcb",
+    "Tags": [
+      {
+        "Key": "Name",
+        "Value": "orders-private-a"
+      }
+    ],
+    "VpcId": "vpc-040f0f81"
+  }
+}

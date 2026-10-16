@@ -103,7 +103,7 @@ Main outputs (full layout in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#output_
 
 ```
 output/
-├── <type>/<region>/<id>.json|.md   one file per resource (S3 and IAM use region "global")
+├── <type>/<region>/<id>.json|.md   one file per resource (global types use region "global")
 ├── resources.json  resources.md    aggregates
 ├── raw_responses/                  sanitized raw API responses
 ├── manifest.json  discovery.json
@@ -114,7 +114,13 @@ output/
 
 ### analyze
 
-Finds relationships (`vpc_connection`, `iam_role_usage`, `security_group`, `dynamodb_access`, `log_group`), patterns ("Serverless Application", "Compute in VPC") and security findings (`OVERLY_PERMISSIVE_IAM_POLICY`, `PUBLIC_S3_BUCKET`, `UNRESTRICTED_SECURITY_GROUP_ACCESS`), each with a confidence score and citations. Writes `analysis/analysis.json`, `analysis/analysis.md` and `diagrams/architecture.drawio` (open it at <https://app.diagrams.net> or in the draw.io desktop app).
+Finds relationships, architecture patterns and security findings, each with a confidence score and citations, and writes `analysis/analysis.json`, `analysis/analysis.md` and `diagrams/architecture.drawio`.
+
+- Relationships: `vpc_connection`, `subnet_placement`, `route_table_association`, `route_target`, `security_group`, `network_access` (a data store's security group rule admits the compute's group), `iam_role_usage`, `log_group`, `dynamodb_access`, `lb_listener`, `forwards_to`, `lb_target`, `certificate`, `cdn_origin`, `waf_protection`, `dns_alias`, `ecs_cluster`, `task_definition`, `container_image`, `launch_template`, `subscription`, `event_target`.
+- Patterns: "Serverless Application", "Compute in VPC", "Web app: CloudFront + ALB + ECS", "Static site: S3 + CloudFront". Patterns no rule can detect are listed under `undetectable_patterns` with the reason.
+- Security findings: `OVERLY_PERMISSIVE_IAM_POLICY`, `PUBLIC_S3_BUCKET`, `UNRESTRICTED_SECURITY_GROUP_ACCESS`.
+
+The diagram (open it at <https://app.diagrams.net> or in the draw.io desktop app) has two pages. **Overview** nests AWS Cloud → Region → VPC → Availability Zone → public/private subnet, places each resource in the subnet its spec names, puts Route 53, CloudFront and WAF left of the VPC, and draws data-flow edges only (Users → CloudFront → load balancer → ECS → RDS/ElastiCache); IAM roles, log groups, security groups and other supporting types sit in a "Supporting resources" panel, one icon per type. **Network detail** shows route tables, gateways, VPC endpoints and security groups. Hovering an icon shows its ARNs; every edge has an `evidence` attribute pointing at its citation. The output is deterministic.
 
 ```bash
 aws-inventory analyze --output-dir ./output

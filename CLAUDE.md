@@ -28,11 +28,11 @@ venv/bin/bandit -r src -ll
 The package import root is `src` (`from src.parser import ResourceSpec`); the console script is `aws-inventory = src.cli:main`.
 
 The pipeline is split into an online phase and an offline phase:
-- **Online (needs AWS creds):** `discovery.ResourceDiscovery` lists resources per region in parallel → `inventory.InventoryCollector` drives one `collector.SpecCollector` per (service, region) client → `integrity.seal_specs` sanitizes and sets `metadata.checksum` → `output_generator.OutputGenerator` writes the Output_Dir.
+- **Online (needs AWS creds):** `discovery.ResourceDiscovery` lists resources per region in parallel (or `scope.TagScopedDiscovery` seeds from `--project-tag`; `scope.exclude_defaults` drops default VPC resources and service-linked roles) → `inventory.InventoryCollector` drives one `collector.SpecCollector` per (service, region) client and repeats for resources referenced by collected specs (`scope.REFERENCE_RULES`, dependency closure) → `integrity.seal_specs` sanitizes and sets `metadata.checksum` → `output_generator.OutputGenerator` writes the Output_Dir.
 - **Offline (reads Output_Dir only):** `analysis_engine` (relationships/patterns/security findings with citations), `diagram_generator` (.drawio), `iac_generator` (Terraform + import/verify scripts), `documentation`, `integrity.verify_output_dir`, and the MCP server.
 
 Cross-cutting rules that span several modules:
-- `ResourceSpec.resource_type` is always a canonical id = Terraform type name (`aws_instance`, `aws_db_instance`, `aws_sfn_state_machine`, ...). Type names, resource ids and file names come from `src/resource_types.py`; don't hard-code alternates.
+- `ResourceSpec.resource_type` is always a canonical id = Terraform type name. The 33 supported types: compute/data `aws_instance`, `aws_lambda_function`, `aws_sfn_state_machine`, `aws_db_instance`, `aws_dynamodb_table`, `aws_s3_bucket`, `aws_elasticache_replication_group`, `aws_sqs_queue`, `aws_sns_topic`, `aws_ecs_cluster`, `aws_ecs_service`, `aws_ecs_task_definition`, `aws_ecr_repository`, `aws_autoscaling_group`, `aws_launch_template`, `aws_cloudwatch_event_rule`, `aws_scheduler_schedule`; network `aws_vpc`, `aws_subnet`, `aws_route_table`, `aws_internet_gateway`, `aws_nat_gateway`, `aws_vpc_endpoint`, `aws_security_group`; edge `aws_cloudfront_distribution`, `aws_lb`, `aws_lb_listener`, `aws_lb_target_group`, `aws_route53_zone`, `aws_acm_certificate`, `aws_wafv2_web_acl`; `aws_iam_role`, `aws_cloudwatch_log_group`. Type names, ARN layout, resource ids and file names come from `src/resource_types.py`; don't hard-code alternates. Adding a type touches every stage (checklist in `docs/TESTING.md`).
 - `specifications` keeps AWS API field names (PascalCase, logs/stepfunctions camelCase) minus `ResponseMetadata`; S3 uses `bucket-*` sub-keys. Analysis, IaC and diagram rules read these exact fields (see design.md "Specification schema").
 - Per-resource files at `<out>/<type>/<region>/<file_id>.json` are the cache the MCP server reads; other top-level dirs (`raw_responses/`, `analysis/`, `terraform/`, ...) must never be treated as specs.
 - Everything written to disk, returned by MCP or logged passes through `DataSanitizer`. `mcp_server.py` must not import boto3/botocore.
@@ -42,7 +42,8 @@ Cross-cutting rules that span several modules:
 ## Conventions
 
 - TDD: write or adjust the failing test first. Test names carry the requirement id: `test_<component>_<behavior>_req_<X>_<Y>`; property tests are `test_property_..._req_<X>_<Y>`.
-- AWS mocking uses moto 4.x per-service decorators (`mock_s3`, `mock_ec2`, ...), not moto 5's `mock_aws`.
+- AWS mocking uses moto 4.x per-service decorators (`mock_s3`, `mock_ec2`, ...), not moto 5's `mock_aws`. Gaps of moto 4.2 (ElastiCache replication groups, ECS `networkConfiguration`, per-source security group rules) are filled by `src/moto_compat.py`, used by tests, demo and benchmark only.
+- `examples/output/` is regenerated with `venv/bin/python scripts/demo.py --output-dir examples/output`; the diagram there is the golden file.
 - `instruction.md` is the Vietnamese end-user guide; keep it in sync with the real CLI.
 
 ## Skills

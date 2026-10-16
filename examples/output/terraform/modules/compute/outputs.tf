@@ -43,7 +43,7 @@ output "ecs_task_definition_arns" {
 output "instance_ids" {
   description = "IDs of the instances in this module, keyed by resource name"
   value = {
-    i_b892b745a8c407b02 = aws_instance.i_b892b745a8c407b02.id
+    i_3bd88a7f905f64de6 = aws_instance.i_3bd88a7f905f64de6.id
     orders_web_1        = aws_instance.orders_web_1.id
   }
 }

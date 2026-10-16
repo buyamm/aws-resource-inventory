@@ -57,7 +57,7 @@ sequenceDiagram
     autonumber
     participant CLI as aws-inventory collect
     participant S as aws_session
-    participant D as ResourceDiscovery
+    participant D as ResourceDiscovery / TagScopedDiscovery
     participant C as InventoryCollector / SpecCollector
     participant AWS
     participant I as integrity.seal_specs
@@ -68,15 +68,23 @@ sequenceDiagram
     S->>AWS: sts:AssumeRole (only with --role-arn)
     S->>AWS: sts:GetCallerIdentity
     CLI->>D: discover_all_resources() [phase: discovery]
-    par one worker per region
-        D->>AWS: DescribeInstances, ListFunctions, ListTables, ... (paginated)
+    alt --project-tag given
+        D->>AWS: tag:GetResources(TagFilters) per region, iam:ListRoles + ListRoleTags
+    else
+        par one worker per region
+            D->>AWS: DescribeInstances, ListFunctions, ListTables, ... (paginated)
+        end
     end
     D-->>CLI: DiscoveredResource list + DiscoveryErrors
+    CLI->>CLI: scope.exclude_defaults (default VPC, its subnets/SG/IGW/route tables,<br/>service-linked roles) unless --include-defaults
     CLI->>C: collect_all(resources) [phase: collection]
-    par one SpecCollector per (service, region), max_workers resources at a time
-        C->>AWS: primary call (e.g. DescribeTable)
-        C->>AWS: secondary calls (tags, attributes, policies)
-        Note over C,AWS: up to 3 attempts, 1 s / 2 s backoff or Retry-After;<br/>botocore retries disabled
+    loop until no new resource (dependency closure)
+        par one SpecCollector per (service, region), max_workers resources at a time
+            C->>AWS: primary call (e.g. DescribeTable)
+            C->>AWS: secondary calls (tags, attributes, policies)
+            Note over C,AWS: up to 3 attempts, 1 s / 2 s backoff or Retry-After;<br/>botocore retries disabled
+        end
+        C->>C: scope.extract_references(spec): REFERENCE_RULES<br/>(VpcId, SubnetIds, SGs, role ARNs, TGs, ...) -> new resources
     end
     C-->>CLI: ResourceSpecs + CollectionErrors + operation log
     CLI->>O: generate_json / markdown / raw / manifest [phase: output]
@@ -85,6 +93,8 @@ sequenceDiagram
     CLI->>FS: discovery.json, collection_report.json, summary_report.md
     CLI->>FS: checksums.sha256, checksums.json
 ```
+
+**Scope.** With `--project-tag`, `TagScopedDiscovery` seeds the run from the tagged resources (global types through `us-east-1`; ECS task definitions are reached through their services instead) and, without `--region`, keeps only the regions that hold seeds. Defaults are excluded from the seeds in both modes. The closure then collects every resource a collected spec references through a `scope.REFERENCE_RULES` path, even an excluded default, and records `referenced by <arn>#<path>`; references to other accounts are never followed. The resulting `scope` block (tags, regions, excluded resources, referenced resources) is written to `discovery.json`, `manifest.json` and `collection_report.json`.
 
 A failure never stops the run. A failed region or list call becomes a `DiscoveryError`. A primary call that still fails after its retries becomes a `CollectionError`, and that resource is skipped. A denied or missing secondary configuration only omits that key. All of these appear in `collection_report.json`, and any discovery or collection error makes `collect` exit with code 1.
 
@@ -95,7 +105,7 @@ flowchart TB
     Specs[("#lt;type#gt;/#lt;region#gt;/*.json<br/>(OutputGenerator.load_specs)")]
     Specs --> AE["AnalysisEngine<br/>relationships, patterns,<br/>security findings + citations"]
     AE --> AJ["analysis/analysis.json<br/>analysis/analysis.md"]
-    AE --> DG["DiagramGenerator"] --> DR["diagrams/architecture.drawio"]
+    AE --> DG["DiagramGenerator"] --> DR["diagrams/architecture.drawio<br/>(Overview, Network detail)"]
     AE --> DOC["documentation.py"] --> DM["docs/infrastructure.md"]
     Specs --> IAC["IaCGenerator"] --> TF["terraform/ modules/#lt;module#gt;/,<br/>envs/#lt;env#gt;/ (imports.tf, verify_state.sh)"]
     AJ --> V{"verify_output_dir"}
@@ -104,6 +114,9 @@ flowchart TB
     V -->|ok| OK["OK: n files, m citations verified (exit 0)"]
     V -->|discrepancy| BAD["path:line: reason (exit 1)"]
 ```
+
+- **Diagram.** The Overview page nests AWS Cloud → Region → VPC → Availability Zone → public/private subnet (draw.io containers with relative child geometry), places resources in the subnet their spec names, keeps Route 53/CloudFront/WAF left of the VPC and draws only data-flow relationships, layered left to right (triggers, entry, compute, messaging, data). Supporting types (roles, log groups, security groups, listeners, target groups, ...) appear once per type in a panel. The Network detail page holds gateways, endpoints, route tables and security groups. Only stencils verified in the `aws-architecture-diagram` skill are used.
+- **Terraform.** Resources are grouped into modules (`network`, `edge`, `compute`, `data`, `iam`, `observability`) under `terraform/modules/`, and one root `terraform/envs/<env>/` wires them together and holds the `import` blocks. A value equal to another generated resource's id or ARN becomes a reference (same module) or a module variable fed from the owning module's output. Security group rules are separate `aws_vpc_security_group_{ingress,egress}_rule` resources built from the collected `SecurityGroupRules`.
 
 Every command that writes files regenerates `checksums.sha256` at the end, so `verify` always checks the latest state.
 
@@ -114,7 +127,8 @@ Every command that writes files regenerates `checksums.sha256` at the end, so `v
 | `src/cli.py` | Click CLI, sanitized logging (`SanitizingFilter`), console output, exit codes |
 | `src/aws_session.py` | boto3 session (profile, assume-role), botocore retries disabled, account id |
 | `src/discovery.py` | Concurrent per-region listing with pagination |
-| `src/inventory.py` | Groups resources by (service, region) and drives one `SpecCollector` per group |
+| `src/scope.py` | `--project-tag` seeding (`TagScopedDiscovery`), default exclusion, `REFERENCE_RULES` for the dependency closure, `scope` block |
+| `src/inventory.py` | Groups resources by (service, region), drives one `SpecCollector` per group, repeats for references until closed |
 | `src/collector.py` | Per-type spec collection, retry/backoff, error classification, operation log |
 | `src/resource_types.py` | Registry of the 33 supported types: ids, aliases, ARN layout, file names, draw.io styles |
 | `src/parser.py` | `ResourceSpec`, `Result`, JSON parse/print |
@@ -123,8 +137,8 @@ Every command that writes files regenerates `checksums.sha256` at the end, so `v
 | `src/output_generator.py` | All Output_Dir writers, `load_specs` |
 | `src/metrics.py` | Phase timer, run metrics, time savings |
 | `src/analysis_engine.py` | Relationship/pattern/security rules with citations |
-| `src/diagram_generator.py` | draw.io (mxGraph XML) with `mxgraph.aws4.*` stencils |
-| `src/iac_generator.py` | Terraform mapping, import and plan-verification scripts |
+| `src/diagram_generator.py` | draw.io (mxGraph XML): nested VPC/AZ/subnet groups, data-flow edges, `mxgraph.aws4.*` stencils, optional PNG export |
+| `src/iac_generator.py` | Terraform mapping per type, `modules/` + `envs/<env>/` layout, reference resolution, `import` blocks, plan verification |
 | `src/documentation.py` | `docs/infrastructure.md` with citation markers |
 | `src/mcp_server.py` | MCP core: whitelist, parameter validation, rate limit, sanitization (no boto3) |
 | `src/mcp_stdio.py` | FastMCP stdio transport and environment sandbox |
@@ -143,9 +157,9 @@ Every command that writes files regenerates `checksums.sha256` at the end, so `v
 ├── collection_report.json              operations, errors, phases, metrics, time savings
 ├── summary_report.md                   manual vs automated effort
 ├── analysis/analysis.json  analysis/analysis.md      (analyze)
-├── diagrams/architecture.drawio                      (analyze)
+├── diagrams/architecture.drawio[.png]                (analyze; PNG with --export-png)
 ├── docs/infrastructure.md                            (generate-docs)
-├── terraform/                                        (generate-iac)
+├── terraform/modules/<module>/  terraform/envs/<env>/ (generate-iac)
 └── checksums.sha256  checksums.json    refreshed by every command that writes
 ```
 

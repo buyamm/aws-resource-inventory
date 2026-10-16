@@ -1,0 +1,40 @@
+{
+  "DescribeRouteTables": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Fri, 16 Oct 2026 09:30:23 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "6f570b0b-9c18-4b07-bdec-73740dcf861a",
+      "RetryAttempts": 0
+    },
+    "RouteTables": [
+      {
+        "Associations": [
+          {
+            "AssociationState": {
+              "State": "associated"
+            },
+            "Main": true,
+            "RouteTableAssociationId": "rtbassoc-ee38871c",
+            "RouteTableId": "rtb-8fc56d9e"
+          }
+        ],
+        "OwnerId": "123456789012",
+        "RouteTableId": "rtb-8fc56d9e",
+        "Routes": [
+          {
+            "DestinationCidrBlock": "10.0.0.0/16",
+            "GatewayId": "local",
+            "Origin": "CreateRouteTable",
+            "State": "active"
+          }
+        ],
+        "Tags": [],
+        "VpcId": "vpc-040f0f81"
+      }
+    ]
+  }
+}

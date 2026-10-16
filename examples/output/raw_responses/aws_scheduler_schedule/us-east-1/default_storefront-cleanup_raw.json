@@ -1,17 +1,17 @@
 {
   "GetSchedule": {
     "Arn": "arn:aws:scheduler:us-east-1:123456789012:schedule/default/storefront-cleanup",
-    "CreationDate": "2026-10-16T09:05:48.927260+07:00",
+    "CreationDate": "2026-10-16T09:30:22.971081+07:00",
     "Description": "Hourly cleanup message",
     "FlexibleTimeWindow": {
       "Mode": "OFF"
     },
     "GroupName": "default",
-    "LastModificationDate": "2026-10-16T09:05:48.927260+07:00",
+    "LastModificationDate": "2026-10-16T09:30:22.971081+07:00",
     "Name": "storefront-cleanup",
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Fri, 16 Oct 2026 09:05:49 GMT",
+        "date": "Fri, 16 Oct 2026 09:30:23 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,

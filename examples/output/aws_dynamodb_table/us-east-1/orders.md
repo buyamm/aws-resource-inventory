@@ -8,7 +8,7 @@
 | ARN               | arn:aws:dynamodb:us-east-1:123456789012:table/orders |
 | Region            | us-east-1                                            |
 | Account ID        | 123456789012                                         |
-| Collected At      | 2026-10-16T02:05:49Z                                 |
+| Collected At      | 2026-10-16T02:30:23Z                                 |
 | Collector Version | 0.1.0                                                |
 
 
@@ -16,7 +16,7 @@
 
 | Configuration Key | Value                                                |
 | ----------------- | ---------------------------------------------------- |
-| CreationDateTime  | 2026-10-16T09:05:48.228366+07:00                     |
+| CreationDateTime  | 2026-10-16T09:30:22.303827+07:00                     |
 | ItemCount         | 0                                                    |
 | TableArn          | arn:aws:dynamodb:us-east-1:123456789012:table/orders |
 | TableName         | orders                                               |

@@ -4,8 +4,8 @@
 # every resource names its source specification file.
 
 # Resource: aws_vpc.orders_vpc
-# Source specification: aws_vpc/us-east-1/vpc-660d36ef.json
-# ARN: arn:aws:ec2:us-east-1:123456789012:vpc/vpc-660d36ef
+# Source specification: aws_vpc/us-east-1/vpc-040f0f81.json
+# ARN: arn:aws:ec2:us-east-1:123456789012:vpc/vpc-040f0f81
 # Region: us-east-1
 # mapped: CidrBlock, EnableDnsHostnames, EnableDnsSupport, InstanceTenancy, Tags, VpcId
 # unmapped: CidrBlockAssociationSet
@@ -26,8 +26,8 @@ resource "aws_vpc" "orders_vpc" {
 }
 
 # Resource: aws_subnet.orders_private_a
-# Source specification: aws_subnet/us-east-1/subnet-4d897e3d.json
-# ARN: arn:aws:ec2:us-east-1:123456789012:subnet/subnet-4d897e3d
+# Source specification: aws_subnet/us-east-1/subnet-7f177dcb.json
+# ARN: arn:aws:ec2:us-east-1:123456789012:subnet/subnet-7f177dcb
 # Region: us-east-1
 # mapped: AssignIpv6AddressOnCreation, AvailabilityZone, CidrBlock, Ipv6CidrBlockAssociationSet, MapPublicIpOnLaunch, SubnetArn, SubnetId, Tags, VpcId
 # unmapped: AvailabilityZoneId
@@ -49,8 +49,8 @@ resource "aws_subnet" "orders_private_a" {
 }
 
 # Resource: aws_subnet.public_a
-# Source specification: aws_subnet/us-east-1/subnet-2cf4f53a.json
-# ARN: arn:aws:ec2:us-east-1:123456789012:subnet/subnet-2cf4f53a
+# Source specification: aws_subnet/us-east-1/subnet-084ef767.json
+# ARN: arn:aws:ec2:us-east-1:123456789012:subnet/subnet-084ef767
 # Region: us-east-1
 # mapped: AssignIpv6AddressOnCreation, AvailabilityZone, CidrBlock, Ipv6CidrBlockAssociationSet, MapPublicIpOnLaunch, SubnetArn, SubnetId, Tags, VpcId
 # unmapped: AvailabilityZoneId
@@ -73,8 +73,8 @@ resource "aws_subnet" "public_a" {
 }
 
 # Resource: aws_subnet.public_b
-# Source specification: aws_subnet/us-east-1/subnet-4db17d3d.json
-# ARN: arn:aws:ec2:us-east-1:123456789012:subnet/subnet-4db17d3d
+# Source specification: aws_subnet/us-east-1/subnet-a6f66dc7.json
+# ARN: arn:aws:ec2:us-east-1:123456789012:subnet/subnet-a6f66dc7
 # Region: us-east-1
 # mapped: AssignIpv6AddressOnCreation, AvailabilityZone, CidrBlock, Ipv6CidrBlockAssociationSet, MapPublicIpOnLaunch, SubnetArn, SubnetId, Tags, VpcId
 # unmapped: AvailabilityZoneId
@@ -97,8 +97,8 @@ resource "aws_subnet" "public_b" {
 }
 
 # Resource: aws_route_table.private
-# Source specification: aws_route_table/us-east-1/rtb-e28b5541.json
-# ARN: arn:aws:ec2:us-east-1:123456789012:route-table/rtb-e28b5541
+# Source specification: aws_route_table/us-east-1/rtb-ee1782b8.json
+# ARN: arn:aws:ec2:us-east-1:123456789012:route-table/rtb-ee1782b8
 # Region: us-east-1
 # mapped: Associations, RouteTableId, Routes, Tags, VpcId
 # unmapped: OwnerId
@@ -116,14 +116,14 @@ resource "aws_route_table" "private" {
   }
 }
 
-resource "aws_route_table_association" "private_subnet_4d897e3d" {
+resource "aws_route_table_association" "private_subnet_7f177dcb" {
   subnet_id      = aws_subnet.orders_private_a.id
   route_table_id = aws_route_table.private.id
 }
 
 # Resource: aws_route_table.public
-# Source specification: aws_route_table/us-east-1/rtb-bf60be68.json
-# ARN: arn:aws:ec2:us-east-1:123456789012:route-table/rtb-bf60be68
+# Source specification: aws_route_table/us-east-1/rtb-47bf1246.json
+# ARN: arn:aws:ec2:us-east-1:123456789012:route-table/rtb-47bf1246
 # Region: us-east-1
 # mapped: Associations, RouteTableId, Routes, Tags, VpcId
 # unmapped: OwnerId
@@ -141,29 +141,29 @@ resource "aws_route_table" "public" {
   }
 }
 
-resource "aws_route_table_association" "public_subnet_2cf4f53a" {
+resource "aws_route_table_association" "public_subnet_084ef767" {
   subnet_id      = aws_subnet.public_a.id
   route_table_id = aws_route_table.public.id
 }
 
-resource "aws_route_table_association" "public_subnet_4db17d3d" {
+resource "aws_route_table_association" "public_subnet_a6f66dc7" {
   subnet_id      = aws_subnet.public_b.id
   route_table_id = aws_route_table.public.id
 }
 
-# Resource: aws_route_table.rtb_561c82c8
-# Source specification: aws_route_table/us-east-1/rtb-561c82c8.json
-# ARN: arn:aws:ec2:us-east-1:123456789012:route-table/rtb-561c82c8
+# Resource: aws_route_table.rtb_8fc56d9e
+# Source specification: aws_route_table/us-east-1/rtb-8fc56d9e.json
+# ARN: arn:aws:ec2:us-east-1:123456789012:route-table/rtb-8fc56d9e
 # Region: us-east-1
 # mapped: Associations, RouteTableId, Routes, Tags, VpcId
 # unmapped: OwnerId
-resource "aws_route_table" "rtb_561c82c8" {
+resource "aws_route_table" "rtb_8fc56d9e" {
   vpc_id = aws_vpc.orders_vpc.id
 }
 
 # Resource: aws_internet_gateway.igw
-# Source specification: aws_internet_gateway/us-east-1/igw-d045f4ab.json
-# ARN: arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-d045f4ab
+# Source specification: aws_internet_gateway/us-east-1/igw-c94e6ba3.json
+# ARN: arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-c94e6ba3
 # Region: us-east-1
 # mapped: Attachments, InternetGatewayId, Tags
 # unmapped: OwnerId
@@ -177,16 +177,16 @@ resource "aws_internet_gateway" "igw" {
 }
 
 # Resource: aws_nat_gateway.nat
-# Source specification: aws_nat_gateway/us-east-1/nat-af9f73b40a8a4af4f.json
-# ARN: arn:aws:ec2:us-east-1:123456789012:natgateway/nat-af9f73b40a8a4af4f
+# Source specification: aws_nat_gateway/us-east-1/nat-8af9c7bd4aed62d36.json
+# ARN: arn:aws:ec2:us-east-1:123456789012:natgateway/nat-8af9c7bd4aed62d36
 # Region: us-east-1
 # mapped: ConnectivityType, NatGatewayAddresses, NatGatewayId, SubnetId, Tags, VpcId
 # unmapped: CreateTime
 # unmapped: State
 resource "aws_nat_gateway" "nat" {
   subnet_id     = aws_subnet.public_a.id
-  allocation_id = "eipalloc-1b6897fd"
-  private_ip    = "10.194.230.82"
+  allocation_id = "eipalloc-5131c8a1"
+  private_ip    = "10.141.29.253"
 
   tags = {
     "Name"    = "storefront-nat"
@@ -195,8 +195,8 @@ resource "aws_nat_gateway" "nat" {
 }
 
 # Resource: aws_vpc_endpoint.s3
-# Source specification: aws_vpc_endpoint/us-east-1/vpce-40eb00b6.json
-# ARN: arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-40eb00b6
+# Source specification: aws_vpc_endpoint/us-east-1/vpce-170a3c5e.json
+# ARN: arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-170a3c5e
 # Region: us-east-1
 # mapped: PolicyDocument, RouteTableIds, ServiceName, Tags, VpcEndpointId, VpcEndpointType, VpcId
 # unmapped: CreationTimestamp
@@ -230,8 +230,8 @@ resource "aws_vpc_endpoint" "s3" {
 }
 
 # Resource: aws_security_group.alb_sg
-# Source specification: aws_security_group/us-east-1/sg-e4a0ee2dde2bb1f50.json
-# ARN: arn:aws:ec2:us-east-1:123456789012:security-group/sg-e4a0ee2dde2bb1f50
+# Source specification: aws_security_group/us-east-1/sg-e351ba83453fe3b63.json
+# ARN: arn:aws:ec2:us-east-1:123456789012:security-group/sg-e351ba83453fe3b63
 # Region: us-east-1
 # mapped: Description, GroupId, GroupName, IpPermissions, IpPermissionsEgress, SecurityGroupRules, Tags, VpcId
 # unmapped: OwnerId
@@ -239,12 +239,6 @@ resource "aws_security_group" "alb_sg" {
   name        = "storefront-alb-sg"
   description = "Public HTTPS"
   vpc_id      = aws_vpc.orders_vpc.id
-}
-
-resource "aws_vpc_security_group_egress_rule" "alb_sg_egress_all" {
-  security_group_id = aws_security_group.alb_sg.id
-  ip_protocol       = "-1"
-  cidr_ipv4         = "0.0.0.0/0"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "alb_sg_ingress_tcp_443" {
@@ -255,9 +249,15 @@ resource "aws_vpc_security_group_ingress_rule" "alb_sg_ingress_tcp_443" {
   cidr_ipv4         = "0.0.0.0/0"
 }
 
+resource "aws_vpc_security_group_egress_rule" "alb_sg_egress_all" {
+  security_group_id = aws_security_group.alb_sg.id
+  ip_protocol       = "-1"
+  cidr_ipv4         = "0.0.0.0/0"
+}
+
 # Resource: aws_security_group.app
-# Source specification: aws_security_group/us-east-1/sg-12874fb82c9db66ed.json
-# ARN: arn:aws:ec2:us-east-1:123456789012:security-group/sg-12874fb82c9db66ed
+# Source specification: aws_security_group/us-east-1/sg-b7692d5b41942a421.json
+# ARN: arn:aws:ec2:us-east-1:123456789012:security-group/sg-b7692d5b41942a421
 # Region: us-east-1
 # mapped: Description, GroupId, GroupName, IpPermissions, IpPermissionsEgress, SecurityGroupRules, Tags, VpcId
 # unmapped: OwnerId
@@ -272,10 +272,12 @@ resource "aws_security_group" "app" {
   }
 }
 
-resource "aws_vpc_security_group_egress_rule" "app_egress_all" {
-  security_group_id = aws_security_group.app.id
-  ip_protocol       = "-1"
-  cidr_ipv4         = "0.0.0.0/0"
+resource "aws_vpc_security_group_ingress_rule" "app_ingress_tcp_6379" {
+  security_group_id            = aws_security_group.app.id
+  ip_protocol                  = "tcp"
+  from_port                    = 6379
+  to_port                      = 6379
+  referenced_security_group_id = aws_security_group.app.id
 }
 
 resource "aws_vpc_security_group_ingress_rule" "app_ingress_tcp_80" {
@@ -286,17 +288,15 @@ resource "aws_vpc_security_group_ingress_rule" "app_ingress_tcp_80" {
   referenced_security_group_id = aws_security_group.alb_sg.id
 }
 
-resource "aws_vpc_security_group_ingress_rule" "app_ingress_tcp_6379" {
-  security_group_id            = aws_security_group.app.id
-  ip_protocol                  = "tcp"
-  from_port                    = 6379
-  to_port                      = 6379
-  referenced_security_group_id = aws_security_group.app.id
+resource "aws_vpc_security_group_egress_rule" "app_egress_all" {
+  security_group_id = aws_security_group.app.id
+  ip_protocol       = "-1"
+  cidr_ipv4         = "0.0.0.0/0"
 }
 
 # Resource: aws_security_group.default
-# Source specification: aws_security_group/us-east-1/sg-156a39ed25de235cf.json
-# ARN: arn:aws:ec2:us-east-1:123456789012:security-group/sg-156a39ed25de235cf
+# Source specification: aws_security_group/us-east-1/sg-1f2b0a4eff89696aa.json
+# ARN: arn:aws:ec2:us-east-1:123456789012:security-group/sg-1f2b0a4eff89696aa
 # Region: us-east-1
 # mapped: Description, GroupId, GroupName, IpPermissions, IpPermissionsEgress, SecurityGroupRules, Tags, VpcId
 # unmapped: OwnerId
@@ -313,8 +313,8 @@ resource "aws_vpc_security_group_egress_rule" "default_egress_all" {
 }
 
 # Resource: aws_security_group.orders_web_sg
-# Source specification: aws_security_group/us-east-1/sg-2bf145296ea5159ab.json
-# ARN: arn:aws:ec2:us-east-1:123456789012:security-group/sg-2bf145296ea5159ab
+# Source specification: aws_security_group/us-east-1/sg-80de5126f2f05dbc9.json
+# ARN: arn:aws:ec2:us-east-1:123456789012:security-group/sg-80de5126f2f05dbc9
 # Region: us-east-1
 # mapped: Description, GroupId, GroupName, IpPermissions, IpPermissionsEgress, SecurityGroupRules, Tags, VpcId
 # unmapped: OwnerId
@@ -324,12 +324,10 @@ resource "aws_security_group" "orders_web_sg" {
   vpc_id      = aws_vpc.orders_vpc.id
 }
 
-resource "aws_vpc_security_group_ingress_rule" "orders_web_sg_ingress_tcp_5432" {
-  security_group_id            = aws_security_group.orders_web_sg.id
-  ip_protocol                  = "tcp"
-  from_port                    = 5432
-  to_port                      = 5432
-  referenced_security_group_id = aws_security_group.app.id
+resource "aws_vpc_security_group_egress_rule" "orders_web_sg_egress_all" {
+  security_group_id = aws_security_group.orders_web_sg.id
+  ip_protocol       = "-1"
+  cidr_ipv4         = "0.0.0.0/0"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "orders_web_sg_ingress_tcp_22" {
@@ -340,8 +338,10 @@ resource "aws_vpc_security_group_ingress_rule" "orders_web_sg_ingress_tcp_22" {
   cidr_ipv4         = "0.0.0.0/0"
 }
 
-resource "aws_vpc_security_group_egress_rule" "orders_web_sg_egress_all" {
-  security_group_id = aws_security_group.orders_web_sg.id
-  ip_protocol       = "-1"
-  cidr_ipv4         = "0.0.0.0/0"
+resource "aws_vpc_security_group_ingress_rule" "orders_web_sg_ingress_tcp_5432" {
+  security_group_id            = aws_security_group.orders_web_sg.id
+  ip_protocol                  = "tcp"
+  from_port                    = 5432
+  to_port                      = 5432
+  referenced_security_group_id = aws_security_group.app.id
 }

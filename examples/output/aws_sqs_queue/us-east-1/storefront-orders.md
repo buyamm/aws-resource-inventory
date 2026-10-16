@@ -8,7 +8,7 @@
 | ARN               | arn:aws:sqs:us-east-1:123456789012:storefront-orders |
 | Region            | us-east-1                                            |
 | Account ID        | 123456789012                                         |
-| Collected At      | 2026-10-16T02:05:49Z                                 |
+| Collected At      | 2026-10-16T02:30:23Z                                 |
 | Collector Version | 0.1.0                                                |
 
 
@@ -33,9 +33,9 @@
   "ApproximateNumberOfMessages": "0",
   "ApproximateNumberOfMessagesDelayed": "0",
   "ApproximateNumberOfMessagesNotVisible": "0",
-  "CreatedTimestamp": "1792116348.740304",
+  "CreatedTimestamp": "1792117822.78418",
   "DelaySeconds": "0",
-  "LastModifiedTimestamp": "1792116348.740304",
+  "LastModifiedTimestamp": "1792117822.78418",
   "MaximumMessageSize": "262144",
   "MessageRetentionPeriod": "345600",
   "QueueArn": "arn:aws:sqs:us-east-1:123456789012:storefront-orders",

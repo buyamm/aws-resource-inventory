@@ -481,9 +481,10 @@ Findings from the first live run (account `monetkit-prod`): without `--region` t
   - _Requirements: 7.1–7.6 (revised), 16.1–16.3 (new)_
   - Commit: `feat(iac): Terraform modules and per-environment root with import blocks (Task 31)`
 
-- [ ] 32. Phase 2 docs, demo and checkpoint
-  - [ ] 32.1 `instruction.md`, README, `docs/ARCHITECTURE.md`, `docs/TESTING.md` (how to add a type), CLAUDE.md type list
-  - [ ] 32.2 Regenerate `examples/output/`; full suite, ruff, black, mypy, bandit clean
+- [x] 32. Phase 2 docs, demo and checkpoint
+  - [x] 32.1 `instruction.md`, README, `docs/ARCHITECTURE.md`, `docs/TESTING.md` (how to add a type), CLAUDE.md type list
+  - [x] 32.2 Regenerate `examples/output/`; full suite, ruff, black, mypy, bandit clean
+  - README: Phase 2 relationships/patterns and the two diagram pages; ARCHITECTURE: tag seed, default exclusion and closure loop in the data flow, `src/scope.py`, diagram and Terraform layout; TESTING: 11-step add-a-type checklist (ARN layout, `REFERENCE_RULES`, `MODULES`, diagram placement, `moto_compat`), stale CI note removed; instruction.md: storefront demo numbers (47 resources, 70 relationships, 115 citations); CLAUDE.md: all 33 types, scope step, `moto_compat`, example regeneration. 558 passed, 1 skipped (opt-in live IaC test); ruff, black, mypy, bandit `-ll` clean; `verify` on `examples/output/` OK
   - Commit: `docs: Phase 2 guide, examples and checkpoint (Task 32)`
 
 ## Notes

@@ -1,0 +1,48 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-1f2b0a4eff89696aa",
+  "generated_at": "2026-10-16T02:30:23.985216Z",
+  "metadata": {
+    "api_version": "2016-11-15",
+    "checksum": "5ec6f2a2572b283860c327dcf49a8d588d1a330611e82ac0a07989c589242656",
+    "collected_at": "2026-10-16T02:30:23Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_security_group",
+  "specifications": {
+    "Description": "default VPC security group",
+    "GroupId": "sg-1f2b0a4eff89696aa",
+    "GroupName": "default",
+    "IpPermissions": [],
+    "IpPermissionsEgress": [
+      {
+        "IpProtocol": "-1",
+        "IpRanges": [
+          {
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "Ipv6Ranges": [],
+        "PrefixListIds": [],
+        "UserIdGroupPairs": []
+      }
+    ],
+    "OwnerId": "123456789012",
+    "SecurityGroupRules": [
+      {
+        "CidrIpv4": "0.0.0.0/0",
+        "FromPort": -1,
+        "GroupId": "sg-1f2b0a4eff89696aa",
+        "GroupOwnerId": "123456789012",
+        "IpProtocol": "-1",
+        "IsEgress": true,
+        "SecurityGroupRuleId": "sgr-3d9b8032b1879d361",
+        "Tags": [],
+        "ToPort": -1
+      }
+    ],
+    "Tags": [],
+    "VpcId": "vpc-040f0f81"
+  }
+}

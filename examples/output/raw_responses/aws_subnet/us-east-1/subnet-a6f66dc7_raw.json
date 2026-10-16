@@ -1,0 +1,42 @@
+{
+  "DescribeSubnets": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Fri, 16 Oct 2026 09:30:23 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE",
+      "RetryAttempts": 0
+    },
+    "Subnets": [
+      {
+        "AssignIpv6AddressOnCreation": false,
+        "AvailabilityZone": "us-east-1b",
+        "AvailabilityZoneId": "use1-az1",
+        "AvailableIpAddressCount": 251,
+        "CidrBlock": "10.0.11.0/24",
+        "DefaultForAz": false,
+        "Ipv6CidrBlockAssociationSet": [],
+        "Ipv6Native": false,
+        "MapPublicIpOnLaunch": false,
+        "OwnerId": "123456789012",
+        "State": "available",
+        "SubnetArn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-a6f66dc7",
+        "SubnetId": "subnet-a6f66dc7",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "storefront-public-b"
+          },
+          {
+            "Key": "service",
+            "Value": "storefront"
+          }
+        ],
+        "VpcId": "vpc-040f0f81"
+      }
+    ]
+  }
+}

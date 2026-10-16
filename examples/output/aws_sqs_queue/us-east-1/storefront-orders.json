@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:sqs:us-east-1:123456789012:storefront-orders",
-  "generated_at": "2026-10-16T02:05:50.002193Z",
+  "generated_at": "2026-10-16T02:30:23.985216Z",
   "metadata": {
     "api_version": "2012-11-05",
-    "checksum": "8b776374c95796d2aa3822509040c79553dcb7c81ebdc09485250fc5c505d569",
-    "collected_at": "2026-10-16T02:05:49Z",
+    "checksum": "a9bde5f913d5cb8cd6dc43ad57f5c89baf0bc7040849d0cf69cbf0f88c88f332",
+    "collected_at": "2026-10-16T02:30:23Z",
     "collector_version": "0.1.0"
   },
   "region": "us-east-1",
@@ -15,9 +15,9 @@
       "ApproximateNumberOfMessages": "0",
       "ApproximateNumberOfMessagesDelayed": "0",
       "ApproximateNumberOfMessagesNotVisible": "0",
-      "CreatedTimestamp": "1792116348.740304",
+      "CreatedTimestamp": "1792117822.78418",
       "DelaySeconds": "0",
-      "LastModifiedTimestamp": "1792116348.740304",
+      "LastModifiedTimestamp": "1792117822.78418",
       "MaximumMessageSize": "262144",
       "MessageRetentionPeriod": "345600",
       "QueueArn": "arn:aws:sqs:us-east-1:123456789012:storefront-orders",

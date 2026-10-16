@@ -64,7 +64,7 @@ Chỉ cần chạy tool (không chạy test/demo): `venv/bin/pip install -e .` l
 
 ## 4. Chạy thử với demo (không cần AWS account)
 
-Demo tạo một account giả lập bằng moto (mỗi loại resource một cái, cố ý có vài cấu hình không an toàn) rồi chạy toàn bộ quy trình:
+Demo tạo một account giả lập bằng moto (stack "storefront": CloudFront + WAF + ALB + ECS + RDS + ElastiCache, Lambda/DynamoDB, hàng đợi, ASG worker; mỗi loại resource ít nhất một cái, cố ý có vài cấu hình không an toàn) rồi chạy toàn bộ quy trình:
 
 ```bash
 python scripts/demo.py                    # ghi vào ./demo-output
@@ -74,14 +74,16 @@ Kết quả mong đợi (rút gọn):
 
 ```
 $ aws-inventory collect --output-dir demo-output --region us-east-1
-Collected 14/14 resources in 0.32s (44 API calls) -> demo-output
-Time saved: 1.17 hours (100.0%)
+Collected 47/47 resources in 1.01s (140 API calls) -> demo-output
+Time saved: 3.92 hours (100.0%)
 $ aws-inventory analyze --output-dir demo-output
-Analyzed 14 resources: 11 relationships, 2 patterns, 3 security findings
+Analyzed 47 resources: 70 relationships, 5 patterns, 4 security findings
 $ aws-inventory generate-iac --output-dir demo-output
+Generated 40 Terraform files for 47 resources -> demo-output/terraform
+Environment root: demo-output/terraform/envs/default
 $ aws-inventory generate-docs --output-dir demo-output
 $ aws-inventory verify --output-dir demo-output
-OK: 68 files, 23 citations verified
+OK: 191 files, 115 citations verified
 ```
 
 Kết quả mẫu đã được commit sẵn ở [examples/output/](examples/output/). Các option khác:

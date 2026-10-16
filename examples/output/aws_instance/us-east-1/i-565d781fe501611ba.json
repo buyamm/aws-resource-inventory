@@ -1,0 +1,111 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-565d781fe501611ba",
+  "generated_at": "2026-10-16T02:30:23.985216Z",
+  "metadata": {
+    "api_version": "2016-11-15",
+    "checksum": "7074ada6b498c3f9a34d154151a1d7ad06518db97c04363b22a6cec52626b706",
+    "collected_at": "2026-10-16T02:30:23Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_instance",
+  "specifications": {
+    "AmiLaunchIndex": 0,
+    "Architecture": "x86_64",
+    "BlockDeviceMappings": [
+      {
+        "DeviceName": "/dev/sda1",
+        "Ebs": {
+          "AttachTime": "2026-10-16T02:30:22+00:00",
+          "DeleteOnTermination": true,
+          "Status": "in-use",
+          "VolumeId": "vol-2fcb4841"
+        }
+      }
+    ],
+    "ClientToken": "[REDACTED]",
+    "EbsOptimized": false,
+    "Hypervisor": "xen",
+    "IamInstanceProfile": {
+      "Arn": "arn:aws:iam::123456789012:instance-profile/orders-app-role",
+      "Id": "iip-assoc-d19a96d6"
+    },
+    "ImageId": "ami-12c6146b",
+    "InstanceId": "i-565d781fe501611ba",
+    "InstanceType": "t3.micro",
+    "KernelId": "None",
+    "LaunchTime": "2026-10-16T02:30:22+00:00",
+    "Monitoring": {
+      "State": "disabled"
+    },
+    "NetworkInterfaces": [
+      {
+        "Attachment": {
+          "AttachTime": "2015-01-01T00:00:00+00:00",
+          "AttachmentId": "eni-attach-ae192e2e",
+          "DeleteOnTermination": true,
+          "DeviceIndex": 0,
+          "Status": "attached"
+        },
+        "Description": "Primary network interface",
+        "Groups": [
+          {
+            "GroupId": "sg-80de5126f2f05dbc9",
+            "GroupName": "orders-web-sg"
+          }
+        ],
+        "MacAddress": "1b:2b:3c:4d:5e:6f",
+        "NetworkInterfaceId": "eni-bd093934",
+        "OwnerId": "123456789012",
+        "PrivateIpAddress": "10.0.1.4",
+        "PrivateIpAddresses": [
+          {
+            "Primary": true,
+            "PrivateIpAddress": "10.0.1.4"
+          }
+        ],
+        "SourceDestCheck": true,
+        "Status": "in-use",
+        "SubnetId": "subnet-7f177dcb",
+        "VpcId": "vpc-040f0f81"
+      }
+    ],
+    "Placement": {
+      "AvailabilityZone": "us-east-1a",
+      "GroupName": "",
+      "Tenancy": "default"
+    },
+    "Platform": "windows",
+    "PrivateDnsName": "ip-10-0-1-4.ec2.internal",
+    "PrivateIpAddress": "10.0.1.4",
+    "PublicDnsName": "None",
+    "RootDeviceName": "/dev/sda1",
+    "RootDeviceType": "ebs",
+    "SecurityGroups": [
+      {
+        "GroupId": "sg-80de5126f2f05dbc9",
+        "GroupName": "orders-web-sg"
+      }
+    ],
+    "SourceDestCheck": true,
+    "State": {
+      "Code": 16,
+      "Name": "running"
+    },
+    "StateReason": {
+      "Code": "",
+      "Message": ""
+    },
+    "StateTransitionReason": "",
+    "SubnetId": "subnet-7f177dcb",
+    "Tags": [
+      {
+        "Key": "Name",
+        "Value": "orders-web-1"
+      }
+    ],
+    "VirtualizationType": "hvm",
+    "VpcId": "vpc-040f0f81"
+  }
+}

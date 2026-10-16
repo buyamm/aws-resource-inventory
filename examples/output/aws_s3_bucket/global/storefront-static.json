@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:s3:::storefront-static",
-  "generated_at": "2026-10-16T02:05:50.002193Z",
+  "generated_at": "2026-10-16T02:30:23.985216Z",
   "metadata": {
     "api_version": "2006-03-01",
     "checksum": "85655120f74e553eb992973253560092398c99c682efb6ddb26c49431b095d5a",
-    "collected_at": "2026-10-16T02:05:49Z",
+    "collected_at": "2026-10-16T02:30:23Z",
     "collector_version": "0.1.0"
   },
   "region": "global",

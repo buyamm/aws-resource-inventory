@@ -6,12 +6,12 @@
 | specs_collected | 47 |
 | specs_failed | 0 |
 | api_calls | 140 |
-| data_volume_bytes | 547828 |
+| data_volume_bytes | 547817 |
 
 | Phase | Duration (s) |
 |---|---|
-| discovery | 0.66 |
-| collection | 0.34 |
+| discovery | 0.63 |
+| collection | 0.32 |
 | output | 0.07 |
 
 ## Performance & Time Savings Summary Report
@@ -23,5 +23,5 @@
 | --------------- | ------------------------ | ------------------------- | ----------------- |
 | Baseline Rate   | 5 minutes / resource     | N/A                       | -                 |
 | Total Resources | 47                       | 47                        | -                 |
-| Total Duration  | 3.92 hours (235 min)     | 1.08 seconds (0.0003 hrs) | 3.92 hours saved  |
+| Total Duration  | 3.92 hours (235 min)     | 1.01 seconds (0.0003 hrs) | 3.92 hours saved  |
 | Efficiency Gain | Baseline (100%)          | +100.0% faster            | 100.0% time saved |

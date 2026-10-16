@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:events:us-east-1:123456789012:rule/storefront-nightly-report",
-  "generated_at": "2026-10-16T02:05:50.002193Z",
+  "generated_at": "2026-10-16T02:30:23.985216Z",
   "metadata": {
     "api_version": "2015-10-07",
     "checksum": "aa8d1c0eb1048802f2b914ae5f5cdce5aa6a2fa8380413dc6e72cb45ba105907",
-    "collected_at": "2026-10-16T02:05:49Z",
+    "collected_at": "2026-10-16T02:30:23Z",
     "collector_version": "0.1.0"
   },
   "region": "us-east-1",

@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:elasticache:us-east-1:123456789012:replicationgroup:storefront-cache",
-  "generated_at": "2026-10-16T02:05:50.002193Z",
+  "generated_at": "2026-10-16T02:30:23.985216Z",
   "metadata": {
     "api_version": "2015-02-02",
-    "checksum": "f25524b567e01ef338274b0294978b854362bc93f79969e07a3d3aa942bd4142",
-    "collected_at": "2026-10-16T02:05:49Z",
+    "checksum": "4502dd58cb691db5d2e632d6dd19a1c514aabc11860a45d57ad7ce60c6715f06",
+    "collected_at": "2026-10-16T02:30:23Z",
     "collector_version": "0.1.0"
   },
   "region": "us-east-1",
@@ -45,7 +45,7 @@
       "ReplicationGroupLogDeliveryEnabled": false,
       "SecurityGroups": [
         {
-          "SecurityGroupId": "sg-12874fb82c9db66ed",
+          "SecurityGroupId": "sg-b7692d5b41942a421",
           "Status": "active"
         }
       ],
@@ -63,7 +63,7 @@
           "SubnetAvailabilityZone": {
             "Name": "us-east-1a"
           },
-          "SubnetIdentifier": "subnet-4d897e3d",
+          "SubnetIdentifier": "subnet-7f177dcb",
           "SupportedNetworkTypes": [
             "ipv4"
           ]
@@ -72,7 +72,7 @@
       "SupportedNetworkTypes": [
         "ipv4"
       ],
-      "VpcId": "vpc-660d36ef"
+      "VpcId": "vpc-040f0f81"
     },
     "ClusterEnabled": false,
     "ClusterMode": "disabled",

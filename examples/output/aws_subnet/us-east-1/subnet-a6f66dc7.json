@@ -1,0 +1,39 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-a6f66dc7",
+  "generated_at": "2026-10-16T02:30:23.985216Z",
+  "metadata": {
+    "api_version": "2016-11-15",
+    "checksum": "c6238e897232d2c847f277df37d8d3f025dbf5a9796738bd0c483278fa36d361",
+    "collected_at": "2026-10-16T02:30:23Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_subnet",
+  "specifications": {
+    "AssignIpv6AddressOnCreation": false,
+    "AvailabilityZone": "us-east-1b",
+    "AvailabilityZoneId": "use1-az1",
+    "AvailableIpAddressCount": 251,
+    "CidrBlock": "10.0.11.0/24",
+    "DefaultForAz": false,
+    "Ipv6CidrBlockAssociationSet": [],
+    "Ipv6Native": false,
+    "MapPublicIpOnLaunch": false,
+    "OwnerId": "123456789012",
+    "State": "available",
+    "SubnetArn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-a6f66dc7",
+    "SubnetId": "subnet-a6f66dc7",
+    "Tags": [
+      {
+        "Key": "Name",
+        "Value": "storefront-public-b"
+      },
+      {
+        "Key": "service",
+        "Value": "storefront"
+      }
+    ],
+    "VpcId": "vpc-040f0f81"
+  }
+}

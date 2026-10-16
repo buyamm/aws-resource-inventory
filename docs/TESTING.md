@@ -46,10 +46,10 @@ tests/
 
 | Level | What it covers | Examples |
 |---|---|---|
-| Unit | One component in isolation | `test_sanitizer.py`, `test_integrity.py`, `test_cli.py`, `test_docs.py` |
-| Integration | Components together against moto or a subprocess | `test_collector_types.py` (all 10 types), `test_mcp_stdio.py` (real MCP client over stdio), `test_iac_generator.py` (plan verification with a mocked `terraform`) |
+| Unit | One component in isolation | `test_sanitizer.py`, `test_integrity.py`, `test_scope.py`, `test_diagram_generator.py`, `test_cli.py`, `test_docs.py` |
+| Integration | Components together against moto or a subprocess | `test_collector_types.py` (all 33 types), `test_mcp_stdio.py` (real MCP client over stdio), `test_iac_generator.py` (module layout, `terraform validate`/`fmt -check` when the CLI is installed, plan verification with a mocked `terraform`) |
 | End-to-end | Whole CLI workflows | `test_workflows.py` (collect → analyze → IaC → MCP → verify, tampering, partial failure), `test_demo.py`, `test_benchmark.py` (`scripts/benchmark.py` at 40 resources) |
-| Live (opt-in) | Real account | `test_live_iac.py`: import and `terraform plan` with zero changes |
+| Live (opt-in) | Real account | `test_live_iac.py`: `fmt -check`, `validate`, import and `terraform plan` with zero changes |
 
 ## Markers
 
@@ -76,8 +76,8 @@ AWS is mocked with **moto 4.x per-service decorators/context managers** (`mock_s
 |---|---|
 | `aws_credentials` | Fake credential environment |
 | `mock_s3_client`, `mock_ec2_client`, `mock_lambda_client`, `mock_iam_client`, `mock_dynamodb_client` | A boto3 client inside the corresponding moto mock |
-| `moto_all_services` | moto mocks for every service the inventory touches (EC2, IAM, Lambda, Logs, S3, Step Functions, RDS, DynamoDB, STS, tagging, ELBv2, CloudFront, Route 53, ACM, WAFv2, ECS, ECR, Auto Scaling, ElastiCache, SQS, SNS, EventBridge, Scheduler) plus `src.moto_compat.mock_elasticache_replication_groups()`, because moto 4.x does not implement ElastiCache replication groups |
-| `sample_account` | `moto_all_services` populated by `src/sample_account.py`: one resource of each type, a public bucket, an SSH-open security group and an admin inline policy. Returns `(session, SampleAccount ids)` |
+| `moto_all_services` | moto mocks for every service the inventory touches (EC2, IAM, Lambda, Logs, S3, Step Functions, RDS, DynamoDB, STS, tagging, ELBv2, CloudFront, Route 53, ACM, WAFv2, ECS, ECR, Auto Scaling, ElastiCache, SQS, SNS, EventBridge, Scheduler) plus `src/moto_compat.py`, which fills gaps of moto 4.2 with botocore `before-call` handlers: ElastiCache replication groups, the ECS service `networkConfiguration`, and `DescribeSecurityGroupRules` answered per source |
+| `sample_account` | `moto_all_services` populated by `src/sample_account.py`: the "storefront" stack (CloudFront + WAF + ALB + ECS + RDS + ElastiCache, Lambda/DynamoDB, SQS/SNS, EventBridge, worker ASG) with at least one resource of each type, a public bucket, an SSH-open security group and an admin inline policy. Returns `(session, SampleAccount ids)` |
 | `sample_*_response`, `sample_*_resource_spec`, `sample_collection_report` | Static sample data |
 | `fixtures_dir`, `sample_aws_responses_dir`, `sample_specs_dir`, `load_fixture_json`, `load_fixture_text` | Access to files under `tests/fixtures/` |
 
@@ -92,18 +92,20 @@ venv/bin/mypy src
 venv/bin/bandit -r src -ll
 ```
 
-CI (`.github/workflows/tdd-pipeline.yml`) runs type checking, lint and format checks, unit tests with an 80% overall coverage gate, property tests, and integration tests. The target for `src/parser.py` and `src/sanitizer.py` is 100% coverage; the CI step for it still points at old package paths and is fixed in Task 24.4.
+CI (`.github/workflows/tdd-pipeline.yml`) runs type checking, lint and format checks, unit tests with an 80% overall coverage gate, property tests, and integration tests. `src/parser.py` and `src/sanitizer.py` must stay at 100% coverage (a separate CI step). `tests/unit/test_ci_workflow.py` checks that the workflow gates point at real module files.
 
 ## Adding a resource type
 
 A new type touches every stage of the pipeline. Write the failing test for each step first.
 
 1. **Spec.** Add the type to the "Supported resource types" table and aliases in requirements.md, and its API calls and `specifications` shape to design.md ("Specification schema"), the Terraform mapping table, and the relationship rules if any. Use the Terraform resource type name as the canonical id.
-2. **Registry** (`src/resource_types.py`). Add a `ResourceTypeInfo(type_id, service, scope, id_field, aliases, drawio_style)` to `REGISTRY`. Tests: `tests/unit/test_resource_types.py` (count, aliases, `resource_id`, `drawio_style`).
+2. **Registry** (`src/resource_types.py`). Add a `ResourceTypeInfo(type_id, service, scope, id_field, aliases, drawio_style, arn_service, arn_resource, id_pattern)` to `REGISTRY`. `arn_service`/`arn_resource` drive `build_arn`/`parse_arn`, which the tag seed and the closure use to turn ARNs into resources. Use a stencil name listed in the `aws-architecture-diagram` skill references. Tests: `tests/unit/test_resource_types.py` (count, aliases, `resource_id`, ARN round trip, `drawio_style`).
 3. **Discovery** (`src/discovery.py`). Add a `(type, service, list method, extractor, kwargs)` row and an `_extract_*` function that builds `DiscoveredResource`s with full ARNs. Tests: `tests/unit/test_discovery.py`.
 4. **Collection** (`src/collector.py`). Add a `collect_*_spec` method using `_Context.primary` for the call that defines the resource and `_Context.secondary` for best-effort extras, and register it in `SpecCollector.collect_resource`. Keep AWS field names and drop `ResponseMetadata`. Tests: `tests/unit/test_collector.py` and `tests/integration/test_collector_types.py` (moto). If moto does not support the service, add its mock to `moto_all_services`.
 5. **Read-only and IAM.** Only `Describe*`/`List*`/`Get*` calls are allowed. Add the IAM actions to [iam-policy.json](iam-policy.json) (`test_cli_api_calls_covered_by_iam_policy_req_9_4` fails until you do; add an entry to `IAM_ACTION_OVERRIDES` there if the IAM action name differs from the API operation).
-6. **Terraform** (`src/iac_generator.py`). Add a `_map_*` function to `MAPPERS` that consumes the spec keys it maps (the rest become `# unmapped:` comments), with import id format and `ignore_changes`. Tests: `tests/unit/test_iac_generator.py`; the property test `test_property_iac_generator_includes_all_specs_req_7_3` already covers every registered type.
-7. **Analysis** (`src/analysis_engine.py`), if the type takes part in relationships or findings. Build every citation with `cite(spec, property_path)`. Tests: `tests/unit/test_analysis_engine.py`.
-8. **Sample account and demo.** Add a resource to `src/sample_account.py`, then regenerate the example with `python scripts/demo.py --output-dir examples/output`. `tests/e2e/test_demo.py` checks that every registered type appears in the demo output and in `examples/output/`.
-9. **Docs.** Update the type list in README.md and instruction.md.
+6. **Scope** (`src/scope.py`). Add `REFERENCE_RULES` entries (`Rule(path, target, resolve)`) for every id or ARN the new spec holds, so the closure collects what it depends on, and teach `exclude_defaults` about the type if AWS creates a default one. Tests: `tests/unit/test_scope.py`.
+7. **Terraform** (`src/iac_generator.py`). Add a `_map_*` function to `MAPPERS` that consumes the spec keys it maps (the rest become `# unmapped:` comments), with import id format and `ignore_changes`, and list the type in one of the `MODULES` (types of a module are rendered in dependency order). Ids and ARNs of other managed resources are turned into references automatically. Load the `terraform-style-guide` skill first. Tests: `tests/unit/test_iac_generator.py`; the property test `test_property_iac_generator_includes_all_specs_req_7_3` already covers every registered type, and the sample account must pass `terraform validate` and `fmt -check`.
+8. **Analysis** (`src/analysis_engine.py`), if the type takes part in relationships, patterns or findings: add `_REFERENCE_RELATIONSHIPS` rows for direct id/ARN references and a `CONFIDENCE` entry for a new relationship type. Build every citation with `cite(spec, property_path)`. Tests: `tests/unit/test_analysis_engine.py`.
+9. **Diagram** (`src/diagram_generator.py`). Add a `DISPLAY_NAMES` entry and, where the Name tag is not enough, a `NAME_FIELDS` entry; place the type in `LAYERS` (data-flow column), `SUPPORT_TYPES`, `EDGE_TYPES` or `NETWORK_TYPES`; add the relationship to `FLOW_EDGES`/`NETWORK_EDGES` only if it is a data flow. Load the `aws-architecture-diagram` and `drawio` skills first. Tests: `tests/unit/test_diagram_generator.py`.
+10. **Sample account and demo.** Add a resource to `src/sample_account.py` (and a `src/moto_compat.py` handler if moto 4.2 lacks the API), then regenerate the example with `python scripts/demo.py --output-dir examples/output`. `tests/e2e/test_demo.py` checks that every registered type appears in the demo output and in `examples/output/`. A new AWS service also goes into `MOCKED_SERVICES` in `scripts/demo.py` (the benchmark reuses it) and `moto_all_services` in `tests/conftest.py`.
+11. **Docs and MCP.** Update the type list in README.md, instruction.md and `docs/ARCHITECTURE.md` (type count in the module map), and the design.md MCP alias list; MCP aliases come from the registry.

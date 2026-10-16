@@ -1,0 +1,88 @@
+{
+  "DescribeSecurityGroupRules": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Fri, 16 Oct 2026 09:30:23 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": null,
+      "RetryAttempts": 0
+    },
+    "SecurityGroupRules": [
+      {
+        "CidrIpv4": "0.0.0.0/0",
+        "FromPort": 443,
+        "GroupId": "sg-e351ba83453fe3b63",
+        "GroupOwnerId": "123456789012",
+        "IpProtocol": "tcp",
+        "IsEgress": false,
+        "SecurityGroupRuleId": "sgr-3c10a568e478102e8",
+        "Tags": [],
+        "ToPort": 443
+      },
+      {
+        "CidrIpv4": "0.0.0.0/0",
+        "FromPort": -1,
+        "GroupId": "sg-e351ba83453fe3b63",
+        "GroupOwnerId": "123456789012",
+        "IpProtocol": "-1",
+        "IsEgress": true,
+        "SecurityGroupRuleId": "sgr-ce21b8989ffd93f76",
+        "Tags": [],
+        "ToPort": -1
+      }
+    ]
+  },
+  "DescribeSecurityGroups": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Fri, 16 Oct 2026 09:30:23 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "59dbff89-35bd-4eac-99ed-be587EXAMPLE",
+      "RetryAttempts": 0
+    },
+    "SecurityGroups": [
+      {
+        "Description": "Public HTTPS",
+        "GroupId": "sg-e351ba83453fe3b63",
+        "GroupName": "storefront-alb-sg",
+        "IpPermissions": [
+          {
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "IpRanges": [
+              {
+                "CidrIp": "0.0.0.0/0"
+              }
+            ],
+            "Ipv6Ranges": [],
+            "PrefixListIds": [],
+            "ToPort": 443,
+            "UserIdGroupPairs": []
+          }
+        ],
+        "IpPermissionsEgress": [
+          {
+            "IpProtocol": "-1",
+            "IpRanges": [
+              {
+                "CidrIp": "0.0.0.0/0"
+              }
+            ],
+            "Ipv6Ranges": [],
+            "PrefixListIds": [],
+            "UserIdGroupPairs": []
+          }
+        ],
+        "OwnerId": "123456789012",
+        "Tags": [],
+        "VpcId": "vpc-040f0f81"
+      }
+    ]
+  }
+}

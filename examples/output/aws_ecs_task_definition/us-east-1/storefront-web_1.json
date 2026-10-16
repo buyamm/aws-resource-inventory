@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1",
-  "generated_at": "2026-10-16T02:05:50.002193Z",
+  "generated_at": "2026-10-16T02:30:23.985216Z",
   "metadata": {
     "api_version": "2014-11-13",
     "checksum": "065e5bbe2444550ce6e7fcd421a21a873244d39db3e7eb57caf091a2466bf5ad",
-    "collected_at": "2026-10-16T02:05:49Z",
+    "collected_at": "2026-10-16T02:30:23Z",
     "collector_version": "0.1.0"
   },
   "region": "us-east-1",
