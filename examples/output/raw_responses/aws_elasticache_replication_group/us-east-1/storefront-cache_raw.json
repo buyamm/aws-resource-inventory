@@ -30,7 +30,7 @@
         "ReplicationGroupLogDeliveryEnabled": false,
         "SecurityGroups": [
           {
-            "SecurityGroupId": "sg-eaaa2c57ac5ecc98e",
+            "SecurityGroupId": "sg-7c3a665620cbf02dc",
             "Status": "active"
           }
         ],
@@ -59,7 +59,7 @@
             "SubnetAvailabilityZone": {
               "Name": "us-east-1a"
             },
-            "SubnetIdentifier": "subnet-a6e131f6",
+            "SubnetIdentifier": "subnet-30a75c4f",
             "SupportedNetworkTypes": [
               "ipv4"
             ]
@@ -68,7 +68,7 @@
         "SupportedNetworkTypes": [
           "ipv4"
         ],
-        "VpcId": "vpc-b6ee287f"
+        "VpcId": "vpc-7c4f2f1d"
       }
     ],
     "ResponseMetadata": {

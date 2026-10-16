@@ -1,0 +1,63 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-2edfb301c8a045aa8",
+  "generated_at": "2026-10-16T01:29:14.603213Z",
+  "metadata": {
+    "api_version": "2016-11-15",
+    "checksum": "eca72d6b0d891e7dd7506970888baba162125242229821fe301663fa6fb68b43",
+    "collected_at": "2026-10-16T01:29:14Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_security_group",
+  "specifications": {
+    "Description": "Web tier",
+    "GroupId": "sg-2edfb301c8a045aa8",
+    "GroupName": "orders-web-sg",
+    "IpPermissions": [
+      {
+        "FromPort": 22,
+        "IpProtocol": "tcp",
+        "IpRanges": [
+          {
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "Ipv6Ranges": [],
+        "PrefixListIds": [],
+        "ToPort": 22,
+        "UserIdGroupPairs": []
+      },
+      {
+        "FromPort": 5432,
+        "IpProtocol": "tcp",
+        "IpRanges": [],
+        "Ipv6Ranges": [],
+        "PrefixListIds": [],
+        "ToPort": 5432,
+        "UserIdGroupPairs": [
+          {
+            "GroupId": "sg-7c3a665620cbf02dc",
+            "UserId": "123456789012"
+          }
+        ]
+      }
+    ],
+    "IpPermissionsEgress": [
+      {
+        "IpProtocol": "-1",
+        "IpRanges": [
+          {
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "Ipv6Ranges": [],
+        "PrefixListIds": [],
+        "UserIdGroupPairs": []
+      }
+    ],
+    "OwnerId": "123456789012",
+    "Tags": [],
+    "VpcId": "vpc-7c4f2f1d"
+  }
+}

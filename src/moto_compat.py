@@ -1,5 +1,6 @@
 """
-ElastiCache replication groups for moto 4.x (demo and test support only).
+ElastiCache replication groups and ECS service networking for moto 4.x (demo and test
+support only).
 
 moto 4.2 implements ElastiCache cache clusters and users but not replication groups or
 cache subnet groups, so ``DescribeReplicationGroups`` raises ``NotImplementedError``
@@ -13,7 +14,11 @@ no request is sent anywhere):
 - ``ListTagsForResource`` (tags given at creation)
 
 Responses follow the shapes of the ElastiCache API reference. Every other ElastiCache
-operation is left to moto. The handlers are registered in ``botocore.handlers`` when this
+operation is left to moto.
+
+moto 4.2 also drops the ``networkConfiguration`` of ECS services. An ``after-call``
+handler keeps the configuration given to ``CreateService`` and adds it to the
+``CreateService`` and ``DescribeServices`` responses (keyed by service ARN). The handlers are registered in ``botocore.handlers`` when this
 module is imported, so only botocore sessions created afterwards see it; import it
 before creating sessions (``tests/conftest.py`` and ``scripts/demo.py`` do).
 
@@ -49,12 +54,15 @@ class _Store:
         self.groups: dict[tuple[tuple[str, str], str], dict[str, Any]] = {}
         self.clusters: dict[tuple[tuple[str, str], str], dict[str, Any]] = {}
         self.tags: dict[str, list[dict[str, str]]] = {}
+        # ECS service ARN -> networkConfiguration given to CreateService.
+        self.ecs_networks: dict[str, dict[str, Any]] = {}
 
     def reset(self) -> None:
         self.subnet_groups.clear()
         self.groups.clear()
         self.clusters.clear()
         self.tags.clear()
+        self.ecs_networks.clear()
 
 
 _STORE = _Store()
@@ -325,10 +333,35 @@ _OPERATIONS: dict[str, Callable[[Scope, dict[str, Any]], _Outcome]] = {
     "ListTagsForResource": _list_tags_for_resource,
 }
 
+
+def _ecs_after_call(parsed: Any, model: Any, context: dict[str, Any], **_: Any) -> None:
+    """Add the ``networkConfiguration`` moto drops to ECS service responses."""
+    if not _STORE.active or not isinstance(parsed, dict):
+        return
+    operation = getattr(model, "name", "")
+    if operation == "CreateService":
+        service = parsed.get("service") or {}
+        network = (context.get(_PARAMS_KEY) or {}).get("networkConfiguration")
+        if network and service.get("serviceArn"):
+            with _STORE.lock:
+                _STORE.ecs_networks[service["serviceArn"]] = network
+        services = [service]
+    elif operation == "DescribeServices":
+        services = list(parsed.get("services") or [])
+    else:
+        return
+    for service in services:
+        network = _STORE.ecs_networks.get(str(service.get("serviceArn")))
+        if network and not service.get("networkConfiguration"):
+            service["networkConfiguration"] = network
+
+
 # The response handler is registered last on every "before-call", so other before-call
 # handlers (the benchmark's latency injector) still run for these operations.
 _HANDLERS: list[tuple[Any, ...]] = [
     (f"before-parameter-build.{_SERVICE}", _capture_params),
+    ("before-parameter-build.ecs.CreateService", _capture_params),
+    ("after-call.ecs", _ecs_after_call),
     ("before-call", _respond, handlers.REGISTER_LAST),
 ]
 for _handler in _HANDLERS:

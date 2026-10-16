@@ -50,7 +50,7 @@ Binding scope decisions are listed in requirements.md §"Scope decisions". In sh
 | `src/integrity.py` | Canonical JSON, Spec_Checksum, `seal_specs()`, citation path resolution, `verify_output_dir()`. |
 | `src/output_generator.py` | JSON/Markdown/raw/checksum/summary files, `load_specs()` from Output_Dir. |
 | `src/analysis_engine.py` | Relationship rules (single source), patterns, security findings, citations, `AnalysisReport` (+ JSON serialization, `analysis.md`). |
-| `src/diagram_generator.py` | `.drawio` generation from specs + relationships; optional `drawio-ai validate`. |
+| `src/diagram_generator.py` | `.drawio` generation (Overview + Network detail pages) from specs + relationships; optional `drawio-ai validate` and draw.io PNG export. |
 | `src/iac_generator.py` | Terraform generation per type mapping, `import.sh`, `verify_state.sh`, `verify_terraform_plan()`. |
 | `src/documentation.py` | `docs/infrastructure.md` from an `AnalysisReport` (every statement cited). |
 | `src/metrics.py` | Phase timer, run metrics, time-savings computation, `collection_report.json`. |
@@ -59,7 +59,7 @@ Binding scope decisions are listed in requirements.md §"Scope decisions". In sh
 | `src/mcp_stdio.py` | FastMCP stdio adapter + environment sandboxing. |
 | `src/cli.py` | Click CLI `aws-inventory`, logging setup with sanitizing filter, exit codes. |
 | `src/sample_account.py` | Demo/test only: builds the sample account (every Supported_Resource_Type) inside moto. |
-| `src/moto_compat.py` | Demo/test only: ElastiCache replication groups and cache subnet groups, which moto 4.x lacks, served from memory by a botocore `before-call` handler (registered last, per account and region) inside `mock_elasticache_replication_groups()`. Imported before any session is created (`tests/conftest.py`, `scripts/demo.py`, `scripts/benchmark.py`). |
+| `src/moto_compat.py` | Demo/test only: ElastiCache replication groups and cache subnet groups, which moto 4.x lacks, served from memory by a botocore `before-call` handler (registered last, per account and region) inside `mock_elasticache_replication_groups()`; the same context restores the ECS service `networkConfiguration` moto drops (`after-call` on `CreateService`/`DescribeServices`). Imported before any session is created (`tests/conftest.py`, `scripts/demo.py`, `scripts/benchmark.py`). |
 
 ## Development Methodology: Test-Driven Development
 
@@ -171,7 +171,7 @@ class Citation:                      # src/analysis_engine.py (Req 8.2)
 - `spec_relpath(spec) -> str`: `f"{resource_type}/{region}/{file_id}.json"` (posix, relative to Output_Dir).
 - `build_arn(type_id, resource_id, region, account_id) -> str` / `parse_arn(arn) -> (type_id, resource_id, region) | None`: driven by the `arn_service` / `arn_resource` registry fields (e.g. `ec2` + `security-group/{id}`). `parse_arn` drops IAM role paths and the `:*` log group suffix, maps global types to region `"global"`, maps CloudFront-scope web ACLs (`global/webacl/<name>/<id>`) to `"global"` and REGIONAL ones (`regional/webacl/...`) to their region, checks the optional `id_pattern` (load balancers `(app|net|gwy)/<name>/<hash>`, listeners one more segment, target groups and web ACLs `<name>/<id>`, ECS services `<cluster>/<service>`, task definitions `<family>:<revision>`, rules `<name>` or `<bus>/<name>`, schedules `<group>/<name>`, queues and topics one segment), drops the UUID of Auto Scaling group ARNs (`autoScalingGroup:<uuid>:autoScalingGroupName/<name>` → `<name>`), and returns None for unsupported kinds (classic load balancers, listener rules, WAF IP sets, network ACLs, S3 objects, old-format ECS service ARNs, ECS tasks, SNS subscriptions, scheduler groups, launch configurations). `build_arn` writes Route 53 ARNs without region and account (`arn:aws:route53:::hostedzone/<id>`), CloudFront-scope web ACLs as `arn:aws:wafv2:us-east-1:<account>:global/webacl/<name>/<id>` and Auto Scaling groups in the IAM wildcard form `...:autoScalingGroup:*:autoScalingGroupName/<name>` (the UUID is only known from the API; the collector records the real ARN).
 - `s3_bucket_from_domain(domain) -> str | None`: the bucket of an S3 REST or website endpoint (`<bucket>.s3.amazonaws.com`, `<bucket>.s3.<region>.amazonaws.com`, `<bucket>.s3-website-<region>.amazonaws.com`, ...); used for CloudFront origins by the closure and the Analysis_Engine.
-- Draw.io styles: service icons use `shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.<icon>` (ECS cluster `ecs`, ECR `ecr`, ElastiCache `elasticache`, SQS `sqs`, SNS `sns`), resource-level icons (ALB, NAT/internet gateway, VPC endpoint, Route 53 hosted zone, route table = `router`, ECS service `ecs_service`, task definition `ecs_task`, Auto Scaling group `auto_scaling_group`, launch template `ami`, EventBridge rule `rule_3`, schedule `eventbridge_scheduler`) use `shape=mxgraph.aws4.<shape>`, subnets use the subnet group `shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_security_group` (verified stencil names from the `aws-architecture-diagram` skill).
+- Draw.io styles (all names verified against the vendored skill references, `test_registry_styles_use_verified_stencils_req_15_3`): VPC `vpc_virtual_private_cloud_vpc` and IAM role `role` are resource-level shapes; service icons use `shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.<icon>` (ECS cluster `ecs`, ECR `ecr`, ElastiCache `elasticache`, SQS `sqs`, SNS `sns`), resource-level icons (ALB, NAT/internet gateway, VPC endpoint, Route 53 hosted zone, route table = `router`, ECS service `ecs_service`, task definition `ecs_task`, Auto Scaling group `auto_scaling_group`, launch template `ami`, EventBridge rule `rule_3`, schedule `eventbridge_scheduler`) use `shape=mxgraph.aws4.<shape>`, subnets use the subnet group `shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_security_group` (verified stencil names from the `aws-architecture-diagram` skill).
 
 Every module that needs a type name, file name or id uses these functions; no module hard-codes alternative type names.
 
@@ -374,6 +374,7 @@ Rules operate on the AWS-field-name schema. Every rule records Citations whose `
 | `vpc_connection` | ElastiCache `CacheSubnetGroup.VpcId` | VPC | 1.0 |
 | `subscription` | SNS `Subscriptions[].Endpoint` | any collected spec with that ARN (SQS queue, Lambda) | 1.0 |
 | `event_target` | rule `Targets[].Arn`, schedule `Target.Arn` (Lambda version/alias qualifier dropped) | any collected spec with that ARN | 1.0 |
+| `network_access` (Req 15.2) | security group rule `IpPermissions[].UserIdGroupPairs[].GroupId` of an RDS instance / ElastiCache group naming a group of an EC2 instance, Lambda, ECS service or Auto Scaling group (via its launch template); computed after the other relationships from their `security_group` / `launch_template` edges; citations: the rule, then the source's group reference | compute → data store | 0.9 |
 
 Patterns (confidence = min of supporting relationship confidences):
 - **Serverless Application**: Lambda with ≥1 `iam_role_usage` or `dynamodb_access`.
@@ -388,13 +389,18 @@ Citations are built by `cite(spec, property_path)`, which resolves `evidence_val
 
 Security findings: exactly the three rules of Req 6.6 (citation to the offending statement/grant/permission). `AnalysisReport.to_dict()` is what `analysis/analysis.json` stores: `{generated_at, resource_count, relationships, patterns, security_findings, undetectable_patterns}`; `summary_markdown` goes to `analysis/analysis.md`.
 
-## Diagram Generator (`src/diagram_generator.py`)
+## Diagram Generator (`src/diagram_generator.py`, Req 6.4, 15)
 
-- Output: uncompressed mxGraph XML, root `<mxfile host="aws-resource-inventory">` → `<diagram>` → `<mxGraphModel>` → `<root>` with cells `0` and `1`.
-- One vertex per spec (duplicates by ARN dropped): `<UserObject id="res-<sha1(arn)[:12]>" label="<type><br/><resource id>" tooltip=ARN arn=ARN>` wrapping an `mxCell vertex="1"`, style = registry `drawio_style` (`shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.<service>` with the official category fill color) — unknown types get a plain rounded rectangle.
-- One edge per relationship, `value` = relationship type.
-- Layout: one column per region (`global` first), resources grouped by type in rows; deterministic for identical input.
-- `aws-inventory analyze --validate-diagram` runs `drawio-ai validate <file>` when the `drawio-ai` CLI is on PATH; otherwise prints that validation was skipped. XML well-formedness is always checked with `xml.etree.ElementTree`.
+Applies the `aws-architecture-diagram` / `drawio` skill rules deterministically from the specs and relationships; nothing is guessed.
+
+- Output: uncompressed mxGraph XML, `<mxfile host="aws-resource-inventory">` with two `<diagram>` pages, `Overview` and `Network detail`. Each `<root>`: cells `0`, `1`, a `#F5F5F5` background (lowest z-order, page size), a title block (`AWS architecture` + account, regions, latest `collected_at` date), then the content.
+- Facts (`_Context`): subnets/VPCs by id; public subnet = explicit route table association, else the VPC's main route table, has a `GatewayId` `igw-*` route; placement = `subnet_placement` targets ordered (AZ, public first, id); VPC = `vpc_connection` target or the subnet's VPC; Auto Scaling members = instances whose `aws:autoscaling:groupName` tag names a collected group.
+- Overview containers: page row [Users] [AWS Cloud]; AWS Cloud = row [edge columns: Route 53 | WAF, CloudFront] [Regions] [global services (S3)], then the "Supporting resources" panel (grid, 8 per row). Region = row [VPCs] [regional services, one column per layer]. VPC = row [IGW] [AZ rows] [VPC endpoints without subnets]. AZ = row of subnets (public first, then by name); the i-th subnet of every AZ row has the same width. Subnet = row of icons by layer (0 events, 1 load balancer/NAT/IGW, 2 compute, 3 messaging/endpoints, 4 data), then type, name.
+- Network detail: same VPC/AZ/subnet containers with NAT gateways and VPC endpoints in their subnets, IGW left, route tables and gateway endpoints right, security groups in a row below; edges `route_target` (label = route destination CIDR/prefix list) and `route_table_association` (dashed, to the subnet container).
+- Cells: icons and VPC/subnet containers are `UserObject`s (`label`, `tooltip` = `arns` = newline-separated ARNs, `resource_type`, subnets also `subnet_type`); ids `<page>-res|grp|box|edge-<sha1(key)[:12]>`. Icons 78×78 in 160×130 slots, 60 px gaps (≥ 220 px between icon centres), group padding 50/30/30/30. Group styles: AWS Cloud `group_aws_cloud_alt`, Region `group_region` (dashed), VPC `group_vpc`, subnets `group_security_group` (`#7AA116` public / `#147EBA` private), AZ and panel dashed generic boxes; all `container=1;dropTarget=1;fillColor=none`. Icon style = registry `drawio_style`; unknown types use `resIcon=mxgraph.aws4.general_AWScloud`. Labels: `<b>name[ ×N]</b><br>type name[ (N instances)]`, names truncated to 30 characters, XML-invalid characters replaced.
+- Edges (Req 15.2): `UserObject` (`label`, `relationships`, `evidence`) wrapping an `mxCell edge="1"` with `source`, `target`, `<mxGeometry relative="1">`, parent = innermost common container. Style: orthogonal, rounded, `strokeWidth=2`, exit/entry on the facing sides (horizontal when |dx| ≥ |dy|), `dashed=1` for DNS/WAF/async, `labelBackgroundColor=#F5F5F5;fontSize=11` when labelled. Edges between the same pair of cells are merged.
+- `aws-inventory analyze --validate-diagram` runs `drawio-ai validate <file>` when the `drawio-ai` CLI is on PATH; otherwise prints that validation was skipped. `--export-png` runs `<drawio> -x -f png -e -b 10 -o architecture.drawio.png architecture.drawio` (CLI from `drawio`/`draw.io` on PATH or `/Applications/draw.io.app/Contents/MacOS/draw.io`); skipped with a message when absent, exit 1 on failure.
+- Golden file: `examples/output/diagrams/architecture.drawio` must equal the generator output for `examples/output` (regenerated by `scripts/demo.py --output-dir examples/output`).
 
 ## IaC Generator (`src/iac_generator.py`)
 
@@ -492,7 +498,7 @@ Entry point `aws-inventory = "src.cli:main"`. Global options: `--log-level [DEBU
 |---|---|---|---|
 | `discover` | `--region` (repeatable), `--project-tag KEY=VALUE` (repeatable, AND), `--include-defaults`, `--profile`, `--role-arn`, `--external-id`, `--output-dir` (default `./output`) | yes | `discovery.json` |
 | `collect` | same as discover + `--max-workers` (default 10) | yes | everything in "Output directory layout" up to `summary_report.md`, plus checksums |
-| `analyze` | `--output-dir`, `--validate-diagram` | no | `analysis/`, `diagrams/`, checksums |
+| `analyze` | `--output-dir`, `--validate-diagram`, `--export-png` | no | `analysis/`, `diagrams/`, checksums |
 | `generate-iac` | `--output-dir`, `--terraform-dir` | no | `terraform/`, checksums |
 | `generate-docs` | `--output-dir` | no | `docs/infrastructure.md` (runs analysis in memory), checksums |
 | `verify` | `--output-dir` | no | nothing |
@@ -539,7 +545,7 @@ Logging: root handler to stderr with `SanitizingFilter`, which runs `DataSanitiz
 | 1 | `parse(print(spec)) == spec` for all valid specs | 4.4 | `test_property_parse_print_roundtrip_req_4_4` |
 | 2 | Sanitization preserves keys, list lengths and nesting, and is idempotent | 9.5, 9.6 | `test_property_sanitizer_preserves_structure_req_9_5`, `test_property_sanitizer_idempotent_req_9_6` |
 | 3 | Every top-level Specifications key appears in the generated Terraform block | 7.3 | `test_property_iac_generator_includes_all_specs_req_7_3` |
-| 4 | Every spec ARN appears in the diagram | 6.4 | `test_property_diagram_includes_all_resources_req_6_4` |
+| 4 | Every spec ARN appears in the `arns` of an Overview vertex; ids unique; edges attached | 6.4 | `test_property_diagram_includes_all_resources_req_6_4` |
 | 5 | Every citation produced by the engine resolves against its sealed spec | 8.5 | `test_property_citations_resolve_req_8_5` |
 | 6 | No MCP response contains a credential pattern | 5.2 | `test_property_mcp_server_no_credentials_req_5_2` |
 

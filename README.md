@@ -29,7 +29,7 @@ More documentation:
 - AWS credentials reachable through the standard boto3 credential chain (environment variables, `~/.aws/credentials` / `~/.aws/config`, AWS SSO, or a container/instance role). Only `discover` and `collect` need them.
 - An identity allowed to perform the read-only actions in [docs/iam-policy.json](docs/iam-policy.json). AWS's managed `ReadOnlyAccess` policy also works.
 - Optional: [Terraform](https://developer.hashicorp.com/terraform/install) ≥ 1.5 to run the generated import and plan scripts.
-- Optional: the `drawio-ai` CLI (drawio-ai-kit) for `analyze --validate-diagram`.
+- Optional: the `drawio-ai` CLI (drawio-ai-kit) for `analyze --validate-diagram`, the draw.io desktop app for `analyze --export-png`.
 
 ## Installation
 
@@ -119,6 +119,7 @@ Finds relationships (`vpc_connection`, `iam_role_usage`, `security_group`, `dyna
 ```bash
 aws-inventory analyze --output-dir ./output
 aws-inventory analyze --output-dir ./output --validate-diagram   # also runs `drawio-ai validate` if installed
+aws-inventory analyze --output-dir ./output --export-png         # also writes diagrams/architecture.drawio.png with draw.io desktop
 ```
 
 ### generate-iac
@@ -207,6 +208,7 @@ Then ask, for example, "List the Lambda functions and explain which tables they 
 | MCP client shows no tools / server exits | Use absolute paths for both the executable and `--cache-dir`; the directory must exist. Run the same command in a terminal to see errors on stderr. |
 | `terraform plan` shows changes after `import.sh` | Expected for the items under "Known limitations" below. Review the diff; values marked `# REDACTED: set manually` must be filled in by hand. |
 | `analyze --validate-diagram` says validation was skipped | The `drawio-ai` CLI is not on `PATH`. The XML is still checked for well-formedness. |
+| `analyze --export-png` says the export was skipped | The draw.io desktop CLI (`drawio`) is not installed. The `.drawio` file is still written. |
 
 ## Known limitations
 

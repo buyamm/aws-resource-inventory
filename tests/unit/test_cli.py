@@ -411,11 +411,13 @@ def test_cli_collect_project_tag_option_req_13_1(runner, tmp_path, sample_accoun
     assert manifest["scope"]["project_tags"] == {"team": "orders"}
     assert manifest["scope"]["include_defaults"] is True
     # team=orders is on S3, logs, RDS, Lambda (moto's tagging API); closure adds the
-    # Lambda role and the RDS security group with its VPC. The untagged instance stays out.
+    # Lambda role, the RDS subnet, the RDS security group with its VPC, and the groups
+    # its rules admit (storefront app -> ALB). The untagged instance stays out.
     counts = manifest["resource_counts"]
     assert "aws_instance" not in counts
     assert counts["aws_iam_role"] == 1
-    assert counts["aws_security_group"] == 1 and counts["aws_vpc"] == 1
+    assert counts["aws_security_group"] == 3 and counts["aws_vpc"] == 1
+    assert counts["aws_subnet"] == 1
 
     result = runner.invoke(
         cli,
@@ -438,3 +440,35 @@ def test_cli_collect_project_tag_option_req_13_1(runner, tmp_path, sample_accoun
         "aws_db_instance",
         "aws_lambda_function",
     }
+
+
+@pytest.mark.parametrize(
+    ("outcome", "exit_code", "expected"),
+    [
+        ((None, "draw.io desktop CLI not found; PNG export skipped"), 0, "skipped"),
+        ((True, "PNG: x/architecture.drawio.png"), 0, "architecture.drawio.png"),
+        ((False, "export crashed"), 1, "export crashed"),
+    ],
+)
+def test_cli_analyze_export_png_req_15_4(
+    runner, tmp_path, monkeypatch, outcome, exit_code, expected
+):
+    import shutil
+
+    out = tmp_path / "out"
+    shutil.copytree(Path(__file__).resolve().parents[2] / "examples" / "output", out)
+    calls = []
+
+    def fake_export(path):
+        calls.append(Path(path))
+        return outcome
+
+    monkeypatch.setattr(cli_module, "export_png", fake_export)
+    result = runner.invoke(cli, ["--no-color", "analyze", "--output-dir", str(out), "--export-png"])
+    assert result.exit_code == exit_code, result.output
+    assert calls == [out / "diagrams" / "architecture.drawio"]
+    assert expected in result.output
+    # Without the flag nothing is exported.
+    calls.clear()
+    assert runner.invoke(cli, ["analyze", "--output-dir", str(out)]).exit_code == 0
+    assert calls == []

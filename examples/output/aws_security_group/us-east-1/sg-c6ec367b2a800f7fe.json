@@ -1,0 +1,49 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-c6ec367b2a800f7fe",
+  "generated_at": "2026-10-16T01:29:14.603213Z",
+  "metadata": {
+    "api_version": "2016-11-15",
+    "checksum": "9f22b00824306f932f4c93c412c311933874e0c0b4e5f69644b0c0ffadf80b0a",
+    "collected_at": "2026-10-16T01:29:14Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_security_group",
+  "specifications": {
+    "Description": "Public HTTPS",
+    "GroupId": "sg-c6ec367b2a800f7fe",
+    "GroupName": "storefront-alb-sg",
+    "IpPermissions": [
+      {
+        "FromPort": 443,
+        "IpProtocol": "tcp",
+        "IpRanges": [
+          {
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "Ipv6Ranges": [],
+        "PrefixListIds": [],
+        "ToPort": 443,
+        "UserIdGroupPairs": []
+      }
+    ],
+    "IpPermissionsEgress": [
+      {
+        "IpProtocol": "-1",
+        "IpRanges": [
+          {
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "Ipv6Ranges": [],
+        "PrefixListIds": [],
+        "UserIdGroupPairs": []
+      }
+    ],
+    "OwnerId": "123456789012",
+    "Tags": [],
+    "VpcId": "vpc-7c4f2f1d"
+  }
+}

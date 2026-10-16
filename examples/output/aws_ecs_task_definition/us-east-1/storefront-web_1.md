@@ -8,7 +8,7 @@
 | ARN               | arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1 |
 | Region            | us-east-1                                                           |
 | Account ID        | 123456789012                                                        |
-| Collected At      | 2026-10-15T16:40:03Z                                                |
+| Collected At      | 2026-10-16T01:29:14Z                                                |
 | Collector Version | 0.1.0                                                               |
 
 

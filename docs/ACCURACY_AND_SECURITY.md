@@ -108,7 +108,7 @@ The sanitizer runs on per-resource JSON and Markdown, aggregates, raw responses,
 
 - Tests run with fake credentials forced by `tests/conftest.py` and moto mocks. `AWS_ACCOUNT_ID_ENDPOINT_MODE=disabled` stops botocore's account-based DynamoDB endpoint from bypassing moto. Live tests are opt-in (`AWS_INVENTORY_LIVE_TESTS=1`, marker `aws`).
 - `scripts/demo.py` applies the same fake credentials and endpoint setting in its default (moto) mode.
-- `bandit -r src -ll` (medium and high severity) runs in CI and is clean. The remaining low-severity notes are intentional: `subprocess` runs fixed commands (`terraform plan`, `drawio-ai validate`) without a shell, `xml.etree` only parses the `.drawio` file the tool wrote itself, `assert` narrows a type in the collector, and `hunter2-demo` is the deliberately insecure Lambda variable of the moto sample account.
+- `bandit -r src -ll` (medium and high severity) runs in CI and is clean. The remaining low-severity notes are intentional: `subprocess` runs fixed commands (`terraform plan`, `drawio-ai validate`, draw.io PNG export) without a shell, `xml.etree` only parses the `.drawio` file the tool wrote itself, `assert` narrows a type in the collector, and `hunter2-demo` is the deliberately insecure Lambda variable of the moto sample account.
 
 ## Performance benchmark
 

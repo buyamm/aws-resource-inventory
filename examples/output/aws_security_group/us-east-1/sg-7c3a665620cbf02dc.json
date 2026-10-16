@@ -1,0 +1,73 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-7c3a665620cbf02dc",
+  "generated_at": "2026-10-16T01:29:14.603213Z",
+  "metadata": {
+    "api_version": "2016-11-15",
+    "checksum": "c1f701f34c06de7f42bb9f661ee00dc75fdafe6f75025f942fd61d6ead8b87eb",
+    "collected_at": "2026-10-16T01:29:14Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_security_group",
+  "specifications": {
+    "Description": "Storefront tasks and cache",
+    "GroupId": "sg-7c3a665620cbf02dc",
+    "GroupName": "storefront-app-sg",
+    "IpPermissions": [
+      {
+        "FromPort": 80,
+        "IpProtocol": "tcp",
+        "IpRanges": [],
+        "Ipv6Ranges": [],
+        "PrefixListIds": [],
+        "ToPort": 80,
+        "UserIdGroupPairs": [
+          {
+            "GroupId": "sg-c6ec367b2a800f7fe",
+            "UserId": "123456789012"
+          }
+        ]
+      },
+      {
+        "FromPort": 6379,
+        "IpProtocol": "tcp",
+        "IpRanges": [],
+        "Ipv6Ranges": [],
+        "PrefixListIds": [],
+        "ToPort": 6379,
+        "UserIdGroupPairs": [
+          {
+            "GroupId": "sg-7c3a665620cbf02dc",
+            "UserId": "123456789012"
+          }
+        ]
+      }
+    ],
+    "IpPermissionsEgress": [
+      {
+        "IpProtocol": "-1",
+        "IpRanges": [
+          {
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "Ipv6Ranges": [],
+        "PrefixListIds": [],
+        "UserIdGroupPairs": []
+      }
+    ],
+    "OwnerId": "123456789012",
+    "Tags": [
+      {
+        "Key": "Name",
+        "Value": "storefront-app"
+      },
+      {
+        "Key": "service",
+        "Value": "storefront"
+      }
+    ],
+    "VpcId": "vpc-7c4f2f1d"
+  }
+}

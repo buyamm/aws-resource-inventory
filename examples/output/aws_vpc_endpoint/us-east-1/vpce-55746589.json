@@ -1,0 +1,38 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-55746589",
+  "generated_at": "2026-10-16T01:29:14.603213Z",
+  "metadata": {
+    "api_version": "2016-11-15",
+    "checksum": "cb2bd7f40f664c74153a57aa5db23bb7160340dd1720ec4fbac9a6f0fda11e08",
+    "collected_at": "2026-10-16T01:29:14Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_vpc_endpoint",
+  "specifications": {
+    "CreationTimestamp": "2026-10-16T01:29:13+00:00",
+    "DnsEntries": [],
+    "OwnerId": "123456789012",
+    "PolicyDocument": "{\"Version\": \"2008-10-17\", \"Statement\": [{\"Effect\": \"Allow\", \"Principal\": \"*\", \"Action\": \"*\", \"Resource\": \"*\"}]}",
+    "PrivateDnsEnabled": true,
+    "RouteTableIds": [
+      "rtb-abf4c4b4"
+    ],
+    "ServiceName": "com.amazonaws.us-east-1.s3",
+    "State": "available",
+    "Tags": [
+      {
+        "Key": "Name",
+        "Value": "storefront-s3"
+      },
+      {
+        "Key": "service",
+        "Value": "storefront"
+      }
+    ],
+    "VpcEndpointId": "vpce-55746589",
+    "VpcEndpointType": "Gateway",
+    "VpcId": "vpc-7c4f2f1d"
+  }
+}

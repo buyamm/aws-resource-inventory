@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:ecs:us-east-1:123456789012:service/storefront/web",
-  "generated_at": "2026-10-15T16:40:03.851507Z",
+  "generated_at": "2026-10-16T01:29:14.603213Z",
   "metadata": {
     "api_version": "2014-11-13",
-    "checksum": "de1130ac0afe088e46cdf067bf814bab669ac71b95545bcdfa07714fe0055225",
-    "collected_at": "2026-10-15T16:40:03Z",
+    "checksum": "781293bfbc6bb66a57e0da7cef2ba9099c581d497e71198d418e8c3fc2d5deb4",
+    "collected_at": "2026-10-16T01:29:14Z",
     "collector_version": "0.1.0"
   },
   "region": "us-east-1",
@@ -14,15 +14,15 @@
     "clusterArn": "arn:aws:ecs:us-east-1:123456789012:cluster/storefront",
     "deployments": [
       {
-        "createdAt": "2026-10-15T23:40:02.617837+07:00",
+        "createdAt": "2026-10-16T08:29:13.277437+07:00",
         "desiredCount": 2,
-        "id": "ecs-svc/614225609518633782",
+        "id": "ecs-svc/487704048739958131",
         "launchType": "FARGATE",
         "pendingCount": 2,
         "runningCount": 0,
         "status": "PRIMARY",
         "taskDefinition": "arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1",
-        "updatedAt": "2026-10-15T23:40:02.617843+07:00"
+        "updatedAt": "2026-10-16T08:29:13.277442+07:00"
       }
     ],
     "desiredCount": 2,
@@ -34,6 +34,17 @@
         "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188"
       }
     ],
+    "networkConfiguration": {
+      "awsvpcConfiguration": {
+        "assignPublicIp": "DISABLED",
+        "securityGroups": [
+          "sg-7c3a665620cbf02dc"
+        ],
+        "subnets": [
+          "subnet-30a75c4f"
+        ]
+      }
+    },
     "pendingCount": 2,
     "runningCount": 0,
     "schedulingStrategy": "REPLICA",

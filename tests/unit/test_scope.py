@@ -283,6 +283,12 @@ def test_scope_closure_pulls_referenced_resources_req_13_3(sample_account):
         ),
         ("aws_vpc", build_arn("aws_vpc", ids.vpc_id, "us-east-1", ACCOUNT)),
         ("aws_subnet", build_arn("aws_subnet", ids.subnet_id, "us-east-1", ACCOUNT)),
+        # The instance group admits PostgreSQL from the storefront app group, which
+        # admits the ALB group (IpPermissions[].UserIdGroupPairs[]).
+        *(
+            ("aws_security_group", build_arn("aws_security_group", g, "us-east-1", ACCOUNT))
+            for g in (ids.app_security_group_id, ids.alb_security_group_id)
+        ),
     }
     referenced = {r.arn: r for r in result.referenced}
     assert set(referenced) == {arn for _, arn in collected} - {seeds[0].arn, seeds[1].arn}

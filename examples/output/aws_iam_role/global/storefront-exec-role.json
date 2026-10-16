@@ -1,11 +1,11 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:iam::123456789012:role/storefront-exec-role",
-  "generated_at": "2026-10-15T16:40:03.851507Z",
+  "generated_at": "2026-10-16T01:29:14.603213Z",
   "metadata": {
     "api_version": "2010-05-08",
-    "checksum": "523c0938a79f1f2de9e3b0fb744bde58ac19f3bc42247e6f141b197f28825c7d",
-    "collected_at": "2026-10-15T16:40:03Z",
+    "checksum": "6a37e7a4d7243e9caff7ac3193e29101e8e6fa1b9dc7947392ce8c8768effc86",
+    "collected_at": "2026-10-16T01:29:14Z",
     "collector_version": "0.1.0"
   },
   "region": "global",
@@ -30,11 +30,11 @@
         "PolicyName": "AmazonECSTaskExecutionRolePolicy"
       }
     ],
-    "CreateDate": "2026-10-15T16:40:02.590000+00:00",
+    "CreateDate": "2026-10-16T01:29:13.247000+00:00",
     "InlinePolicies": {},
     "MaxSessionDuration": 3600,
     "Path": "/",
-    "RoleId": "AROARZPUZDIKLELZ3QLZO",
+    "RoleId": "AROARZPUZDIKHRFGVZ7IB",
     "RoleLastUsed": {},
     "RoleName": "storefront-exec-role",
     "Tags": [

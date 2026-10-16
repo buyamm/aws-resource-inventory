@@ -1,0 +1,41 @@
+{
+  "DescribeVpcEndpoints": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Fri, 16 Oct 2026 08:29:14 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "19a9ff46-7df6-49b8-9726-3df27527089d",
+      "RetryAttempts": 0
+    },
+    "VpcEndpoints": [
+      {
+        "CreationTimestamp": "2026-10-16T01:29:13+00:00",
+        "DnsEntries": [],
+        "OwnerId": "123456789012",
+        "PolicyDocument": "{\"Version\": \"2008-10-17\", \"Statement\": [{\"Effect\": \"Allow\", \"Principal\": \"*\", \"Action\": \"*\", \"Resource\": \"*\"}]}",
+        "PrivateDnsEnabled": true,
+        "RouteTableIds": [
+          "rtb-abf4c4b4"
+        ],
+        "ServiceName": "com.amazonaws.us-east-1.s3",
+        "State": "available",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "storefront-s3"
+          },
+          {
+            "Key": "service",
+            "Value": "storefront"
+          }
+        ],
+        "VpcEndpointId": "vpce-55746589",
+        "VpcEndpointType": "Gateway",
+        "VpcId": "vpc-7c4f2f1d"
+      }
+    ]
+  }
+}

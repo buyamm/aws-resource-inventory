@@ -3,9 +3,9 @@
 # Run from the Terraform root after `terraform init`; imported addresses are skipped.
 set -euo pipefail
 
-terraform state show module.us_east_1.aws_acm_certificate.a731cd05-0052-48e0-8889-0431af5b4bbe >/dev/null 2>&1 || terraform import module.us_east_1.aws_acm_certificate.a731cd05-0052-48e0-8889-0431af5b4bbe arn:aws:acm:us-east-1:123456789012:certificate/a731cd05-0052-48e0-8889-0431af5b4bbe
+terraform state show module.us_east_1.aws_acm_certificate.r_8f72f034-ca75-4120-acc5-f35a9fd3885d >/dev/null 2>&1 || terraform import module.us_east_1.aws_acm_certificate.r_8f72f034-ca75-4120-acc5-f35a9fd3885d arn:aws:acm:us-east-1:123456789012:certificate/8f72f034-ca75-4120-acc5-f35a9fd3885d
 terraform state show module.us_east_1.aws_autoscaling_group.storefront-workers >/dev/null 2>&1 || terraform import module.us_east_1.aws_autoscaling_group.storefront-workers storefront-workers
-terraform state show module.global.aws_cloudfront_distribution.WUDV5OCSQIBBJ >/dev/null 2>&1 || terraform import module.global.aws_cloudfront_distribution.WUDV5OCSQIBBJ WUDV5OCSQIBBJ
+terraform state show module.global.aws_cloudfront_distribution.S8ZTDFP8H8PGF >/dev/null 2>&1 || terraform import module.global.aws_cloudfront_distribution.S8ZTDFP8H8PGF S8ZTDFP8H8PGF
 terraform state show module.us_east_1.aws_cloudwatch_event_rule.storefront-nightly-report >/dev/null 2>&1 || terraform import module.us_east_1.aws_cloudwatch_event_rule.storefront-nightly-report storefront-nightly-report
 terraform state show module.us_east_1.aws_cloudwatch_event_target.storefront-nightly-report_order-processor >/dev/null 2>&1 || terraform import module.us_east_1.aws_cloudwatch_event_target.storefront-nightly-report_order-processor storefront-nightly-report/order-processor
 terraform state show module.us_east_1.aws_cloudwatch_log_group.aws_lambda_order-processor >/dev/null 2>&1 || terraform import module.us_east_1.aws_cloudwatch_log_group.aws_lambda_order-processor /aws/lambda/order-processor
@@ -24,40 +24,40 @@ terraform state show module.global.aws_iam_role.storefront-exec-role >/dev/null 
 terraform state show module.global.aws_iam_role_policy_attachment.storefront-exec-role_AmazonECSTaskExecutionRolePolicy >/dev/null 2>&1 || terraform import module.global.aws_iam_role_policy_attachment.storefront-exec-role_AmazonECSTaskExecutionRolePolicy storefront-exec-role/arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 terraform state show module.global.aws_iam_role.storefront-scheduler-role >/dev/null 2>&1 || terraform import module.global.aws_iam_role.storefront-scheduler-role storefront-scheduler-role
 terraform state show module.global.aws_iam_role.storefront-task-role >/dev/null 2>&1 || terraform import module.global.aws_iam_role.storefront-task-role storefront-task-role
-terraform state show module.us_east_1.aws_instance.i-685e30ac4d43a0d83 >/dev/null 2>&1 || terraform import module.us_east_1.aws_instance.i-685e30ac4d43a0d83 i-685e30ac4d43a0d83
-terraform state show module.us_east_1.aws_instance.i-f6333ad6a6250cb6f >/dev/null 2>&1 || terraform import module.us_east_1.aws_instance.i-f6333ad6a6250cb6f i-f6333ad6a6250cb6f
-terraform state show module.us_east_1.aws_internet_gateway.igw-bd38647b >/dev/null 2>&1 || terraform import module.us_east_1.aws_internet_gateway.igw-bd38647b igw-bd38647b
+terraform state show module.us_east_1.aws_instance.i-47f9de669501b27af >/dev/null 2>&1 || terraform import module.us_east_1.aws_instance.i-47f9de669501b27af i-47f9de669501b27af
+terraform state show module.us_east_1.aws_instance.i-7c15a7e2df90fa017 >/dev/null 2>&1 || terraform import module.us_east_1.aws_instance.i-7c15a7e2df90fa017 i-7c15a7e2df90fa017
+terraform state show module.us_east_1.aws_internet_gateway.igw-dbc38f85 >/dev/null 2>&1 || terraform import module.us_east_1.aws_internet_gateway.igw-dbc38f85 igw-dbc38f85
 terraform state show module.us_east_1.aws_lambda_function.order-processor >/dev/null 2>&1 || terraform import module.us_east_1.aws_lambda_function.order-processor order-processor
-terraform state show module.us_east_1.aws_launch_template.lt-254efd878ee151eb7 >/dev/null 2>&1 || terraform import module.us_east_1.aws_launch_template.lt-254efd878ee151eb7 lt-254efd878ee151eb7
+terraform state show module.us_east_1.aws_launch_template.lt-c743f2f076e986059 >/dev/null 2>&1 || terraform import module.us_east_1.aws_launch_template.lt-c743f2f076e986059 lt-c743f2f076e986059
 terraform state show module.us_east_1.aws_lb.app_storefront-alb_50dc6c495c0c9188 >/dev/null 2>&1 || terraform import module.us_east_1.aws_lb.app_storefront-alb_50dc6c495c0c9188 arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188
-terraform state show module.us_east_1.aws_lb_listener.app_storefront-alb_50dc6c495c0c9188_4434588500944 >/dev/null 2>&1 || terraform import module.us_east_1.aws_lb_listener.app_storefront-alb_50dc6c495c0c9188_4434588500944 arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434588500944
+terraform state show module.us_east_1.aws_lb_listener.app_storefront-alb_50dc6c495c0c9188_4434536313232 >/dev/null 2>&1 || terraform import module.us_east_1.aws_lb_listener.app_storefront-alb_50dc6c495c0c9188_4434536313232 arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434536313232
 terraform state show module.us_east_1.aws_lb_target_group.storefront-tg_50dc6c495c0c9188 >/dev/null 2>&1 || terraform import module.us_east_1.aws_lb_target_group.storefront-tg_50dc6c495c0c9188 arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188
-terraform state show module.us_east_1.aws_nat_gateway.nat-8604a604f3c5a3cf0 >/dev/null 2>&1 || terraform import module.us_east_1.aws_nat_gateway.nat-8604a604f3c5a3cf0 nat-8604a604f3c5a3cf0
-terraform state show module.global.aws_route53_zone.r_0QZOTUEJO46KDTZ >/dev/null 2>&1 || terraform import module.global.aws_route53_zone.r_0QZOTUEJO46KDTZ 0QZOTUEJO46KDTZ
-terraform state show module.global.aws_route53_record.r_0QZOTUEJO46KDTZ_api_example_com_A >/dev/null 2>&1 || terraform import module.global.aws_route53_record.r_0QZOTUEJO46KDTZ_api_example_com_A 0QZOTUEJO46KDTZ_api.example.com_A
-terraform state show module.global.aws_route53_record.r_0QZOTUEJO46KDTZ_shop_example_com_A >/dev/null 2>&1 || terraform import module.global.aws_route53_record.r_0QZOTUEJO46KDTZ_shop_example_com_A 0QZOTUEJO46KDTZ_shop.example.com_A
-terraform state show module.us_east_1.aws_route_table.rtb-52dac71b >/dev/null 2>&1 || terraform import module.us_east_1.aws_route_table.rtb-52dac71b rtb-52dac71b
-terraform state show module.us_east_1.aws_route_table_association.rtb-52dac71b_subnet-a6e131f6 >/dev/null 2>&1 || terraform import module.us_east_1.aws_route_table_association.rtb-52dac71b_subnet-a6e131f6 subnet-a6e131f6/rtb-52dac71b
-terraform state show module.us_east_1.aws_route_table.rtb-590047f7 >/dev/null 2>&1 || terraform import module.us_east_1.aws_route_table.rtb-590047f7 rtb-590047f7
-terraform state show module.us_east_1.aws_route_table_association.rtb-590047f7_subnet-d94916f9 >/dev/null 2>&1 || terraform import module.us_east_1.aws_route_table_association.rtb-590047f7_subnet-d94916f9 subnet-d94916f9/rtb-590047f7
-terraform state show module.us_east_1.aws_route_table_association.rtb-590047f7_subnet-b83c8765 >/dev/null 2>&1 || terraform import module.us_east_1.aws_route_table_association.rtb-590047f7_subnet-b83c8765 subnet-b83c8765/rtb-590047f7
-terraform state show module.us_east_1.aws_route_table.rtb-fc59c9b7 >/dev/null 2>&1 || terraform import module.us_east_1.aws_route_table.rtb-fc59c9b7 rtb-fc59c9b7
+terraform state show module.us_east_1.aws_nat_gateway.nat-60d1a0cf8c8f398eb >/dev/null 2>&1 || terraform import module.us_east_1.aws_nat_gateway.nat-60d1a0cf8c8f398eb nat-60d1a0cf8c8f398eb
+terraform state show module.global.aws_route53_zone.r_2VX36NXN28FIY7F >/dev/null 2>&1 || terraform import module.global.aws_route53_zone.r_2VX36NXN28FIY7F 2VX36NXN28FIY7F
+terraform state show module.global.aws_route53_record.r_2VX36NXN28FIY7F_api_example_com_A >/dev/null 2>&1 || terraform import module.global.aws_route53_record.r_2VX36NXN28FIY7F_api_example_com_A 2VX36NXN28FIY7F_api.example.com_A
+terraform state show module.global.aws_route53_record.r_2VX36NXN28FIY7F_shop_example_com_A >/dev/null 2>&1 || terraform import module.global.aws_route53_record.r_2VX36NXN28FIY7F_shop_example_com_A 2VX36NXN28FIY7F_shop.example.com_A
+terraform state show module.us_east_1.aws_route_table.rtb-260c9780 >/dev/null 2>&1 || terraform import module.us_east_1.aws_route_table.rtb-260c9780 rtb-260c9780
+terraform state show module.us_east_1.aws_route_table_association.rtb-260c9780_subnet-91c2dcc6 >/dev/null 2>&1 || terraform import module.us_east_1.aws_route_table_association.rtb-260c9780_subnet-91c2dcc6 subnet-91c2dcc6/rtb-260c9780
+terraform state show module.us_east_1.aws_route_table_association.rtb-260c9780_subnet-9134f3a5 >/dev/null 2>&1 || terraform import module.us_east_1.aws_route_table_association.rtb-260c9780_subnet-9134f3a5 subnet-9134f3a5/rtb-260c9780
+terraform state show module.us_east_1.aws_route_table.rtb-7bfbfaee >/dev/null 2>&1 || terraform import module.us_east_1.aws_route_table.rtb-7bfbfaee rtb-7bfbfaee
+terraform state show module.us_east_1.aws_route_table.rtb-abf4c4b4 >/dev/null 2>&1 || terraform import module.us_east_1.aws_route_table.rtb-abf4c4b4 rtb-abf4c4b4
+terraform state show module.us_east_1.aws_route_table_association.rtb-abf4c4b4_subnet-30a75c4f >/dev/null 2>&1 || terraform import module.us_east_1.aws_route_table_association.rtb-abf4c4b4_subnet-30a75c4f subnet-30a75c4f/rtb-abf4c4b4
 terraform state show module.global.aws_s3_bucket.orders-public-assets >/dev/null 2>&1 || terraform import module.global.aws_s3_bucket.orders-public-assets orders-public-assets
 terraform state show module.global.aws_s3_bucket_versioning.orders-public-assets >/dev/null 2>&1 || terraform import module.global.aws_s3_bucket_versioning.orders-public-assets orders-public-assets
 terraform state show module.global.aws_s3_bucket.storefront-static >/dev/null 2>&1 || terraform import module.global.aws_s3_bucket.storefront-static storefront-static
 terraform state show module.us_east_1.aws_scheduler_schedule.default_storefront-cleanup >/dev/null 2>&1 || terraform import module.us_east_1.aws_scheduler_schedule.default_storefront-cleanup default/storefront-cleanup
-terraform state show module.us_east_1.aws_security_group.sg-67ee3adaaa05cd07e >/dev/null 2>&1 || terraform import module.us_east_1.aws_security_group.sg-67ee3adaaa05cd07e sg-67ee3adaaa05cd07e
-terraform state show module.us_east_1.aws_security_group.sg-8c9c7f5f96b0d5fb1 >/dev/null 2>&1 || terraform import module.us_east_1.aws_security_group.sg-8c9c7f5f96b0d5fb1 sg-8c9c7f5f96b0d5fb1
-terraform state show module.us_east_1.aws_security_group.sg-eaaa2c57ac5ecc98e >/dev/null 2>&1 || terraform import module.us_east_1.aws_security_group.sg-eaaa2c57ac5ecc98e sg-eaaa2c57ac5ecc98e
-terraform state show module.us_east_1.aws_security_group.sg-fb454a9efcd634f32 >/dev/null 2>&1 || terraform import module.us_east_1.aws_security_group.sg-fb454a9efcd634f32 sg-fb454a9efcd634f32
+terraform state show module.us_east_1.aws_security_group.sg-2edfb301c8a045aa8 >/dev/null 2>&1 || terraform import module.us_east_1.aws_security_group.sg-2edfb301c8a045aa8 sg-2edfb301c8a045aa8
+terraform state show module.us_east_1.aws_security_group.sg-71a3ac0ec6bbd92b7 >/dev/null 2>&1 || terraform import module.us_east_1.aws_security_group.sg-71a3ac0ec6bbd92b7 sg-71a3ac0ec6bbd92b7
+terraform state show module.us_east_1.aws_security_group.sg-7c3a665620cbf02dc >/dev/null 2>&1 || terraform import module.us_east_1.aws_security_group.sg-7c3a665620cbf02dc sg-7c3a665620cbf02dc
+terraform state show module.us_east_1.aws_security_group.sg-c6ec367b2a800f7fe >/dev/null 2>&1 || terraform import module.us_east_1.aws_security_group.sg-c6ec367b2a800f7fe sg-c6ec367b2a800f7fe
 terraform state show module.us_east_1.aws_sfn_state_machine.order-flow >/dev/null 2>&1 || terraform import module.us_east_1.aws_sfn_state_machine.order-flow arn:aws:states:us-east-1:123456789012:stateMachine:order-flow
 terraform state show module.us_east_1.aws_sns_topic.storefront-events >/dev/null 2>&1 || terraform import module.us_east_1.aws_sns_topic.storefront-events arn:aws:sns:us-east-1:123456789012:storefront-events
 terraform state show module.us_east_1.aws_sqs_queue.storefront-orders >/dev/null 2>&1 || terraform import module.us_east_1.aws_sqs_queue.storefront-orders https://sqs.us-east-1.amazonaws.com/123456789012/storefront-orders
-terraform state show module.us_east_1.aws_subnet.subnet-a6e131f6 >/dev/null 2>&1 || terraform import module.us_east_1.aws_subnet.subnet-a6e131f6 subnet-a6e131f6
-terraform state show module.us_east_1.aws_subnet.subnet-b83c8765 >/dev/null 2>&1 || terraform import module.us_east_1.aws_subnet.subnet-b83c8765 subnet-b83c8765
-terraform state show module.us_east_1.aws_subnet.subnet-d94916f9 >/dev/null 2>&1 || terraform import module.us_east_1.aws_subnet.subnet-d94916f9 subnet-d94916f9
-terraform state show module.us_east_1.aws_vpc.vpc-b6ee287f >/dev/null 2>&1 || terraform import module.us_east_1.aws_vpc.vpc-b6ee287f vpc-b6ee287f
-terraform state show module.us_east_1.aws_vpc_endpoint.vpce-073f3c1e >/dev/null 2>&1 || terraform import module.us_east_1.aws_vpc_endpoint.vpce-073f3c1e vpce-073f3c1e
-terraform state show module.global.aws_wafv2_web_acl.storefront-waf_e910f120-ccdb-46a7-bbb2-4e34585f73b5 >/dev/null 2>&1 || terraform import module.global.aws_wafv2_web_acl.storefront-waf_e910f120-ccdb-46a7-bbb2-4e34585f73b5 e910f120-ccdb-46a7-bbb2-4e34585f73b5/storefront-waf/CLOUDFRONT
+terraform state show module.us_east_1.aws_subnet.subnet-30a75c4f >/dev/null 2>&1 || terraform import module.us_east_1.aws_subnet.subnet-30a75c4f subnet-30a75c4f
+terraform state show module.us_east_1.aws_subnet.subnet-9134f3a5 >/dev/null 2>&1 || terraform import module.us_east_1.aws_subnet.subnet-9134f3a5 subnet-9134f3a5
+terraform state show module.us_east_1.aws_subnet.subnet-91c2dcc6 >/dev/null 2>&1 || terraform import module.us_east_1.aws_subnet.subnet-91c2dcc6 subnet-91c2dcc6
+terraform state show module.us_east_1.aws_vpc.vpc-7c4f2f1d >/dev/null 2>&1 || terraform import module.us_east_1.aws_vpc.vpc-7c4f2f1d vpc-7c4f2f1d
+terraform state show module.us_east_1.aws_vpc_endpoint.vpce-55746589 >/dev/null 2>&1 || terraform import module.us_east_1.aws_vpc_endpoint.vpce-55746589 vpce-55746589
+terraform state show module.global.aws_wafv2_web_acl.storefront-waf_1cbd8645-1348-4072-8b2e-633711042db1 >/dev/null 2>&1 || terraform import module.global.aws_wafv2_web_acl.storefront-waf_1cbd8645-1348-4072-8b2e-633711042db1 1cbd8645-1348-4072-8b2e-633711042db1/storefront-waf/CLOUDFRONT
 
 echo 'Terraform import completed.'

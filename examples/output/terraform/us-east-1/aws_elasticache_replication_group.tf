@@ -25,7 +25,7 @@ resource "aws_elasticache_replication_group" "storefront-cache" {
   num_cache_clusters = 2
   parameter_group_name = "default.redis7"
   subnet_group_name = "storefront-cache-subnets"
-  security_group_ids = ["sg-eaaa2c57ac5ecc98e"]
+  security_group_ids = ["sg-7c3a665620cbf02dc"]
   maintenance_window = "sun:23:00-mon:01:30"
   automatic_failover_enabled = true
   multi_az_enabled = true

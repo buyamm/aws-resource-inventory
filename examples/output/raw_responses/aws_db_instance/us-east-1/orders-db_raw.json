@@ -18,6 +18,21 @@
           }
         ],
         "DBSecurityGroups": [],
+        "DBSubnetGroup": {
+          "DBSubnetGroupDescription": "Orders database",
+          "DBSubnetGroupName": "orders-db-subnets",
+          "SubnetGroupStatus": "Complete",
+          "Subnets": [
+            {
+              "SubnetAvailabilityZone": {
+                "Name": "us-east-1a"
+              },
+              "SubnetIdentifier": "subnet-30a75c4f",
+              "SubnetStatus": "Active"
+            }
+          ],
+          "VpcId": "vpc-7c4f2f1d"
+        },
         "DbInstancePort": 5432,
         "DbiResourceId": "db-M5ENSHXFPU6XHZ4G4ZEI5QIO2U",
         "DeletionProtection": false,
@@ -29,7 +44,7 @@
         "Engine": "postgres",
         "EngineVersion": "9.3.3",
         "IAMDatabaseAuthenticationEnabled": false,
-        "InstanceCreateTime": "2026-10-15T16:40:02.370000+00:00",
+        "InstanceCreateTime": "2026-10-16T01:29:12.979000+00:00",
         "LicenseModel": "None",
         "MasterUsername": "orders_admin",
         "MultiAZ": false,
@@ -55,14 +70,14 @@
         "VpcSecurityGroups": [
           {
             "Status": "active",
-            "VpcSecurityGroupId": "sg-fb454a9efcd634f32"
+            "VpcSecurityGroupId": "sg-2edfb301c8a045aa8"
           }
         ]
       }
     ],
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
+        "date": "Fri, 16 Oct 2026 08:29:14 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,

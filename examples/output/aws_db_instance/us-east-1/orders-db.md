@@ -8,7 +8,7 @@
 | ARN               | arn:aws:rds:us-east-1:123456789012:db:orders-db |
 | Region            | us-east-1                                       |
 | Account ID        | 123456789012                                    |
-| Collected At      | 2026-10-15T16:40:03Z                            |
+| Collected At      | 2026-10-16T01:29:14Z                            |
 | Collector Version | 0.1.0                                           |
 
 
@@ -31,7 +31,7 @@
 | Engine                           | postgres                                        |
 | EngineVersion                    | 9.3.3                                           |
 | IAMDatabaseAuthenticationEnabled | False                                           |
-| InstanceCreateTime               | 2026-10-15T16:40:02.370000+00:00                |
+| InstanceCreateTime               | 2026-10-16T01:29:12.979000+00:00                |
 | LicenseModel                     | None                                            |
 | MasterUsername                   | orders_admin                                    |
 | MultiAZ                          | False                                           |
@@ -53,6 +53,27 @@
 
 ```json
 []
+```
+
+
+### Dbsubnetgroup
+
+```json
+{
+  "DBSubnetGroupDescription": "Orders database",
+  "DBSubnetGroupName": "orders-db-subnets",
+  "SubnetGroupStatus": "Complete",
+  "Subnets": [
+    {
+      "SubnetAvailabilityZone": {
+        "Name": "us-east-1a"
+      },
+      "SubnetIdentifier": "subnet-30a75c4f",
+      "SubnetStatus": "Active"
+    }
+  ],
+  "VpcId": "vpc-7c4f2f1d"
+}
 ```
 
 
@@ -105,5 +126,5 @@
 
 | Status | VpcSecurityGroupId   |
 | ------ | -------------------- |
-| active | sg-fb454a9efcd634f32 |
+| active | sg-2edfb301c8a045aa8 |
 

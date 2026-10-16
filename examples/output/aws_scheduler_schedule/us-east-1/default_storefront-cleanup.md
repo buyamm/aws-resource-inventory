@@ -8,7 +8,7 @@
 | ARN               | arn:aws:scheduler:us-east-1:123456789012:schedule/default/storefront-cleanup |
 | Region            | us-east-1                                                                    |
 | Account ID        | 123456789012                                                                 |
-| Collected At      | 2026-10-15T16:40:03Z                                                         |
+| Collected At      | 2026-10-16T01:29:14Z                                                         |
 | Collector Version | 0.1.0                                                                        |
 
 
@@ -17,10 +17,10 @@
 | Configuration Key    | Value                                                                        |
 | -------------------- | ---------------------------------------------------------------------------- |
 | Arn                  | arn:aws:scheduler:us-east-1:123456789012:schedule/default/storefront-cleanup |
-| CreationDate         | 2026-10-15T23:40:02.856052+07:00                                             |
+| CreationDate         | 2026-10-16T08:29:13.520641+07:00                                             |
 | Description          | Hourly cleanup message                                                       |
 | GroupName            | default                                                                      |
-| LastModificationDate | 2026-10-15T23:40:02.856052+07:00                                             |
+| LastModificationDate | 2026-10-16T08:29:13.520641+07:00                                             |
 | Name                 | storefront-cleanup                                                           |
 | ScheduleExpression   | rate(1 hour)                                                                 |
 | State                | ENABLED                                                                      |

@@ -1,0 +1,65 @@
+{
+  "DescribeRouteTables": {
+    "ResponseMetadata": {
+      "HTTPHeaders": {
+        "date": "Fri, 16 Oct 2026 08:29:14 GMT",
+        "server": "amazon.com"
+      },
+      "HTTPStatusCode": 200,
+      "MaxAttemptsReached": true,
+      "RequestId": "6f570b0b-9c18-4b07-bdec-73740dcf861a",
+      "RetryAttempts": 0
+    },
+    "RouteTables": [
+      {
+        "Associations": [
+          {
+            "AssociationState": {
+              "State": "associated"
+            },
+            "Main": false,
+            "RouteTableAssociationId": "rtbassoc-f25d1101",
+            "RouteTableId": "rtb-260c9780",
+            "SubnetId": "subnet-91c2dcc6"
+          },
+          {
+            "AssociationState": {
+              "State": "associated"
+            },
+            "Main": false,
+            "RouteTableAssociationId": "rtbassoc-51cd429a",
+            "RouteTableId": "rtb-260c9780",
+            "SubnetId": "subnet-9134f3a5"
+          }
+        ],
+        "OwnerId": "123456789012",
+        "RouteTableId": "rtb-260c9780",
+        "Routes": [
+          {
+            "DestinationCidrBlock": "10.0.0.0/16",
+            "GatewayId": "local",
+            "Origin": "CreateRouteTable",
+            "State": "active"
+          },
+          {
+            "DestinationCidrBlock": "0.0.0.0/0",
+            "GatewayId": "igw-dbc38f85",
+            "Origin": "CreateRoute",
+            "State": "active"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "storefront-public"
+          },
+          {
+            "Key": "service",
+            "Value": "storefront"
+          }
+        ],
+        "VpcId": "vpc-7c4f2f1d"
+      }
+    ]
+  }
+}

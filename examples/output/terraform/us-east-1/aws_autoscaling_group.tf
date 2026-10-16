@@ -3,7 +3,7 @@
 
 # Resource: aws_autoscaling_group.storefront-workers
 # Source specification: aws_autoscaling_group/us-east-1/storefront-workers.json
-# ARN: arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:d7e19156-0c83-434b-b8e0-a1b67c604518:autoScalingGroupName/storefront-workers
+# ARN: arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:9bbe6615-958a-43a1-81c1-b9c0e0c23918:autoScalingGroupName/storefront-workers
 # Region: us-east-1
 # mapped: AutoScalingGroupARN, AutoScalingGroupName, AvailabilityZones, CapacityRebalance, DefaultCooldown, DesiredCapacity, HealthCheckGracePeriod, HealthCheckType, LaunchTemplate, LoadBalancerNames, MaxSize, MinSize, NewInstancesProtectedFromScaleIn, ServiceLinkedRoleARN, Tags, TargetGroupARNs, TerminationPolicies, VPCZoneIdentifier
 # unmapped: CreatedTime
@@ -17,12 +17,12 @@ resource "aws_autoscaling_group" "storefront-workers" {
   default_cooldown = 300
   health_check_type = "EC2"
   health_check_grace_period = 300
-  vpc_zone_identifier = ["subnet-a6e131f6"]
+  vpc_zone_identifier = ["subnet-30a75c4f"]
   termination_policies = ["Default"]
   capacity_rebalance = false
   protect_from_scale_in = false
   launch_template {
-    id = "lt-254efd878ee151eb7"
+    id = "lt-c743f2f076e986059"
     version = "$Default"
   }
   tag {

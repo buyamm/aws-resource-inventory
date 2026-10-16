@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-10-15T16:40:03.851507Z",
+  "generated_at": "2026-10-16T01:29:14.603213Z",
   "resources": [
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-685e30ac4d43a0d83",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-47f9de669501b27af",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2016-11-15",
-        "checksum": "66d0dd1de4db1cbd80d6888c94deb343a033b009b5cb39d02669e92fe3699039",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "fbcc065e03e41568601b6fb8d257bd953076291b0869377be58a49a3c200d02e",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -20,10 +20,10 @@
           {
             "DeviceName": "/dev/sda1",
             "Ebs": {
-              "AttachTime": "2026-10-15T16:40:02+00:00",
+              "AttachTime": "2026-10-16T01:29:12+00:00",
               "DeleteOnTermination": true,
               "Status": "in-use",
-              "VolumeId": "vol-4c603ca0"
+              "VolumeId": "vol-a5de2498"
             }
           }
         ],
@@ -32,13 +32,13 @@
         "Hypervisor": "xen",
         "IamInstanceProfile": {
           "Arn": "arn:aws:iam::123456789012:instance-profile/orders-app-role",
-          "Id": "iip-assoc-b9568f33"
+          "Id": "iip-assoc-28071f6e"
         },
         "ImageId": "ami-12c6146b",
-        "InstanceId": "i-685e30ac4d43a0d83",
+        "InstanceId": "i-47f9de669501b27af",
         "InstanceType": "t3.micro",
         "KernelId": "None",
-        "LaunchTime": "2026-10-15T16:40:02+00:00",
+        "LaunchTime": "2026-10-16T01:29:12+00:00",
         "Monitoring": {
           "State": "disabled"
         },
@@ -46,7 +46,7 @@
           {
             "Attachment": {
               "AttachTime": "2015-01-01T00:00:00+00:00",
-              "AttachmentId": "eni-attach-9136c5dc",
+              "AttachmentId": "eni-attach-bcd2af88",
               "DeleteOnTermination": true,
               "DeviceIndex": 0,
               "Status": "attached"
@@ -54,12 +54,12 @@
             "Description": "Primary network interface",
             "Groups": [
               {
-                "GroupId": "sg-fb454a9efcd634f32",
+                "GroupId": "sg-2edfb301c8a045aa8",
                 "GroupName": "orders-web-sg"
               }
             ],
             "MacAddress": "1b:2b:3c:4d:5e:6f",
-            "NetworkInterfaceId": "eni-73afcfee",
+            "NetworkInterfaceId": "eni-52ca70e6",
             "OwnerId": "123456789012",
             "PrivateIpAddress": "10.0.1.4",
             "PrivateIpAddresses": [
@@ -70,8 +70,8 @@
             ],
             "SourceDestCheck": true,
             "Status": "in-use",
-            "SubnetId": "subnet-a6e131f6",
-            "VpcId": "vpc-b6ee287f"
+            "SubnetId": "subnet-30a75c4f",
+            "VpcId": "vpc-7c4f2f1d"
           }
         ],
         "Placement": {
@@ -87,7 +87,7 @@
         "RootDeviceType": "ebs",
         "SecurityGroups": [
           {
-            "GroupId": "sg-fb454a9efcd634f32",
+            "GroupId": "sg-2edfb301c8a045aa8",
             "GroupName": "orders-web-sg"
           }
         ],
@@ -101,7 +101,7 @@
           "Message": ""
         },
         "StateTransitionReason": "",
-        "SubnetId": "subnet-a6e131f6",
+        "SubnetId": "subnet-30a75c4f",
         "Tags": [
           {
             "Key": "Name",
@@ -109,17 +109,17 @@
           }
         ],
         "VirtualizationType": "hvm",
-        "VpcId": "vpc-b6ee287f"
+        "VpcId": "vpc-7c4f2f1d"
       }
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-f6333ad6a6250cb6f",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-7c15a7e2df90fa017",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2016-11-15",
-        "checksum": "74aadad0fb9c5e22545e93181947a3332ac8b0bc1f315938d1aa5ab89d541ac4",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "428742aee241bec5a8319ef498e7c71e8c34bb09f1eb5ad2d6d2e867031eaf8c",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -131,10 +131,10 @@
           {
             "DeviceName": "/dev/sda1",
             "Ebs": {
-              "AttachTime": "2026-10-15T16:40:02+00:00",
+              "AttachTime": "2026-10-16T01:29:13+00:00",
               "DeleteOnTermination": true,
               "Status": "in-use",
-              "VolumeId": "vol-8428f813"
+              "VolumeId": "vol-2ccae71c"
             }
           }
         ],
@@ -142,10 +142,10 @@
         "EbsOptimized": false,
         "Hypervisor": "xen",
         "ImageId": "ami-12c6146b",
-        "InstanceId": "i-f6333ad6a6250cb6f",
+        "InstanceId": "i-7c15a7e2df90fa017",
         "InstanceType": "t3.small",
         "KernelId": "None",
-        "LaunchTime": "2026-10-15T16:40:02+00:00",
+        "LaunchTime": "2026-10-16T01:29:13+00:00",
         "Monitoring": {
           "State": "disabled"
         },
@@ -153,7 +153,7 @@
           {
             "Attachment": {
               "AttachTime": "2015-01-01T00:00:00+00:00",
-              "AttachmentId": "eni-attach-c55fb339",
+              "AttachmentId": "eni-attach-44f95493",
               "DeleteOnTermination": true,
               "DeviceIndex": 0,
               "Status": "attached"
@@ -161,12 +161,12 @@
             "Description": "Primary network interface",
             "Groups": [
               {
-                "GroupId": "sg-67ee3adaaa05cd07e",
+                "GroupId": "sg-71a3ac0ec6bbd92b7",
                 "GroupName": "default"
               }
             ],
             "MacAddress": "1b:2b:3c:4d:5e:6f",
-            "NetworkInterfaceId": "eni-8e0426cc",
+            "NetworkInterfaceId": "eni-c468e79a",
             "OwnerId": "123456789012",
             "PrivateIpAddress": "10.0.1.5",
             "PrivateIpAddresses": [
@@ -177,8 +177,8 @@
             ],
             "SourceDestCheck": true,
             "Status": "in-use",
-            "SubnetId": "subnet-a6e131f6",
-            "VpcId": "vpc-b6ee287f"
+            "SubnetId": "subnet-30a75c4f",
+            "VpcId": "vpc-7c4f2f1d"
           }
         ],
         "Placement": {
@@ -203,7 +203,7 @@
           "Message": ""
         },
         "StateTransitionReason": "",
-        "SubnetId": "subnet-a6e131f6",
+        "SubnetId": "subnet-30a75c4f",
         "Tags": [
           {
             "Key": "service",
@@ -215,17 +215,17 @@
           }
         ],
         "VirtualizationType": "hvm",
-        "VpcId": "vpc-b6ee287f"
+        "VpcId": "vpc-7c4f2f1d"
       }
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-b6ee287f",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-7c4f2f1d",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2016-11-15",
-        "checksum": "a0fdd984f90f91ae307981f3fd82c0b532483882f40ebb74652c3867f1a5e6ca",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "99dd7be024c1300a9c288fa913d6c8c9cbcac08535345e1837b7084e849b3f72",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -234,7 +234,7 @@
         "CidrBlock": "10.0.0.0/16",
         "CidrBlockAssociationSet": [
           {
-            "AssociationId": "vpc-cidr-assoc-939f32a6",
+            "AssociationId": "vpc-cidr-assoc-3b8c2b77",
             "CidrBlock": "10.0.0.0/16",
             "CidrBlockState": {
               "State": "associated"
@@ -255,24 +255,24 @@
             "Value": "orders-vpc"
           }
         ],
-        "VpcId": "vpc-b6ee287f"
+        "VpcId": "vpc-7c4f2f1d"
       }
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-67ee3adaaa05cd07e",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-71a3ac0ec6bbd92b7",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2016-11-15",
-        "checksum": "51b1ff075af2911ddc26ce6bd3872d490557750bf2817be7de820e25902c5f7a",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "4bfe76169da1dc4e8cbf25ab9fbec098f4470abccd56eae850d2a5779b25caec",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
       "resource_type": "aws_security_group",
       "specifications": {
         "Description": "default VPC security group",
-        "GroupId": "sg-67ee3adaaa05cd07e",
+        "GroupId": "sg-71a3ac0ec6bbd92b7",
         "GroupName": "default",
         "IpPermissions": [],
         "IpPermissionsEgress": [
@@ -290,24 +290,24 @@
         ],
         "OwnerId": "123456789012",
         "Tags": [],
-        "VpcId": "vpc-b6ee287f"
+        "VpcId": "vpc-7c4f2f1d"
       }
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-fb454a9efcd634f32",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-2edfb301c8a045aa8",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2016-11-15",
-        "checksum": "765917c33184cd78dd6f53fa5f72dfe7a83b7fb1e0eae3314554fb01814e0d11",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "eca72d6b0d891e7dd7506970888baba162125242229821fe301663fa6fb68b43",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
       "resource_type": "aws_security_group",
       "specifications": {
         "Description": "Web tier",
-        "GroupId": "sg-fb454a9efcd634f32",
+        "GroupId": "sg-2edfb301c8a045aa8",
         "GroupName": "orders-web-sg",
         "IpPermissions": [
           {
@@ -322,6 +322,20 @@
             "PrefixListIds": [],
             "ToPort": 22,
             "UserIdGroupPairs": []
+          },
+          {
+            "FromPort": 5432,
+            "IpProtocol": "tcp",
+            "IpRanges": [],
+            "Ipv6Ranges": [],
+            "PrefixListIds": [],
+            "ToPort": 5432,
+            "UserIdGroupPairs": [
+              {
+                "GroupId": "sg-7c3a665620cbf02dc",
+                "UserId": "123456789012"
+              }
+            ]
           }
         ],
         "IpPermissionsEgress": [
@@ -339,24 +353,24 @@
         ],
         "OwnerId": "123456789012",
         "Tags": [],
-        "VpcId": "vpc-b6ee287f"
+        "VpcId": "vpc-7c4f2f1d"
       }
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-8c9c7f5f96b0d5fb1",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-c6ec367b2a800f7fe",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2016-11-15",
-        "checksum": "dd0fe45d87c5de534e46d99ae2ce77195a37eea0d1d9ba5b76abb7ef0d0dca2b",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "9f22b00824306f932f4c93c412c311933874e0c0b4e5f69644b0c0ffadf80b0a",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
       "resource_type": "aws_security_group",
       "specifications": {
         "Description": "Public HTTPS",
-        "GroupId": "sg-8c9c7f5f96b0d5fb1",
+        "GroupId": "sg-c6ec367b2a800f7fe",
         "GroupName": "storefront-alb-sg",
         "IpPermissions": [
           {
@@ -388,24 +402,24 @@
         ],
         "OwnerId": "123456789012",
         "Tags": [],
-        "VpcId": "vpc-b6ee287f"
+        "VpcId": "vpc-7c4f2f1d"
       }
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-eaaa2c57ac5ecc98e",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-7c3a665620cbf02dc",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2016-11-15",
-        "checksum": "5b573d31fa2ade2b100a186d8af66d846a601dc748e581d638b0b32572a4e2b2",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "c1f701f34c06de7f42bb9f661ee00dc75fdafe6f75025f942fd61d6ead8b87eb",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
       "resource_type": "aws_security_group",
       "specifications": {
         "Description": "Storefront tasks and cache",
-        "GroupId": "sg-eaaa2c57ac5ecc98e",
+        "GroupId": "sg-7c3a665620cbf02dc",
         "GroupName": "storefront-app-sg",
         "IpPermissions": [
           {
@@ -417,7 +431,7 @@
             "ToPort": 80,
             "UserIdGroupPairs": [
               {
-                "GroupId": "sg-8c9c7f5f96b0d5fb1",
+                "GroupId": "sg-c6ec367b2a800f7fe",
                 "UserId": "123456789012"
               }
             ]
@@ -431,7 +445,7 @@
             "ToPort": 6379,
             "UserIdGroupPairs": [
               {
-                "GroupId": "sg-eaaa2c57ac5ecc98e",
+                "GroupId": "sg-7c3a665620cbf02dc",
                 "UserId": "123456789012"
               }
             ]
@@ -461,17 +475,17 @@
             "Value": "storefront"
           }
         ],
-        "VpcId": "vpc-b6ee287f"
+        "VpcId": "vpc-7c4f2f1d"
       }
     },
     {
       "account_id": "123456789012",
       "arn": "arn:aws:lambda:us-east-1:123456789012:function:order-processor",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2015-03-31",
-        "checksum": "778b38320819911d2e94901fd1a19113c61806a85eed595d8425fe25af94abbd",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "e3708fbacdd86430558c15de1bfed8a748a41bb2c48081166dd64e713aceda5f",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -480,7 +494,7 @@
         "Architectures": [
           "x86_64"
         ],
-        "CodeSha256": "bB8dektm2MaANdR9fw5rs+E0sn1aNkRalv+xIm8ygpQ=",
+        "CodeSha256": "3oiA3dMfo6wNQA75emS05PR4Q703d3KNXUpZ1ykz1uU=",
         "CodeSize": 164,
         "Description": "",
         "Environment": {
@@ -495,7 +509,7 @@
         "FunctionArn": "arn:aws:lambda:us-east-1:123456789012:function:order-processor",
         "FunctionName": "order-processor",
         "Handler": "handler.handler",
-        "LastModified": "2026-10-15T16:40:02.246947000Z",
+        "LastModified": "2026-10-16T01:29:12.774833000Z",
         "LastUpdateStatus": "Successful",
         "Layers": [],
         "MemorySize": 256,
@@ -524,11 +538,11 @@
     {
       "account_id": "123456789012",
       "arn": "arn:aws:rds:us-east-1:123456789012:db:orders-db",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2014-10-31",
-        "checksum": "f1c30e919db7ed34f2d583e3c89cc86ab9d860c440a8747ec387f848ca7667ad",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "5d2f824784a5e385d7da20865f7d48f05f8d32856a83bf9271ec4f2938d1072a",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -550,6 +564,21 @@
           }
         ],
         "DBSecurityGroups": [],
+        "DBSubnetGroup": {
+          "DBSubnetGroupDescription": "Orders database",
+          "DBSubnetGroupName": "orders-db-subnets",
+          "SubnetGroupStatus": "Complete",
+          "Subnets": [
+            {
+              "SubnetAvailabilityZone": {
+                "Name": "us-east-1a"
+              },
+              "SubnetIdentifier": "subnet-30a75c4f",
+              "SubnetStatus": "Active"
+            }
+          ],
+          "VpcId": "vpc-7c4f2f1d"
+        },
         "DbInstancePort": 5432,
         "DbiResourceId": "db-M5ENSHXFPU6XHZ4G4ZEI5QIO2U",
         "DeletionProtection": false,
@@ -561,7 +590,7 @@
         "Engine": "postgres",
         "EngineVersion": "9.3.3",
         "IAMDatabaseAuthenticationEnabled": false,
-        "InstanceCreateTime": "2026-10-15T16:40:02.370000+00:00",
+        "InstanceCreateTime": "2026-10-16T01:29:12.979000+00:00",
         "LicenseModel": "None",
         "MasterUsername": "orders_admin",
         "MultiAZ": false,
@@ -587,7 +616,7 @@
         "VpcSecurityGroups": [
           {
             "Status": "active",
-            "VpcSecurityGroupId": "sg-fb454a9efcd634f32"
+            "VpcSecurityGroupId": "sg-2edfb301c8a045aa8"
           }
         ]
       }
@@ -595,18 +624,18 @@
     {
       "account_id": "123456789012",
       "arn": "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2014-03-28",
-        "checksum": "05c67a5507eb3e6dd05152d1c34aee2f71fa2bd871711455ec50337f232b8d99",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "7ef2cb8e51874060043eee23a5209ada4eedc8a1277f4e0a5400ebf66f72133d",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
       "resource_type": "aws_cloudwatch_log_group",
       "specifications": {
         "arn": "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/order-processor",
-        "creationTime": 1792082402256,
+        "creationTime": 1792114152786,
         "logGroupName": "/aws/lambda/order-processor",
         "metricFilterCount": 0,
         "retentionInDays": 14,
@@ -619,18 +648,18 @@
     {
       "account_id": "123456789012",
       "arn": "arn:aws:logs:us-east-1:123456789012:log-group:/ecs/storefront-web",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2014-03-28",
-        "checksum": "56930d54abb488c17ca5184787b4c0f4b4a58d1b7cd4513921ccd9bc4d3b64be",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "704c87cea18a695b0dade537401cf0d14192d59b17f62a3a1f6659dcaa9d7a77",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
       "resource_type": "aws_cloudwatch_log_group",
       "specifications": {
         "arn": "arn:aws:logs:us-east-1:123456789012:log-group:/ecs/storefront-web",
-        "creationTime": 1792082402598,
+        "creationTime": 1792114153257,
         "logGroupName": "/ecs/storefront-web",
         "metricFilterCount": 0,
         "retentionInDays": 30,
@@ -643,17 +672,17 @@
     {
       "account_id": "123456789012",
       "arn": "arn:aws:states:us-east-1:123456789012:stateMachine:order-flow",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2016-11-23",
-        "checksum": "d0949cba96df88c8416a8cc51d83c9d36303450797d43ad96c2f6ba5a4c11e09",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "5247039d16b12665dfea113e754a6077d980966c697d8d6c503e8b29a87e219a",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
       "resource_type": "aws_sfn_state_machine",
       "specifications": {
-        "creationDate": "2026-10-15T16:40:02.287000+00:00",
+        "creationDate": "2026-10-16T01:29:12.824000+00:00",
         "definition": "{\"StartAt\": \"Process\", \"States\": {\"Process\": {\"Type\": \"Task\", \"Resource\": \"arn:aws:lambda:us-east-1:123456789012:function:order-processor\", \"End\": true}}}",
         "name": "order-flow",
         "roleArn": "arn:aws:iam::123456789012:role/order-lambda-role",
@@ -670,11 +699,11 @@
     {
       "account_id": "123456789012",
       "arn": "arn:aws:dynamodb:us-east-1:123456789012:table/orders",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2012-08-10",
-        "checksum": "970b1c37d7cdab862fd4453dfdc60f396069b527d1c61b207332af01672e877a",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "f634ec584f03a2c964d970b16a4e7892f7c8eff347ca42bb66082d0c7313a11f",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -689,7 +718,7 @@
         "BillingModeSummary": {
           "BillingMode": "PAY_PER_REQUEST"
         },
-        "CreationDateTime": "2026-10-15T23:40:02.238292+07:00",
+        "CreationDateTime": "2026-10-16T08:29:12.764973+07:00",
         "GlobalSecondaryIndexes": [],
         "ItemCount": 0,
         "KeySchema": [
@@ -718,12 +747,12 @@
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-a6e131f6",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-30a75c4f",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2016-11-15",
-        "checksum": "ef4d3b63ccfbd3fc796f9dfc6f493a81aba4acfd239a62990a3729ab468088ee",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "18d71c4e5e35481d0e49745ace67ebebdbe1ab82d5726a00d34676cc4595ed17",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -740,25 +769,25 @@
         "MapPublicIpOnLaunch": false,
         "OwnerId": "123456789012",
         "State": "available",
-        "SubnetArn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-a6e131f6",
-        "SubnetId": "subnet-a6e131f6",
+        "SubnetArn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-30a75c4f",
+        "SubnetId": "subnet-30a75c4f",
         "Tags": [
           {
             "Key": "Name",
             "Value": "orders-private-a"
           }
         ],
-        "VpcId": "vpc-b6ee287f"
+        "VpcId": "vpc-7c4f2f1d"
       }
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-d94916f9",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-91c2dcc6",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2016-11-15",
-        "checksum": "055e57fc7d5ba9d6c4ec85670ff6e160f70184710e6ad3405f777a2733bc57d5",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "717465d3515650552a0a9838810b4977c465f2c1c2d365c74009ccd736a5fea2",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -775,8 +804,8 @@
         "MapPublicIpOnLaunch": false,
         "OwnerId": "123456789012",
         "State": "available",
-        "SubnetArn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-d94916f9",
-        "SubnetId": "subnet-d94916f9",
+        "SubnetArn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-91c2dcc6",
+        "SubnetId": "subnet-91c2dcc6",
         "Tags": [
           {
             "Key": "Name",
@@ -787,17 +816,17 @@
             "Value": "storefront"
           }
         ],
-        "VpcId": "vpc-b6ee287f"
+        "VpcId": "vpc-7c4f2f1d"
       }
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-b83c8765",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-9134f3a5",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2016-11-15",
-        "checksum": "36b69891ebf52e918a6b0b1b14b7ddda4e8343a6d2c39a5a18e55671f38baafb",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "6beb7e1ec70b09640b11299a4747366256e8dd49a1fdbc924693aa281fec5095",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -814,8 +843,8 @@
         "MapPublicIpOnLaunch": false,
         "OwnerId": "123456789012",
         "State": "available",
-        "SubnetArn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-b83c8765",
-        "SubnetId": "subnet-b83c8765",
+        "SubnetArn": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-9134f3a5",
+        "SubnetId": "subnet-9134f3a5",
         "Tags": [
           {
             "Key": "Name",
@@ -826,17 +855,17 @@
             "Value": "storefront"
           }
         ],
-        "VpcId": "vpc-b6ee287f"
+        "VpcId": "vpc-7c4f2f1d"
       }
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-fc59c9b7",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-7bfbfaee",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2016-11-15",
-        "checksum": "61fc13bad193f18f0efc31b23df8079985ab7476be9a77171c68cb070106e36a",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "967e385ed49f26099af76407a3b3d04caf7704e008269c96ef68f93766743a8a",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -848,12 +877,12 @@
               "State": "associated"
             },
             "Main": true,
-            "RouteTableAssociationId": "rtbassoc-0652b6d7",
-            "RouteTableId": "rtb-fc59c9b7"
+            "RouteTableAssociationId": "rtbassoc-69e3b0e3",
+            "RouteTableId": "rtb-7bfbfaee"
           }
         ],
         "OwnerId": "123456789012",
-        "RouteTableId": "rtb-fc59c9b7",
+        "RouteTableId": "rtb-7bfbfaee",
         "Routes": [
           {
             "DestinationCidrBlock": "10.0.0.0/16",
@@ -863,17 +892,17 @@
           }
         ],
         "Tags": [],
-        "VpcId": "vpc-b6ee287f"
+        "VpcId": "vpc-7c4f2f1d"
       }
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-590047f7",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-260c9780",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2016-11-15",
-        "checksum": "ca71d5ad76a0a2cfe3ccb33c10b7a1c990a22bbd6f0de15c92805bd2e381bbc1",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "6cdd0de728266a6789ac44ab16608c5ba6348ccce237ba577f072392aa075be3",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -885,22 +914,22 @@
               "State": "associated"
             },
             "Main": false,
-            "RouteTableAssociationId": "rtbassoc-183e4185",
-            "RouteTableId": "rtb-590047f7",
-            "SubnetId": "subnet-d94916f9"
+            "RouteTableAssociationId": "rtbassoc-f25d1101",
+            "RouteTableId": "rtb-260c9780",
+            "SubnetId": "subnet-91c2dcc6"
           },
           {
             "AssociationState": {
               "State": "associated"
             },
             "Main": false,
-            "RouteTableAssociationId": "rtbassoc-a0b52547",
-            "RouteTableId": "rtb-590047f7",
-            "SubnetId": "subnet-b83c8765"
+            "RouteTableAssociationId": "rtbassoc-51cd429a",
+            "RouteTableId": "rtb-260c9780",
+            "SubnetId": "subnet-9134f3a5"
           }
         ],
         "OwnerId": "123456789012",
-        "RouteTableId": "rtb-590047f7",
+        "RouteTableId": "rtb-260c9780",
         "Routes": [
           {
             "DestinationCidrBlock": "10.0.0.0/16",
@@ -910,7 +939,7 @@
           },
           {
             "DestinationCidrBlock": "0.0.0.0/0",
-            "GatewayId": "igw-bd38647b",
+            "GatewayId": "igw-dbc38f85",
             "Origin": "CreateRoute",
             "State": "active"
           }
@@ -925,17 +954,17 @@
             "Value": "storefront"
           }
         ],
-        "VpcId": "vpc-b6ee287f"
+        "VpcId": "vpc-7c4f2f1d"
       }
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-52dac71b",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-abf4c4b4",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2016-11-15",
-        "checksum": "f78440cdfeebdef9564f1cb4210b373a2322651a86359a8666a3a1dd45288469",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "043f29c6024db4e56a37d6b0adbfcdc8309bf79cf21d5b684122dee9e133a53a",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -947,13 +976,13 @@
               "State": "associated"
             },
             "Main": false,
-            "RouteTableAssociationId": "rtbassoc-fe53fe54",
-            "RouteTableId": "rtb-52dac71b",
-            "SubnetId": "subnet-a6e131f6"
+            "RouteTableAssociationId": "rtbassoc-85544a58",
+            "RouteTableId": "rtb-abf4c4b4",
+            "SubnetId": "subnet-30a75c4f"
           }
         ],
         "OwnerId": "123456789012",
-        "RouteTableId": "rtb-52dac71b",
+        "RouteTableId": "rtb-abf4c4b4",
         "Routes": [
           {
             "DestinationCidrBlock": "10.0.0.0/16",
@@ -963,13 +992,13 @@
           },
           {
             "DestinationCidrBlock": "0.0.0.0/0",
-            "NatGatewayId": "nat-8604a604f3c5a3cf0",
+            "NatGatewayId": "nat-60d1a0cf8c8f398eb",
             "Origin": "CreateRoute",
             "State": "active"
           },
           {
-            "DestinationPrefixListId": "pl-7c659893",
-            "GatewayId": "vpce-073f3c1e",
+            "DestinationPrefixListId": "pl-c6e0eb33",
+            "GatewayId": "vpce-55746589",
             "Origin": "CreateRoute",
             "State": "active"
           }
@@ -984,17 +1013,17 @@
             "Value": "storefront"
           }
         ],
-        "VpcId": "vpc-b6ee287f"
+        "VpcId": "vpc-7c4f2f1d"
       }
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-bd38647b",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:internet-gateway/igw-dbc38f85",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2016-11-15",
-        "checksum": "e9d575363b22646e58c2b40b8a4820f7f4f49d7f75f5e92e167e74aab0150662",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "4e2e70e39655532981bed506e9e5a19b95cd99afc57946c5a9ce243843203b57",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -1003,10 +1032,10 @@
         "Attachments": [
           {
             "State": "available",
-            "VpcId": "vpc-b6ee287f"
+            "VpcId": "vpc-7c4f2f1d"
           }
         ],
-        "InternetGatewayId": "igw-bd38647b",
+        "InternetGatewayId": "igw-dbc38f85",
         "OwnerId": "123456789012",
         "Tags": [
           {
@@ -1022,31 +1051,31 @@
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:ec2:us-east-1:123456789012:natgateway/nat-8604a604f3c5a3cf0",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:natgateway/nat-60d1a0cf8c8f398eb",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2016-11-15",
-        "checksum": "1de5f94295c655eab24f1c340377c10cfe67c72e4f8bb4038f5c9da31028fe01",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "efe9dd603272b91e43979694a46adb3bf876a9a58a82c79047aa8ee9e7d12825",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
       "resource_type": "aws_nat_gateway",
       "specifications": {
         "ConnectivityType": "None",
-        "CreateTime": "2026-10-15T16:40:02.399000+00:00",
+        "CreateTime": "2026-10-16T01:29:13.013000+00:00",
         "NatGatewayAddresses": [
           {
-            "AllocationId": "eipalloc-53f35655",
-            "AssociationId": "eipassoc-fd5e2d9f",
-            "NetworkInterfaceId": "eni-39f28b69",
-            "PrivateIp": "10.102.224.36",
-            "PublicIp": "127.111.0.103"
+            "AllocationId": "eipalloc-02aeeac1",
+            "AssociationId": "eipassoc-e467c180",
+            "NetworkInterfaceId": "eni-6fe11400",
+            "PrivateIp": "10.190.162.51",
+            "PublicIp": "127.97.164.56"
           }
         ],
-        "NatGatewayId": "nat-8604a604f3c5a3cf0",
+        "NatGatewayId": "nat-60d1a0cf8c8f398eb",
         "State": "available",
-        "SubnetId": "subnet-d94916f9",
+        "SubnetId": "subnet-91c2dcc6",
         "Tags": [
           {
             "Key": "Name",
@@ -1057,29 +1086,29 @@
             "Value": "storefront"
           }
         ],
-        "VpcId": "vpc-b6ee287f"
+        "VpcId": "vpc-7c4f2f1d"
       }
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-073f3c1e",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:vpc-endpoint/vpce-55746589",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2016-11-15",
-        "checksum": "8c253ca2bb2adb7e9bf428b2318a7033f7b9824de857c4f17389d856b6cbf271",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "cb2bd7f40f664c74153a57aa5db23bb7160340dd1720ec4fbac9a6f0fda11e08",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
       "resource_type": "aws_vpc_endpoint",
       "specifications": {
-        "CreationTimestamp": "2026-10-15T16:40:02+00:00",
+        "CreationTimestamp": "2026-10-16T01:29:13+00:00",
         "DnsEntries": [],
         "OwnerId": "123456789012",
         "PolicyDocument": "{\"Version\": \"2008-10-17\", \"Statement\": [{\"Effect\": \"Allow\", \"Principal\": \"*\", \"Action\": \"*\", \"Resource\": \"*\"}]}",
         "PrivateDnsEnabled": true,
         "RouteTableIds": [
-          "rtb-52dac71b"
+          "rtb-abf4c4b4"
         ],
         "ServiceName": "com.amazonaws.us-east-1.s3",
         "State": "available",
@@ -1093,19 +1122,19 @@
             "Value": "storefront"
           }
         ],
-        "VpcEndpointId": "vpce-073f3c1e",
+        "VpcEndpointId": "vpce-55746589",
         "VpcEndpointType": "Gateway",
-        "VpcId": "vpc-b6ee287f"
+        "VpcId": "vpc-7c4f2f1d"
       }
     },
     {
       "account_id": "123456789012",
       "arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2015-12-01",
-        "checksum": "5444a4e427e90f15622e0e6e70342da17e582a02adf44228990b2da9237628d1",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "e091403e0d784df35329a36697533bbfd5891e46e86ad4d2f02f1714d404d238",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -1131,16 +1160,16 @@
         ],
         "AvailabilityZones": [
           {
-            "SubnetId": "subnet-d94916f9",
+            "SubnetId": "subnet-91c2dcc6",
             "ZoneName": "us-east-1a"
           },
           {
-            "SubnetId": "subnet-b83c8765",
+            "SubnetId": "subnet-9134f3a5",
             "ZoneName": "us-east-1b"
           }
         ],
         "CanonicalHostedZoneId": "Z2P70J7EXAMPLE",
-        "CreatedTime": "2026-10-15T16:40:02.493000+00:00",
+        "CreatedTime": "2026-10-16T01:29:13.124000+00:00",
         "DNSName": "storefront-alb-1.us-east-1.elb.amazonaws.com",
         "IpAddressType": "ipv4",
         "Listeners": [
@@ -1148,7 +1177,7 @@
             "AlpnPolicy": [],
             "Certificates": [
               {
-                "CertificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/a731cd05-0052-48e0-8889-0431af5b4bbe"
+                "CertificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/8f72f034-ca75-4120-acc5-f35a9fd3885d"
               }
             ],
             "DefaultActions": [
@@ -1157,7 +1186,7 @@
                 "Type": "forward"
               }
             ],
-            "ListenerArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434588500944",
+            "ListenerArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434536313232",
             "LoadBalancerArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188",
             "Port": 443,
             "Protocol": "HTTPS",
@@ -1168,7 +1197,7 @@
         "LoadBalancerName": "storefront-alb",
         "Scheme": "internet-facing",
         "SecurityGroups": [
-          "sg-8c9c7f5f96b0d5fb1"
+          "sg-c6ec367b2a800f7fe"
         ],
         "State": {
           "Code": "active"
@@ -1180,17 +1209,17 @@
           }
         ],
         "Type": "application",
-        "VpcId": "vpc-b6ee287f"
+        "VpcId": "vpc-7c4f2f1d"
       }
     },
     {
       "account_id": "123456789012",
       "arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2015-12-01",
-        "checksum": "e27561dc11b9ce035fe67ebbb98f93583e77d139eb71cc104fc956fe102ae5ef",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "1d5a1a06333a34580862491d55f0588691a59d0c5cb1bbbb2e3b83223af99e22",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -1253,37 +1282,26 @@
         "TargetGroupName": "storefront-tg",
         "TargetType": "ip",
         "UnhealthyThresholdCount": 2,
-        "VpcId": "vpc-b6ee287f"
+        "VpcId": "vpc-7c4f2f1d"
       }
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:acm:us-east-1:123456789012:certificate/a731cd05-0052-48e0-8889-0431af5b4bbe",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:acm:us-east-1:123456789012:certificate/8f72f034-ca75-4120-acc5-f35a9fd3885d",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2015-12-08",
-        "checksum": "ea61f624a7cec35e11f2be7803446bd6b4f24c1a89cd5bd7641998325afbcfac",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "cfcca0ad0cd2244b4ec0bc229736528af9ff3fb5458915ce6b1d54f33e3e9546",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
       "resource_type": "aws_acm_certificate",
       "specifications": {
-        "CertificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/a731cd05-0052-48e0-8889-0431af5b4bbe",
-        "CreatedAt": "2026-10-15T16:40:02.451773+07:00",
+        "CertificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/8f72f034-ca75-4120-acc5-f35a9fd3885d",
+        "CreatedAt": "2026-10-16T01:29:13.081602+07:00",
         "DomainName": "shop.example.com",
         "DomainValidationOptions": [
-          {
-            "DomainName": "shop.example.com",
-            "ResourceRecord": {
-              "Name": "_d930b28be6c5927595552b219965053e.shop.example.com.",
-              "Type": "CNAME",
-              "Value": "_c9edd76ee4a0e2a74388032f3861cc50.ykybfrwcxw.acm-validations.aws."
-            },
-            "ValidationDomain": "shop.example.com",
-            "ValidationMethod": "DNS",
-            "ValidationStatus": "PENDING_VALIDATION"
-          },
           {
             "DomainName": "api.example.com",
             "ResourceRecord": {
@@ -1294,26 +1312,37 @@
             "ValidationDomain": "api.example.com",
             "ValidationMethod": "DNS",
             "ValidationStatus": "PENDING_VALIDATION"
+          },
+          {
+            "DomainName": "shop.example.com",
+            "ResourceRecord": {
+              "Name": "_d930b28be6c5927595552b219965053e.shop.example.com.",
+              "Type": "CNAME",
+              "Value": "_c9edd76ee4a0e2a74388032f3861cc50.ykybfrwcxw.acm-validations.aws."
+            },
+            "ValidationDomain": "shop.example.com",
+            "ValidationMethod": "DNS",
+            "ValidationStatus": "PENDING_VALIDATION"
           }
         ],
         "ExtendedKeyUsages": [],
         "InUseBy": [],
-        "IssuedAt": "2026-10-15T16:40:02.451773+07:00",
+        "IssuedAt": "2026-10-16T01:29:13.081602+07:00",
         "Issuer": "Amazon",
         "KeyAlgorithm": "RSA_2048",
-        "NotAfter": "2027-10-15T16:40:02+07:00",
-        "NotBefore": "2026-10-15T16:40:02+07:00",
+        "NotAfter": "2027-10-16T01:29:13+07:00",
+        "NotBefore": "2026-10-16T01:29:13+07:00",
         "Options": {
           "CertificateTransparencyLoggingPreference": "ENABLED"
         },
         "RenewalEligibility": "INELIGIBLE",
-        "Serial": "301918283559421105376956747537191903472248918439",
+        "Serial": "355360776359447352577562696603512747964165224238",
         "SignatureAlgorithm": "SHA512WITHRSA",
         "Status": "PENDING_VALIDATION",
         "Subject": "CN=shop.example.com",
         "SubjectAlternativeNames": [
-          "shop.example.com",
-          "api.example.com"
+          "api.example.com",
+          "shop.example.com"
         ],
         "Tags": [
           {
@@ -1327,11 +1356,11 @@
     {
       "account_id": "123456789012",
       "arn": "arn:aws:ecs:us-east-1:123456789012:cluster/storefront",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2014-11-13",
         "checksum": "61c9a1f831d5bf403586b152442e2514218b43f7a91d4de0df805a6438e62121",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -1361,17 +1390,17 @@
     {
       "account_id": "123456789012",
       "arn": "arn:aws:ecr:us-east-1:123456789012:repository/storefront-web",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2015-09-21",
-        "checksum": "fc63734dfee5daef291ef02a1b7074a6d08fa42ab1c8ee2e0df9d2c68e744402",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "08e36d49656afe4a27d45712143b1b7fbd82aaa3a31d1127a1aa9a506627c242",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
       "resource_type": "aws_ecr_repository",
       "specifications": {
-        "createdAt": "2026-10-15T16:40:02+00:00",
+        "createdAt": "2026-10-16T01:29:13+00:00",
         "encryptionConfiguration": {
           "encryptionType": "AES256"
         },
@@ -1393,18 +1422,18 @@
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:d7e19156-0c83-434b-b8e0-a1b67c604518:autoScalingGroupName/storefront-workers",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:9bbe6615-958a-43a1-81c1-b9c0e0c23918:autoScalingGroupName/storefront-workers",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2011-01-01",
-        "checksum": "bfbd9cc6ad6b79e91cbfc28cf1eb15159ce13ebdd58bfcba6e2016789c0fe7f9",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "87fb01cb7c84f010f3881f3a88e82d3e406e38d33387d3aa61f9f1f846a76824",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
       "resource_type": "aws_autoscaling_group",
       "specifications": {
-        "AutoScalingGroupARN": "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:d7e19156-0c83-434b-b8e0-a1b67c604518:autoScalingGroupName/storefront-workers",
+        "AutoScalingGroupARN": "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:9bbe6615-958a-43a1-81c1-b9c0e0c23918:autoScalingGroupName/storefront-workers",
         "AutoScalingGroupName": "storefront-workers",
         "AvailabilityZones": [
           "us-east-1a"
@@ -1419,10 +1448,10 @@
           {
             "AvailabilityZone": "us-east-1a",
             "HealthStatus": "Healthy",
-            "InstanceId": "i-f6333ad6a6250cb6f",
+            "InstanceId": "i-7c15a7e2df90fa017",
             "InstanceType": "t3.small",
             "LaunchTemplate": {
-              "LaunchTemplateId": "lt-254efd878ee151eb7",
+              "LaunchTemplateId": "lt-c743f2f076e986059",
               "LaunchTemplateName": "storefront-worker",
               "Version": "$Default"
             },
@@ -1431,7 +1460,7 @@
           }
         ],
         "LaunchTemplate": {
-          "LaunchTemplateId": "lt-254efd878ee151eb7",
+          "LaunchTemplateId": "lt-c743f2f076e986059",
           "LaunchTemplateName": "storefront-worker",
           "Version": "$Default"
         },
@@ -1454,23 +1483,23 @@
         "TerminationPolicies": [
           "Default"
         ],
-        "VPCZoneIdentifier": "subnet-a6e131f6"
+        "VPCZoneIdentifier": "subnet-30a75c4f"
       }
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:ec2:us-east-1:123456789012:launch-template/lt-254efd878ee151eb7",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:ec2:us-east-1:123456789012:launch-template/lt-c743f2f076e986059",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2016-11-15",
-        "checksum": "f28e5f6524a943f30d4d81bff1e4c5f0c1bb4b7004bc53d2dec7e88d265342a6",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "a66bfdae65001eb9f7615602c3000dfe883c8fd7d68ce7384f0b7341928367bb",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
       "resource_type": "aws_launch_template",
       "specifications": {
-        "CreateTime": "2026-10-15T16:40:02+00:00",
+        "CreateTime": "2026-10-16T01:29:13+00:00",
         "CreatedBy": "arn:aws:iam::123456789012:root",
         "DefaultVersionNumber": 1,
         "LatestVersionNumber": 1,
@@ -1481,7 +1510,7 @@
           "ImageId": "ami-12c6146b",
           "InstanceType": "t3.small",
           "SecurityGroupIds": [
-            "sg-eaaa2c57ac5ecc98e"
+            "sg-7c3a665620cbf02dc"
           ],
           "TagSpecifications": [
             {
@@ -1499,7 +1528,7 @@
             }
           ]
         },
-        "LaunchTemplateId": "lt-254efd878ee151eb7",
+        "LaunchTemplateId": "lt-c743f2f076e986059",
         "LaunchTemplateName": "storefront-worker",
         "Tags": [
           {
@@ -1516,11 +1545,11 @@
     {
       "account_id": "123456789012",
       "arn": "arn:aws:elasticache:us-east-1:123456789012:replicationgroup:storefront-cache",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2015-02-02",
-        "checksum": "fce04d9cfc9808c1f8a24a9aa4946e589ced146fbe9d191e4907ec2167db9b95",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "dceb3e6ddf31e5af001a5c2840baa28a568ccae19ea4246c563a1c197ab1f057",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -1560,7 +1589,7 @@
           "ReplicationGroupLogDeliveryEnabled": false,
           "SecurityGroups": [
             {
-              "SecurityGroupId": "sg-eaaa2c57ac5ecc98e",
+              "SecurityGroupId": "sg-7c3a665620cbf02dc",
               "Status": "active"
             }
           ],
@@ -1578,7 +1607,7 @@
               "SubnetAvailabilityZone": {
                 "Name": "us-east-1a"
               },
-              "SubnetIdentifier": "subnet-a6e131f6",
+              "SubnetIdentifier": "subnet-30a75c4f",
               "SupportedNetworkTypes": [
                 "ipv4"
               ]
@@ -1587,7 +1616,7 @@
           "SupportedNetworkTypes": [
             "ipv4"
           ],
-          "VpcId": "vpc-b6ee287f"
+          "VpcId": "vpc-7c4f2f1d"
         },
         "ClusterEnabled": false,
         "ClusterMode": "disabled",
@@ -1648,11 +1677,11 @@
     {
       "account_id": "123456789012",
       "arn": "arn:aws:sqs:us-east-1:123456789012:storefront-orders",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2012-11-05",
-        "checksum": "fad905fb55cfa3b933d646e338ef18bb496aa4cc6dbce7e63ebd173dac98d6cc",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "d1c41be56b5ec250a58c0207b31887ba355be0a749ba02078d5ed5daad11c97d",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -1662,9 +1691,9 @@
           "ApproximateNumberOfMessages": "0",
           "ApproximateNumberOfMessagesDelayed": "0",
           "ApproximateNumberOfMessagesNotVisible": "0",
-          "CreatedTimestamp": "1792082402.659784",
+          "CreatedTimestamp": "1792114153.328186",
           "DelaySeconds": "0",
-          "LastModifiedTimestamp": "1792082402.659784",
+          "LastModifiedTimestamp": "1792114153.328186",
           "MaximumMessageSize": "262144",
           "MessageRetentionPeriod": "345600",
           "QueueArn": "arn:aws:sqs:us-east-1:123456789012:storefront-orders",
@@ -1680,11 +1709,11 @@
     {
       "account_id": "123456789012",
       "arn": "arn:aws:sns:us-east-1:123456789012:storefront-events",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2010-03-31",
-        "checksum": "e534e5a3b8acdea2357fdf7ea6cffc4969f1094b1fcd1194798cb0e5d4e1d5ae",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "03c98dd2f797a2476837f3955c930b820444b7f4ec86aa650277179561afa581",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -1706,7 +1735,7 @@
             "Endpoint": "arn:aws:sqs:us-east-1:123456789012:storefront-orders",
             "Owner": "123456789012",
             "Protocol": "sqs",
-            "SubscriptionArn": "arn:aws:sns:us-east-1:123456789012:storefront-events:e79337ef-6785-4a3a-867b-d14f88d2396f",
+            "SubscriptionArn": "arn:aws:sns:us-east-1:123456789012:storefront-events:1803154f-633d-4e9c-bd9a-d16d528a9ee3",
             "TopicArn": "arn:aws:sns:us-east-1:123456789012:storefront-events"
           }
         ],
@@ -1721,24 +1750,24 @@
     {
       "account_id": "123456789012",
       "arn": "arn:aws:scheduler:us-east-1:123456789012:schedule/default/storefront-cleanup",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2021-06-30",
-        "checksum": "046f6025c41bfc87ae526a38ed580663abf752c11f25783f4c9248e4082fe13d",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "4b67acc17da9fcf879a8dd1d8156a1584f58baa86cbb6ae7c1afebbc7e95fb73",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
       "resource_type": "aws_scheduler_schedule",
       "specifications": {
         "Arn": "arn:aws:scheduler:us-east-1:123456789012:schedule/default/storefront-cleanup",
-        "CreationDate": "2026-10-15T23:40:02.856052+07:00",
+        "CreationDate": "2026-10-16T08:29:13.520641+07:00",
         "Description": "Hourly cleanup message",
         "FlexibleTimeWindow": {
           "Mode": "OFF"
         },
         "GroupName": "default",
-        "LastModificationDate": "2026-10-15T23:40:02.856052+07:00",
+        "LastModificationDate": "2026-10-16T08:29:13.520641+07:00",
         "Name": "storefront-cleanup",
         "ScheduleExpression": "rate(1 hour)",
         "State": "ENABLED",
@@ -1755,12 +1784,12 @@
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434588500944",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434536313232",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2015-12-01",
-        "checksum": "af4469008b882608bf85bc657194755f499515840c263504338a13a26655a71c",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "c911f1a7d5b64571de75eabb9eed67632264771e665df8c522e3f884aad9e807",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -1769,7 +1798,7 @@
         "AlpnPolicy": [],
         "Certificates": [
           {
-            "CertificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/a731cd05-0052-48e0-8889-0431af5b4bbe"
+            "CertificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/8f72f034-ca75-4120-acc5-f35a9fd3885d"
           }
         ],
         "DefaultActions": [
@@ -1778,7 +1807,7 @@
             "Type": "forward"
           }
         ],
-        "ListenerArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434588500944",
+        "ListenerArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/storefront-alb/50dc6c495c0c9188/4434536313232",
         "LoadBalancerArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/storefront-alb/50dc6c495c0c9188",
         "Port": 443,
         "Protocol": "HTTPS",
@@ -1789,11 +1818,11 @@
     {
       "account_id": "123456789012",
       "arn": "arn:aws:ecs:us-east-1:123456789012:service/storefront/web",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2014-11-13",
-        "checksum": "de1130ac0afe088e46cdf067bf814bab669ac71b95545bcdfa07714fe0055225",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "781293bfbc6bb66a57e0da7cef2ba9099c581d497e71198d418e8c3fc2d5deb4",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -1802,15 +1831,15 @@
         "clusterArn": "arn:aws:ecs:us-east-1:123456789012:cluster/storefront",
         "deployments": [
           {
-            "createdAt": "2026-10-15T23:40:02.617837+07:00",
+            "createdAt": "2026-10-16T08:29:13.277437+07:00",
             "desiredCount": 2,
-            "id": "ecs-svc/614225609518633782",
+            "id": "ecs-svc/487704048739958131",
             "launchType": "FARGATE",
             "pendingCount": 2,
             "runningCount": 0,
             "status": "PRIMARY",
             "taskDefinition": "arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1",
-            "updatedAt": "2026-10-15T23:40:02.617843+07:00"
+            "updatedAt": "2026-10-16T08:29:13.277442+07:00"
           }
         ],
         "desiredCount": 2,
@@ -1822,6 +1851,17 @@
             "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188"
           }
         ],
+        "networkConfiguration": {
+          "awsvpcConfiguration": {
+            "assignPublicIp": "DISABLED",
+            "securityGroups": [
+              "sg-7c3a665620cbf02dc"
+            ],
+            "subnets": [
+              "subnet-30a75c4f"
+            ]
+          }
+        },
         "pendingCount": 2,
         "runningCount": 0,
         "schedulingStrategy": "REPLICA",
@@ -1841,11 +1881,11 @@
     {
       "account_id": "123456789012",
       "arn": "arn:aws:ecs:us-east-1:123456789012:task-definition/storefront-web:1",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2014-11-13",
         "checksum": "065e5bbe2444550ce6e7fcd421a21a873244d39db3e7eb57caf091a2466bf5ad",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -1914,11 +1954,11 @@
     {
       "account_id": "123456789012",
       "arn": "arn:aws:events:us-east-1:123456789012:rule/storefront-nightly-report",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2015-10-07",
         "checksum": "aa8d1c0eb1048802f2b914ae5f5cdce5aa6a2fa8380413dc6e72cb45ba105907",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "us-east-1",
@@ -1948,11 +1988,11 @@
     {
       "account_id": "123456789012",
       "arn": "arn:aws:s3:::orders-public-assets",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2006-03-01",
         "checksum": "dddfb5d26229dbac29deba5ca9d77b2bb319a49ac22ce6449080e30ec2d1122d",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "global",
@@ -1997,11 +2037,11 @@
     {
       "account_id": "123456789012",
       "arn": "arn:aws:s3:::storefront-static",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2006-03-01",
         "checksum": "85655120f74e553eb992973253560092398c99c682efb6ddb26c49431b095d5a",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "global",
@@ -2036,54 +2076,12 @@
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:iam::123456789012:role/storefront-scheduler-role",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
-      "metadata": {
-        "api_version": "2010-05-08",
-        "checksum": "514e8210e0d1808abbfc5d220a0585699a1b2a40bd3529291b893585910e1e05",
-        "collected_at": "2026-10-15T16:40:03Z",
-        "collector_version": "0.1.0"
-      },
-      "region": "global",
-      "resource_type": "aws_iam_role",
-      "specifications": {
-        "Arn": "arn:aws:iam::123456789012:role/storefront-scheduler-role",
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "scheduler.amazonaws.com"
-              }
-            }
-          ],
-          "Version": "2012-10-17"
-        },
-        "AttachedPolicies": [],
-        "CreateDate": "2026-10-15T16:40:02.594000+00:00",
-        "InlinePolicies": {},
-        "MaxSessionDuration": 3600,
-        "Path": "/",
-        "RoleId": "AROARZPUZDIKBTYRPCPMR",
-        "RoleLastUsed": {},
-        "RoleName": "storefront-scheduler-role",
-        "Tags": [
-          {
-            "Key": "service",
-            "Value": "storefront"
-          }
-        ]
-      }
-    },
-    {
-      "account_id": "123456789012",
       "arn": "arn:aws:iam::123456789012:role/order-lambda-role",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2010-05-08",
-        "checksum": "2a96462513d68d009319191afa407b2e7ef8b80914e8495102300a11743cd4b7",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "e0d055cab5a47787ed59fd5ab85eed1cf6db2d704e7489339ad30b23d01fd956",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "global",
@@ -2103,7 +2101,7 @@
           "Version": "2012-10-17"
         },
         "AttachedPolicies": [],
-        "CreateDate": "2026-10-15T16:40:02.213000+00:00",
+        "CreateDate": "2026-10-16T01:29:12.737000+00:00",
         "Description": "Execution role for order-processor",
         "InlinePolicies": {
           "too-broad": {
@@ -2119,55 +2117,19 @@
         },
         "MaxSessionDuration": 3600,
         "Path": "/",
-        "RoleId": "AROARZPUZDIKCNGY6FPGT",
+        "RoleId": "AROARZPUZDIKDRE7FWEIT",
         "RoleLastUsed": {},
         "RoleName": "order-lambda-role"
       }
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:iam::123456789012:role/orders-app-role",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
-      "metadata": {
-        "api_version": "2010-05-08",
-        "checksum": "401f57a8b6cd59cc5aedaf19dfbe775f478eb3b48267206fa63761b4a38a9f13",
-        "collected_at": "2026-10-15T16:40:03Z",
-        "collector_version": "0.1.0"
-      },
-      "region": "global",
-      "resource_type": "aws_iam_role",
-      "specifications": {
-        "Arn": "arn:aws:iam::123456789012:role/orders-app-role",
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "ec2.amazonaws.com"
-              }
-            }
-          ],
-          "Version": "2012-10-17"
-        },
-        "AttachedPolicies": [],
-        "CreateDate": "2026-10-15T16:40:02.205000+00:00",
-        "InlinePolicies": {},
-        "MaxSessionDuration": 3600,
-        "Path": "/",
-        "RoleId": "AROARZPUZDIKHSGDM6FBZ",
-        "RoleLastUsed": {},
-        "RoleName": "orders-app-role"
-      }
-    },
-    {
-      "account_id": "123456789012",
       "arn": "arn:aws:iam::123456789012:role/storefront-task-role",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2010-05-08",
-        "checksum": "f5568ce4312820002d208da74d595157ea98ff956289bfbad8cdafea330ff09a",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "b346f49fc97aa6d002a5b8d5164c584f7f17063eb049a1777cc55a3d1e9538de",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "global",
@@ -2187,11 +2149,11 @@
           "Version": "2012-10-17"
         },
         "AttachedPolicies": [],
-        "CreateDate": "2026-10-15T16:40:02.587000+00:00",
+        "CreateDate": "2026-10-16T01:29:13.243000+00:00",
         "InlinePolicies": {},
         "MaxSessionDuration": 3600,
         "Path": "/",
-        "RoleId": "AROARZPUZDIKJ7GG4FITJ",
+        "RoleId": "AROARZPUZDIKEO4SY26UU",
         "RoleLastUsed": {},
         "RoleName": "storefront-task-role",
         "Tags": [
@@ -2205,11 +2167,11 @@
     {
       "account_id": "123456789012",
       "arn": "arn:aws:iam::123456789012:role/storefront-exec-role",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2010-05-08",
-        "checksum": "523c0938a79f1f2de9e3b0fb744bde58ac19f3bc42247e6f141b197f28825c7d",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "6a37e7a4d7243e9caff7ac3193e29101e8e6fa1b9dc7947392ce8c8768effc86",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "global",
@@ -2234,11 +2196,11 @@
             "PolicyName": "AmazonECSTaskExecutionRolePolicy"
           }
         ],
-        "CreateDate": "2026-10-15T16:40:02.590000+00:00",
+        "CreateDate": "2026-10-16T01:29:13.247000+00:00",
         "InlinePolicies": {},
         "MaxSessionDuration": 3600,
         "Path": "/",
-        "RoleId": "AROARZPUZDIKLELZ3QLZO",
+        "RoleId": "AROARZPUZDIKHRFGVZ7IB",
         "RoleLastUsed": {},
         "RoleName": "storefront-exec-role",
         "Tags": [
@@ -2251,18 +2213,96 @@
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:cloudfront::123456789012:distribution/WUDV5OCSQIBBJ",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:iam::123456789012:role/storefront-scheduler-role",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
+      "metadata": {
+        "api_version": "2010-05-08",
+        "checksum": "4c40999d21e52c86491ac55083100456247c1c282dfe5e326513a5c475bcb7d7",
+        "collected_at": "2026-10-16T01:29:14Z",
+        "collector_version": "0.1.0"
+      },
+      "region": "global",
+      "resource_type": "aws_iam_role",
+      "specifications": {
+        "Arn": "arn:aws:iam::123456789012:role/storefront-scheduler-role",
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "scheduler.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "AttachedPolicies": [],
+        "CreateDate": "2026-10-16T01:29:13.251000+00:00",
+        "InlinePolicies": {},
+        "MaxSessionDuration": 3600,
+        "Path": "/",
+        "RoleId": "AROARZPUZDIKNQYKGUS4K",
+        "RoleLastUsed": {},
+        "RoleName": "storefront-scheduler-role",
+        "Tags": [
+          {
+            "Key": "service",
+            "Value": "storefront"
+          }
+        ]
+      }
+    },
+    {
+      "account_id": "123456789012",
+      "arn": "arn:aws:iam::123456789012:role/orders-app-role",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
+      "metadata": {
+        "api_version": "2010-05-08",
+        "checksum": "96023be30a503ec63ebf60bd29c4844f9ff4872acd62aa69aa7c0bab80297bd3",
+        "collected_at": "2026-10-16T01:29:14Z",
+        "collector_version": "0.1.0"
+      },
+      "region": "global",
+      "resource_type": "aws_iam_role",
+      "specifications": {
+        "Arn": "arn:aws:iam::123456789012:role/orders-app-role",
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "AttachedPolicies": [],
+        "CreateDate": "2026-10-16T01:29:12.729000+00:00",
+        "InlinePolicies": {},
+        "MaxSessionDuration": 3600,
+        "Path": "/",
+        "RoleId": "AROARZPUZDIKNWJW7QSDR",
+        "RoleLastUsed": {},
+        "RoleName": "orders-app-role"
+      }
+    },
+    {
+      "account_id": "123456789012",
+      "arn": "arn:aws:cloudfront::123456789012:distribution/S8ZTDFP8H8PGF",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2020-05-31",
-        "checksum": "d6bc9a3e500607c1195f88d106f23d2996c348483775f115fa0eb91ac184f7ed",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "c6faf9435f2ec0cd799e4bc01cdaa58ec78301f0c875877fa60e8d819f47ef30",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "global",
       "resource_type": "aws_cloudfront_distribution",
       "specifications": {
-        "ARN": "arn:aws:cloudfront:123456789012:distribution/WUDV5OCSQIBBJ",
+        "ARN": "arn:aws:cloudfront:123456789012:distribution/S8ZTDFP8H8PGF",
         "ActiveTrustedKeyGroups": {
           "Enabled": false,
           "Items": [],
@@ -2426,10 +2466,10 @@
             "MinimumProtocolVersion": "TLSv1",
             "SSLSupportMethod": ""
           },
-          "WebACLId": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/e910f120-ccdb-46a7-bbb2-4e34585f73b5"
+          "WebACLId": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/1cbd8645-1348-4072-8b2e-633711042db1"
         },
-        "DomainName": "v40al5r1v0rte.cloudfront.net",
-        "Id": "WUDV5OCSQIBBJ",
+        "DomainName": "twzawhe0w7foo.cloudfront.net",
+        "Id": "S8ZTDFP8H8PGF",
         "InProgressInvalidationBatches": 0,
         "LastModifiedTime": "2021-11-27T10:34:26.802000+00:00",
         "Status": "Deployed",
@@ -2443,12 +2483,12 @@
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:route53:::hostedzone/0QZOTUEJO46KDTZ",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:route53:::hostedzone/2VX36NXN28FIY7F",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2013-04-01",
-        "checksum": "8d94606920fa33665b36ab269ea622a647c7a30aa06c68adb81b585b84730dcf",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "b0d7adcdc0f5c6943841c18ba019128cae2cf3e8cfd0d175d68868345661ef3b",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "global",
@@ -2467,7 +2507,7 @@
             "ns-2051.awsdns-67.co.uk"
           ]
         },
-        "Id": "/hostedzone/0QZOTUEJO46KDTZ",
+        "Id": "/hostedzone/2VX36NXN28FIY7F",
         "Name": "example.com.",
         "ResourceRecordSetCount": 4,
         "ResourceRecordSets": [
@@ -2511,7 +2551,7 @@
           },
           {
             "AliasTarget": {
-              "DNSName": "v40al5r1v0rte.cloudfront.net",
+              "DNSName": "twzawhe0w7foo.cloudfront.net",
               "EvaluateTargetHealth": false,
               "HostedZoneId": "Z2FDTNDATAQYW2"
             },
@@ -2529,23 +2569,23 @@
     },
     {
       "account_id": "123456789012",
-      "arn": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/e910f120-ccdb-46a7-bbb2-4e34585f73b5",
-      "generated_at": "2026-10-15T16:40:03.851507Z",
+      "arn": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/1cbd8645-1348-4072-8b2e-633711042db1",
+      "generated_at": "2026-10-16T01:29:14.603213Z",
       "metadata": {
         "api_version": "2019-07-29",
-        "checksum": "93a8c45a96ace55fb6c6631150d05ac58daa4284da8ee326d74a630ee7b44bfb",
-        "collected_at": "2026-10-15T16:40:03Z",
+        "checksum": "b58bb8549b30df409a899f1fef58dac267c79987a564a24e0db48e6d8332fb57",
+        "collected_at": "2026-10-16T01:29:14Z",
         "collector_version": "0.1.0"
       },
       "region": "global",
       "resource_type": "aws_wafv2_web_acl",
       "specifications": {
-        "ARN": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/e910f120-ccdb-46a7-bbb2-4e34585f73b5",
+        "ARN": "arn:aws:wafv2:global:123456789012:global/webacl/storefront-waf/1cbd8645-1348-4072-8b2e-633711042db1",
         "DefaultAction": {
           "Allow": {}
         },
         "Description": "Edge protection for the storefront",
-        "Id": "e910f120-ccdb-46a7-bbb2-4e34585f73b5",
+        "Id": "1cbd8645-1348-4072-8b2e-633711042db1",
         "Name": "storefront-waf",
         "Rules": [],
         "Tags": [

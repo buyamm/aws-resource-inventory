@@ -1,17 +1,17 @@
 {
   "account_id": "123456789012",
-  "arn": "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:d7e19156-0c83-434b-b8e0-a1b67c604518:autoScalingGroupName/storefront-workers",
-  "generated_at": "2026-10-15T16:40:03.851507Z",
+  "arn": "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:9bbe6615-958a-43a1-81c1-b9c0e0c23918:autoScalingGroupName/storefront-workers",
+  "generated_at": "2026-10-16T01:29:14.603213Z",
   "metadata": {
     "api_version": "2011-01-01",
-    "checksum": "bfbd9cc6ad6b79e91cbfc28cf1eb15159ce13ebdd58bfcba6e2016789c0fe7f9",
-    "collected_at": "2026-10-15T16:40:03Z",
+    "checksum": "87fb01cb7c84f010f3881f3a88e82d3e406e38d33387d3aa61f9f1f846a76824",
+    "collected_at": "2026-10-16T01:29:14Z",
     "collector_version": "0.1.0"
   },
   "region": "us-east-1",
   "resource_type": "aws_autoscaling_group",
   "specifications": {
-    "AutoScalingGroupARN": "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:d7e19156-0c83-434b-b8e0-a1b67c604518:autoScalingGroupName/storefront-workers",
+    "AutoScalingGroupARN": "arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:9bbe6615-958a-43a1-81c1-b9c0e0c23918:autoScalingGroupName/storefront-workers",
     "AutoScalingGroupName": "storefront-workers",
     "AvailabilityZones": [
       "us-east-1a"
@@ -26,10 +26,10 @@
       {
         "AvailabilityZone": "us-east-1a",
         "HealthStatus": "Healthy",
-        "InstanceId": "i-f6333ad6a6250cb6f",
+        "InstanceId": "i-7c15a7e2df90fa017",
         "InstanceType": "t3.small",
         "LaunchTemplate": {
-          "LaunchTemplateId": "lt-254efd878ee151eb7",
+          "LaunchTemplateId": "lt-c743f2f076e986059",
           "LaunchTemplateName": "storefront-worker",
           "Version": "$Default"
         },
@@ -38,7 +38,7 @@
       }
     ],
     "LaunchTemplate": {
-      "LaunchTemplateId": "lt-254efd878ee151eb7",
+      "LaunchTemplateId": "lt-c743f2f076e986059",
       "LaunchTemplateName": "storefront-worker",
       "Version": "$Default"
     },
@@ -61,6 +61,6 @@
     "TerminationPolicies": [
       "Default"
     ],
-    "VPCZoneIdentifier": "subnet-a6e131f6"
+    "VPCZoneIdentifier": "subnet-30a75c4f"
   }
 }

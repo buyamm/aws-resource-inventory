@@ -8,7 +8,7 @@
 | ARN               | arn:aws:sns:us-east-1:123456789012:storefront-events |
 | Region            | us-east-1                                            |
 | Account ID        | 123456789012                                         |
-| Collected At      | 2026-10-15T16:40:03Z                                 |
+| Collected At      | 2026-10-16T01:29:14Z                                 |
 | Collector Version | 0.1.0                                                |
 
 
@@ -42,5 +42,5 @@
 
 | Endpoint                                             | Owner        | Protocol | SubscriptionArn                                                                           | TopicArn                                             |
 | ---------------------------------------------------- | ------------ | -------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| arn:aws:sqs:us-east-1:123456789012:storefront-orders | 123456789012 | sqs      | arn:aws:sns:us-east-1:123456789012:storefront-events:e79337ef-6785-4a3a-867b-d14f88d2396f | arn:aws:sns:us-east-1:123456789012:storefront-events |
+| arn:aws:sqs:us-east-1:123456789012:storefront-orders | 123456789012 | sqs      | arn:aws:sns:us-east-1:123456789012:storefront-events:1803154f-633d-4e9c-bd9a-d16d528a9ee3 | arn:aws:sns:us-east-1:123456789012:storefront-events |
 

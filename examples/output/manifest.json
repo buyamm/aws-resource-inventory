@@ -1,6 +1,6 @@
 {
   "account_id": "123456789012",
-  "finished_at": "2026-10-15T16:40:03.850926Z",
+  "finished_at": "2026-10-16T01:29:14.601848Z",
   "regions": [
     "us-east-1"
   ],
@@ -41,15 +41,15 @@
   },
   "scope": {
     "excluded_defaults": [
-      "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-1fa6d031",
-      "arn:aws:ec2:us-east-1:123456789012:security-group/sg-4a7bc473b04ad8650",
-      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-180bea1f",
-      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-42776559",
-      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-a05da697",
-      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-a2260c94",
-      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-cb9634f7",
-      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-cbe4f3f0",
-      "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-72070a3f"
+      "arn:aws:ec2:us-east-1:123456789012:route-table/rtb-2d428c61",
+      "arn:aws:ec2:us-east-1:123456789012:security-group/sg-a23470852f1e58130",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-115650b6",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-14c7b0a5",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-39c7bbe1",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-5a0c2b90",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-c53a005a",
+      "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-f7a2f61b",
+      "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-cd9cc3e3"
     ],
     "include_defaults": false,
     "mode": "account",
@@ -60,7 +60,7 @@
     ],
     "seed_resources": 47
   },
-  "started_at": "2026-10-15T16:40:02.929528Z",
+  "started_at": "2026-10-16T01:29:13.589350Z",
   "tool_version": "0.1.0",
   "total_resources": 47
 }

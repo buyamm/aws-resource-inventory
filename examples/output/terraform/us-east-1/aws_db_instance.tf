@@ -5,7 +5,7 @@
 # Source specification: aws_db_instance/us-east-1/orders-db.json
 # ARN: arn:aws:rds:us-east-1:123456789012:db:orders-db
 # Region: us-east-1
-# mapped: AllocatedStorage, BackupRetentionPeriod, DBInstanceClass, DBInstanceIdentifier, Engine, EngineVersion, MasterUsername, MultiAZ, PubliclyAccessible, StorageEncrypted, StorageType, TagList, VpcSecurityGroups
+# mapped: AllocatedStorage, BackupRetentionPeriod, DBInstanceClass, DBInstanceIdentifier, DBSubnetGroup, Engine, EngineVersion, MasterUsername, MultiAZ, PubliclyAccessible, StorageEncrypted, StorageType, TagList, VpcSecurityGroups
 # unmapped: AutoMinorVersionUpgrade
 # unmapped: AvailabilityZone
 # unmapped: CopyTagsToSnapshot
@@ -36,7 +36,8 @@ resource "aws_db_instance" "orders-db" {
   multi_az = false
   publicly_accessible = false
   storage_encrypted = false
-  vpc_security_group_ids = ["sg-fb454a9efcd634f32"]
+  db_subnet_group_name = "orders-db-subnets"
+  vpc_security_group_ids = ["sg-2edfb301c8a045aa8"]
   username = "orders_admin"
   backup_retention_period = 1
   tags = {

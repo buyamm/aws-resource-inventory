@@ -1,0 +1,40 @@
+{
+  "account_id": "123456789012",
+  "arn": "arn:aws:ec2:us-east-1:123456789012:natgateway/nat-60d1a0cf8c8f398eb",
+  "generated_at": "2026-10-16T01:29:14.603213Z",
+  "metadata": {
+    "api_version": "2016-11-15",
+    "checksum": "efe9dd603272b91e43979694a46adb3bf876a9a58a82c79047aa8ee9e7d12825",
+    "collected_at": "2026-10-16T01:29:14Z",
+    "collector_version": "0.1.0"
+  },
+  "region": "us-east-1",
+  "resource_type": "aws_nat_gateway",
+  "specifications": {
+    "ConnectivityType": "None",
+    "CreateTime": "2026-10-16T01:29:13.013000+00:00",
+    "NatGatewayAddresses": [
+      {
+        "AllocationId": "eipalloc-02aeeac1",
+        "AssociationId": "eipassoc-e467c180",
+        "NetworkInterfaceId": "eni-6fe11400",
+        "PrivateIp": "10.190.162.51",
+        "PublicIp": "127.97.164.56"
+      }
+    ],
+    "NatGatewayId": "nat-60d1a0cf8c8f398eb",
+    "State": "available",
+    "SubnetId": "subnet-91c2dcc6",
+    "Tags": [
+      {
+        "Key": "Name",
+        "Value": "storefront-nat"
+      },
+      {
+        "Key": "service",
+        "Value": "storefront"
+      }
+    ],
+    "VpcId": "vpc-7c4f2f1d"
+  }
+}

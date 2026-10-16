@@ -970,3 +970,117 @@ class TestAnalysisEngineComputeData:
                 resolve_property_path(documents[citation.spec_file], citation.property_path)
                 == citation.evidence_value
             )
+
+
+# ----------------------------------------------------------------------------
+# Network access through security group rules (Req 15.2)
+# ----------------------------------------------------------------------------
+
+DB_ARN = f"arn:aws:rds:us-east-1:{ACCOUNT}:db:orders"
+
+
+@pytest.fixture
+def network_access_specs(compute_stack_specs) -> list[ResourceSpec]:
+    """sg-app admits Redis from itself; sg-db admits PostgreSQL from sg-app."""
+    specs = [s for s in compute_stack_specs if s.arn != f"{EC2}:security-group/sg-app"]
+    return [
+        *specs,
+        _spec(
+            "aws_security_group",
+            f"{EC2}:security-group/sg-app",
+            {
+                "GroupId": "sg-app",
+                "IpPermissions": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 80,
+                        "ToPort": 80,
+                        "UserIdGroupPairs": [{"GroupId": "sg-alb"}],
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 6379,
+                        "ToPort": 6379,
+                        "UserIdGroupPairs": [{"GroupId": "sg-app"}],
+                    },
+                ],
+            },
+        ),
+        _spec(
+            "aws_security_group",
+            f"{EC2}:security-group/sg-db",
+            {
+                "GroupId": "sg-db",
+                "IpPermissions": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 5432,
+                        "ToPort": 5432,
+                        "UserIdGroupPairs": [{"GroupId": "sg-app"}],
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 22,
+                        "ToPort": 22,
+                        "IpRanges": [{"CidrIp": "10.0.0.0/8"}],
+                    },
+                ],
+            },
+        ),
+        _spec(
+            "aws_db_instance",
+            DB_ARN,
+            {
+                "DBInstanceIdentifier": "orders",
+                "VpcSecurityGroups": [{"VpcSecurityGroupId": "sg-db", "Status": "active"}],
+            },
+        ),
+    ]
+
+
+class TestAnalysisEngineNetworkAccess:
+    def test_analysis_engine_network_access_from_security_group_rules_req_15_2(
+        self, network_access_specs
+    ):
+        rels = AnalysisEngine().identify_relationships(network_access_specs)
+        access = {
+            (r.from_arn, r.to_arn): r for r in rels if r.relationship_type == "network_access"
+        }
+        # Compute -> data stores only: no cache -> service, no ALB -> service edge here.
+        assert set(access) == {
+            (SERVICE_ARN, DB_ARN),
+            (SERVICE_ARN, CACHE_ARN),
+            (ASG_ARN, DB_ARN),
+            (ASG_ARN, CACHE_ARN),
+        }
+        to_db = access[(SERVICE_ARN, DB_ARN)]
+        assert to_db.confidence == 0.9
+        assert [(c.resource_arn, c.property_path, c.evidence_value) for c in to_db.citations] == [
+            (
+                f"{EC2}:security-group/sg-db",
+                "specifications.IpPermissions[0].UserIdGroupPairs[0].GroupId",
+                "sg-app",
+            ),
+            (
+                SERVICE_ARN,
+                "specifications.networkConfiguration.awsvpcConfiguration.securityGroups[0]",
+                "sg-app",
+            ),
+        ]
+        # Auto Scaling groups reach their security groups through the launch template.
+        assert access[(ASG_ARN, CACHE_ARN)].citations[1].resource_arn == LT_ARN
+
+    def test_analysis_engine_network_access_citations_resolve_req_8_5(self, network_access_specs):
+        sealed = seal_specs(network_access_specs, DataSanitizer())
+        documents = {spec_relpath(s): {"specifications": s.specifications} for s in sealed}
+        rels = [
+            r
+            for r in AnalysisEngine().identify_relationships(sealed)
+            if r.relationship_type == "network_access"
+        ]
+        assert rels
+        for citation in (c for r in rels for c in r.citations):
+            assert (
+                resolve_property_path(documents[citation.spec_file], citation.property_path)
+                == citation.evidence_value
+            )

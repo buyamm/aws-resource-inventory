@@ -21,6 +21,8 @@ Requirements Coverage:
   launch_template, subscription and event_target relationships, plus placement, security
   group, role and log group relationships of the compute and data types; the
   "Web app: CloudFront + ALB + ECS" and "Static site: S3 + CloudFront" patterns
+- Requirement 15.2: network_access (compute -> database/cache admitted by a security
+  group rule)
 """
 
 from __future__ import annotations
@@ -64,6 +66,8 @@ CONFIDENCE = {
     "launch_template": 1.0,
     "subscription": 1.0,
     "event_target": 1.0,
+    # Security group rule admitting the source's group (Req 15.2).
+    "network_access": 0.9,
 }
 
 WEB_APP_PATTERN = "Web app: CloudFront + ALB + ECS"
@@ -164,6 +168,16 @@ _ARN_TARGET_RELATIONSHIPS: dict[str, list[tuple[str, str]]] = {
     "aws_scheduler_schedule": [("Target.Arn", "event_target")],
     "aws_sns_topic": [("Subscriptions[].Endpoint", "subscription")],
 }
+
+# network_access (Req 15.2): compute that may open connections -> data stores whose
+# security group admits one of the compute's groups.
+_NETWORK_SOURCES = {
+    "aws_instance",
+    "aws_lambda_function",
+    "aws_ecs_service",
+    "aws_autoscaling_group",
+}
+_NETWORK_TARGETS = {"aws_db_instance", "aws_elasticache_replication_group"}
 
 # source type -> pattern of target group ARNs: the target group sends traffic to the source.
 _LB_TARGET_PATHS = {
@@ -526,7 +540,45 @@ class AnalysisEngine:
             elif kind == "aws_route53_zone":
                 self._alias_relationships(spec, index, add)
 
+        self._network_access_relationships(list(found.values()), index, add)
         return list(found.values())
+
+    @staticmethod
+    def _network_access_relationships(
+        relationships: list[ResourceRelationship], index: _Index, add: Any
+    ) -> None:
+        """Compute -> data store when the store's security group admits the compute's group."""
+        groups: dict[str, list[tuple[str, Citation]]] = {}
+        for rel in sorted(relationships, key=lambda r: (r.from_arn, r.to_arn)):
+            if rel.relationship_type == "security_group":
+                group_id = (index.by_arn[rel.to_arn].specifications or {}).get("GroupId")
+                if isinstance(group_id, str):
+                    groups.setdefault(rel.from_arn, []).append((group_id, rel.citations[0]))
+        # Auto Scaling groups take the security groups of their launch template.
+        for rel in relationships:
+            if rel.relationship_type == "launch_template":
+                groups.setdefault(rel.from_arn, []).extend(groups.get(rel.to_arn, []))
+
+        sources = sorted(arn for arn in groups if _type(index.by_arn[arn]) in _NETWORK_SOURCES)
+        for target_arn in sorted(groups):
+            if _type(index.by_arn[target_arn]) not in _NETWORK_TARGETS:
+                continue
+            for group_id, _ in groups[target_arn]:
+                group = index.security_groups.get(group_id)
+                if group is None:
+                    continue
+                pattern = "IpPermissions[].UserIdGroupPairs[].GroupId"
+                for path, allowed in iter_property_paths(group.specifications, pattern):
+                    for source_arn in sources:
+                        match = next((c for g, c in groups[source_arn] if g == allowed), None)
+                        if match is not None:
+                            add(
+                                index.by_arn[source_arn],
+                                index.by_arn[target_arn],
+                                "network_access",
+                                CONFIDENCE["network_access"],
+                                [cite(group, path), match],
+                            )
 
     @staticmethod
     def _compute_relationships(spec: ResourceSpec, kind: str, index: _Index, add: Any) -> None:

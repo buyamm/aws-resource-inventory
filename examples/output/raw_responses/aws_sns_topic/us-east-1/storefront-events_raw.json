@@ -13,7 +13,7 @@
     },
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
+        "date": "Fri, 16 Oct 2026 08:29:14 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,
@@ -25,7 +25,7 @@
   "ListSubscriptionsByTopic": {
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
+        "date": "Fri, 16 Oct 2026 08:29:14 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,
@@ -38,7 +38,7 @@
         "Endpoint": "arn:aws:sqs:us-east-1:123456789012:storefront-orders",
         "Owner": "123456789012",
         "Protocol": "sqs",
-        "SubscriptionArn": "arn:aws:sns:us-east-1:123456789012:storefront-events:e79337ef-6785-4a3a-867b-d14f88d2396f",
+        "SubscriptionArn": "arn:aws:sns:us-east-1:123456789012:storefront-events:1803154f-633d-4e9c-bd9a-d16d528a9ee3",
         "TopicArn": "arn:aws:sns:us-east-1:123456789012:storefront-events"
       }
     ]
@@ -46,7 +46,7 @@
   "ListTagsForResource": {
     "ResponseMetadata": {
       "HTTPHeaders": {
-        "date": "Thu, 15 Oct 2026 23:40:03 GMT",
+        "date": "Fri, 16 Oct 2026 08:29:14 GMT",
         "server": "amazon.com"
       },
       "HTTPStatusCode": 200,

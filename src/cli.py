@@ -31,7 +31,7 @@ from src import __version__
 from src.analysis_engine import AnalysisEngine, AnalysisReport
 from src.aws_session import SessionError, create_session, get_account_id
 from src.collector import CallStatus
-from src.diagram_generator import DiagramGenerator, validate_with_drawio_ai
+from src.diagram_generator import DiagramGenerator, export_png, validate_with_drawio_ai
 from src.discovery import DiscoveredResource, DiscoveryError, ResourceDiscovery
 from src.documentation import generate_infrastructure_doc
 from src.iac_generator import IaCGenerator
@@ -556,17 +556,29 @@ def _write_analysis(output_dir: Path, report: AnalysisReport) -> None:
     _write_text(output_dir / "analysis" / "analysis.md", report.summary_markdown)
 
 
+def _export_png(diagram: Path) -> tuple[bool | None, str]:
+    # The analyze option is also named export_png; resolve the module function here.
+    return export_png(diagram)
+
+
 @cli.command(epilog="""\b
 Example:
-  aws-inventory analyze --output-dir ./output --validate-diagram""")
+  aws-inventory analyze --output-dir ./output --validate-diagram
+  aws-inventory analyze --output-dir ./output --export-png""")
 @existing_output_dir_option
 @click.option(
     "--validate-diagram",
     is_flag=True,
     help="Validate the diagram with `drawio-ai validate` when that CLI is installed.",
 )
+@click.option(
+    "--export-png",
+    is_flag=True,
+    help="Also write diagrams/architecture.drawio.png (Overview page, editable) with the "
+    "draw.io desktop CLI when it is installed.",
+)
 @click.pass_context
-def analyze(ctx: click.Context, output_dir: Path, validate_diagram: bool) -> None:
+def analyze(ctx: click.Context, output_dir: Path, validate_diagram: bool, export_png: bool) -> None:
     """Write cited analysis (analysis/) and an architecture diagram (diagrams/)."""
     console = _console(ctx)
     specs, exit_code = _load_specs_or_exit(output_dir)
@@ -588,6 +600,15 @@ def analyze(ctx: click.Context, output_dir: Path, validate_diagram: bool) -> Non
             console.out("Diagram validation passed")
         else:
             console.err(f"Diagram validation failed:\n{message}", fg="red")
+            exit_code = EXIT_ERRORS
+    if export_png:
+        exported, message = _export_png(diagram)
+        if exported is None:
+            console.err(message, fg="yellow")
+        elif exported:
+            console.out(message)
+        else:
+            console.err(f"PNG export failed:\n{message}", fg="red")
             exit_code = EXIT_ERRORS
     _refresh_checksums(output_dir)
     ctx.exit(exit_code)

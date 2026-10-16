@@ -30,6 +30,7 @@ Chỉ `discover` và `collect` gọi AWS. Các lệnh còn lại chạy **offlin
 | Quyền đọc trên account | xem mục 2.1 |
 | (Tuỳ chọn) Terraform ≥ 1.5 | `terraform version` |
 | (Tuỳ chọn) CLI `drawio-ai` để validate diagram | `drawio-ai --help` |
+| (Tuỳ chọn) draw.io desktop để `analyze --export-png` | `drawio --version` (macOS: `/Applications/draw.io.app`) |
 
 ### 2.1. Quyền IAM tối thiểu
 
@@ -135,11 +136,12 @@ Khi gặp lỗi API, tool tự retry tối đa 3 lần (chờ 1 s rồi 2 s, ho�
 ```bash
 aws-inventory analyze --output-dir ./output
 aws-inventory analyze --output-dir ./output --validate-diagram   # thêm bước drawio-ai validate nếu đã cài
+aws-inventory analyze --output-dir ./output --export-png         # xuất thêm diagrams/architecture.drawio.png nếu đã cài draw.io desktop
 ```
 
 Ghi:
-- `analysis/analysis.json`, `analysis/analysis.md`: quan hệ (`vpc_connection`, `iam_role_usage`, `security_group`, `dynamodb_access`, `log_group`, `subnet_placement`, `route_table_association`, `route_target`, `lb_listener`, `forwards_to`, `certificate`, `cdn_origin`, `waf_protection`, `dns_alias`, `ecs_cluster`, `task_definition`, `container_image`, `lb_target`, `launch_template`, `subscription`, `event_target`), pattern ("Serverless Application", "Compute in VPC", "Static site: S3 + CloudFront", "Web app: CloudFront + ALB + ECS") và phát hiện bảo mật (`OVERLY_PERMISSIVE_IAM_POLICY`, `PUBLIC_S3_BUCKET`, `UNRESTRICTED_SECURITY_GROUP_ACCESS`), mỗi mục có điểm tin cậy và citation.
-- `diagrams/architecture.drawio`: mở bằng <https://app.diagrams.net> hoặc draw.io desktop.
+- `analysis/analysis.json`, `analysis/analysis.md`: quan hệ (`vpc_connection`, `iam_role_usage`, `security_group`, `dynamodb_access`, `log_group`, `subnet_placement`, `route_table_association`, `route_target`, `lb_listener`, `forwards_to`, `certificate`, `cdn_origin`, `waf_protection`, `dns_alias`, `ecs_cluster`, `task_definition`, `container_image`, `lb_target`, `launch_template`, `subscription`, `event_target`, `network_access`), pattern ("Serverless Application", "Compute in VPC", "Static site: S3 + CloudFront", "Web app: CloudFront + ALB + ECS") và phát hiện bảo mật (`OVERLY_PERMISSIVE_IAM_POLICY`, `PUBLIC_S3_BUCKET`, `UNRESTRICTED_SECURITY_GROUP_ACCESS`), mỗi mục có điểm tin cậy và citation.
+- `diagrams/architecture.drawio`: mở bằng <https://app.diagrams.net> hoặc draw.io desktop. Trang **Overview**: AWS Cloud → Region → VPC → AZ → subnet public/private, Route 53/CloudFront/WAF bên trái VPC, chỉ vẽ luồng dữ liệu (Users → CloudFront → ALB → ECS → RDS/ElastiCache; IAM, log group, security group nằm ở khung "Supporting resources"). Trang **Network detail**: route table, internet/NAT gateway, VPC endpoint, security group. Rê chuột lên icon để xem ARN; mỗi cạnh có thuộc tính `evidence` trỏ về citation.
 
 Các pattern chưa có luật nhận diện (API Gateway + Lambda + DynamoDB, EC2 + Load Balancer khi instance được đăng ký trực tiếp vào target group) được liệt kê trong `undetectable_patterns` kèm lý do, tool không đoán.
 
@@ -254,7 +256,7 @@ Option chung (đặt **trước** tên lệnh): `--log-level DEBUG|INFO|WARNING|
 |---|---|---|
 | `aws-inventory discover` | `--region`…, `--project-tag`…, `--include-defaults`, `--profile`, `--role-arn`, `--external-id`, `--output-dir` | có |
 | `aws-inventory collect` | như `discover` + `--max-workers` | có |
-| `aws-inventory analyze` | `--output-dir`, `--validate-diagram` | không |
+| `aws-inventory analyze` | `--output-dir`, `--validate-diagram`, `--export-png` | không |
 | `aws-inventory generate-iac` | `--output-dir`, `--terraform-dir` | không |
 | `aws-inventory generate-docs` | `--output-dir` | không |
 | `aws-inventory verify` | `--output-dir` | không |
@@ -297,6 +299,7 @@ Chi tiết: [docs/ACCURACY_AND_SECURITY.md](docs/ACCURACY_AND_SECURITY.md).
 | AI client không thấy tool / server tắt ngay | Dùng đường dẫn tuyệt đối cho cả lệnh và `--cache-dir`, thư mục phải tồn tại. Chạy thử lệnh trong terminal để xem lỗi trên stderr. |
 | `terraform plan` vẫn có thay đổi sau `import.sh` | Xem phần giới hạn bên dưới; điền tay các giá trị `# REDACTED: set manually`. |
 | `--validate-diagram` báo bỏ qua | Chưa cài CLI `drawio-ai`. XML vẫn được kiểm tra hợp lệ. |
+| `--export-png` báo bỏ qua | Chưa cài draw.io desktop (không có `drawio` trên PATH). File `.drawio` vẫn được ghi. |
 
 ---
 

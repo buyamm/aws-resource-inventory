@@ -5,7 +5,7 @@
 # Source specification: aws_ecs_service/us-east-1/storefront_web.json
 # ARN: arn:aws:ecs:us-east-1:123456789012:service/storefront/web
 # Region: us-east-1
-# mapped: clusterArn, desiredCount, launchType, loadBalancers, schedulingStrategy, serviceArn, serviceName, tags, taskDefinition
+# mapped: clusterArn, desiredCount, launchType, loadBalancers, networkConfiguration, schedulingStrategy, serviceArn, serviceName, tags, taskDefinition
 # unmapped: deployments
 # unmapped: pendingCount
 # unmapped: runningCount
@@ -22,6 +22,11 @@ resource "aws_ecs_service" "storefront_web" {
     target_group_arn = "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/storefront-tg/50dc6c495c0c9188"
     container_name = "web"
     container_port = 80
+  }
+  network_configuration {
+    subnets = ["subnet-30a75c4f"]
+    security_groups = ["sg-7c3a665620cbf02dc"]
+    assign_public_ip = false
   }
   tags = {
     "service" = "storefront"

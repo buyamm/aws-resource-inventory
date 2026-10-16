@@ -12,7 +12,7 @@ resource "aws_lb_target_group" "storefront-tg_50dc6c495c0c9188" {
   port = 80
   protocol = "HTTP"
   protocol_version = "HTTP1"
-  vpc_id = "vpc-b6ee287f"
+  vpc_id = "vpc-7c4f2f1d"
   target_type = "ip"
   ip_address_type = "ipv4"
   health_check {

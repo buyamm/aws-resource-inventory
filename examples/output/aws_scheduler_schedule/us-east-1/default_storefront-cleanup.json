@@ -1,24 +1,24 @@
 {
   "account_id": "123456789012",
   "arn": "arn:aws:scheduler:us-east-1:123456789012:schedule/default/storefront-cleanup",
-  "generated_at": "2026-10-15T16:40:03.851507Z",
+  "generated_at": "2026-10-16T01:29:14.603213Z",
   "metadata": {
     "api_version": "2021-06-30",
-    "checksum": "046f6025c41bfc87ae526a38ed580663abf752c11f25783f4c9248e4082fe13d",
-    "collected_at": "2026-10-15T16:40:03Z",
+    "checksum": "4b67acc17da9fcf879a8dd1d8156a1584f58baa86cbb6ae7c1afebbc7e95fb73",
+    "collected_at": "2026-10-16T01:29:14Z",
     "collector_version": "0.1.0"
   },
   "region": "us-east-1",
   "resource_type": "aws_scheduler_schedule",
   "specifications": {
     "Arn": "arn:aws:scheduler:us-east-1:123456789012:schedule/default/storefront-cleanup",
-    "CreationDate": "2026-10-15T23:40:02.856052+07:00",
+    "CreationDate": "2026-10-16T08:29:13.520641+07:00",
     "Description": "Hourly cleanup message",
     "FlexibleTimeWindow": {
       "Mode": "OFF"
     },
     "GroupName": "default",
-    "LastModificationDate": "2026-10-15T23:40:02.856052+07:00",
+    "LastModificationDate": "2026-10-16T08:29:13.520641+07:00",
     "Name": "storefront-cleanup",
     "ScheduleExpression": "rate(1 hour)",
     "State": "ENABLED",

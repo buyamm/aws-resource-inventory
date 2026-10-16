@@ -21,8 +21,12 @@ ElastiCache replication group, a worker Auto Scaling group with its launch templ
 SQS queue subscribed to an SNS topic, an EventBridge rule invoking the order Lambda and
 an EventBridge Scheduler schedule sending to the queue.
 
-ElastiCache replication groups need ``src.moto_compat.mock_elasticache_replication_groups``
-(moto 4.x does not implement them).
+The orders database sits in a DB subnet group on the instance subnet, and its security
+group admits PostgreSQL from the storefront tasks.
+
+ElastiCache replication groups and the ECS service network configuration need
+``src.moto_compat.mock_elasticache_replication_groups`` (moto 4.x does not implement
+them).
 
 Only call this inside a moto mock (``scripts/demo.py`` and tests do). It issues
 create calls and must never be pointed at a real account.
@@ -236,8 +240,15 @@ def build_sample_account(session: Any, region: str = SAMPLE_REGION) -> SampleAcc
     )["stateMachineArn"]
 
     db_instance_id = "orders-db"
-    session.client("rds", region_name=region).create_db_instance(
+    rds = session.client("rds", region_name=region)
+    rds.create_db_subnet_group(
+        DBSubnetGroupName="orders-db-subnets",
+        DBSubnetGroupDescription="Orders database",
+        SubnetIds=[subnet_id],
+    )
+    rds.create_db_instance(
         DBInstanceIdentifier=db_instance_id,
+        DBSubnetGroupName="orders-db-subnets",
         DBInstanceClass="db.t3.micro",
         Engine="postgres",
         AllocatedStorage=20,
@@ -255,6 +266,7 @@ def build_sample_account(session: Any, region: str = SAMPLE_REGION) -> SampleAcc
         vpc_id=vpc_id,
         private_subnet_id=subnet_id,
         alb_security_group_id=web["alb_security_group_id"],
+        db_security_group_id=sg_id,
         target_group_arn=web["target_group_arn"],
         function_arn=f"arn:aws:lambda:{region}:123456789012:function:{function_name}",
     )
@@ -538,6 +550,7 @@ def _build_compute_stack(
     vpc_id: str,
     private_subnet_id: str,
     alb_security_group_id: str,
+    db_security_group_id: str,
     target_group_arn: str,
     function_arn: str,
 ) -> dict:
@@ -566,6 +579,18 @@ def _build_compute_stack(
                 "ToPort": 6379,
                 "UserIdGroupPairs": [{"GroupId": app_sg}],
             },
+        ],
+    )
+    # The tasks reach the orders database (PostgreSQL) through its security group.
+    ec2.authorize_security_group_ingress(
+        GroupId=db_security_group_id,
+        IpPermissions=[
+            {
+                "IpProtocol": "tcp",
+                "FromPort": 5432,
+                "ToPort": 5432,
+                "UserIdGroupPairs": [{"GroupId": app_sg}],
+            }
         ],
     )
 
